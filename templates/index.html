@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="category-grid">
+    {% for category in categories %}
+    <div class="category-card" data-category-id="{{ category.id }}">
+        {% if category.image %}
+        <div class="category-image">
+            <img src="{{ category.image }}" alt="{{ category.name }}">
+        </div>
+        {% endif %}
+        <h3>{{ category.name }}</h3>
+        <p class="category-description">{{ category.description }}</p>
+        <div class="subcategory-grid hidden">
+            {% for subcategory in category.subcategories %}
+            <div class="subcategory-card {% if subcategory.visited %}visited{% endif %}" 
+                 data-subcategory-id="{{ subcategory.id }}">
+                <div class="subcategory-content">
+                    <h4>{{ subcategory.name }}</h4>
+                    <p class="subcategory-description">{{ subcategory.description }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 处理类别卡片的点击
+    const categoryCards = document.querySelectorAll('.category-card');
+    categoryCards.forEach(card => {
+        card.addEventListener('click', function(e) {
+            // 如果点击的是子类别卡片或其内容，不要触发父类别的展开/收起
+            if (e.target.closest('.subcategory-card')) {
+                return;
+            }
+            
+            const subcategoryGrid = this.querySelector('.subcategory-grid');
+            subcategoryGrid.classList.toggle('hidden');
+            this.classList.toggle('expanded');
+        });
+    });
+
+    // 处理子类别卡片的点击
+    const subcategoryCards = document.querySelectorAll('.subcategory-card');
+    subcategoryCards.forEach(card => {
+        card.addEventListener('click', function(e) {
+            // 阻止事件冒泡，防止触发父类别的点击事件
+            e.stopPropagation();
+            
+            // 标记为已访问
+            this.classList.add('visited');
+            localStorage.setItem(`visited-${this.dataset.subcategoryId}`, 'true');
+            
+            // 切换子类别详情的显示/隐藏
+            const details = this.querySelector('.subcategory-details');
+            if (details) {
+                details.classList.toggle('hidden');
+                this.classList.toggle('expanded');
+            }
+        });
+    });
+
+    // 恢复之前访问过的状态
+    document.querySelectorAll('.subcategory-card').forEach(card => {
+        const id = card.dataset.subcategoryId;
+        if (localStorage.getItem(`visited-${id}`) === 'true') {
+            card.classList.add('visited');
+        }
+    });
+});
+</script>
+{% endblock %}
+

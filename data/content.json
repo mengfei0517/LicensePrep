@@ -1,0 +1,398 @@
+{
+  "categories": [
+    {
+      "id": "basic-driving",
+      "name": "Grundlegende Fahraufgaben (Basic driving tasks)",
+      "description": "This section covers basic driving skills and operations.",
+      "image": "/static/images/basic-driving.jpg",
+      "subcategories": [
+        {
+          "id": "straight-driving",
+          "name": "Geradeausfahren (Straight driving)",
+          "description": "Keine Schlangenlinien fahren (Do not drive in a serpentine pattern)",
+          "content": [
+            {
+              "type": "text",
+              "content": "Beim Geradeausfahren ist es wichtig, das Fahrzeug stabil und ohne Schlangenlinien zu führen. Dies zeigt Ihre Kontrolle über das Fahrzeug und ist ein grundlegender Aspekt der Fahrsicherheit."
+            },
+            {
+              "type": "image",
+              "url": "/static/images/basic_driving/straight_driving/straight_driving.png"
+            }
+          ]
+        },
+        {
+          "id": "curb-distance",
+          "name": "Bordsteinabstand (Curb distance)",
+          "description": "Abstand zum Bordstein kennen/sehen, nicht zu nahe fahren (Know/see distance to curb, don't drive too close)",
+          "content": [
+            {
+              "type": "text",
+              "content": "Der richtige Abstand zum Bordstein ist etwa 50-70 cm. Sie müssen den Bordstein im Seitenspiegel sehen können, ohne zu nah heranzufahren. Dies ist besonders wichtig bei Kurvenfahrten und beim Einparken."
+            },
+            {
+              "type": "image",
+              "url": "/static/images/basic_driving/curb_distance/curb_distance.png"
+            }
+          ]
+        },
+        {
+          "id": "parked-cars-distance",
+          "name": "Abstand zu parkenden Fahrzeugen (Distance to parked vehicles)",
+          "description": "Mindestabstand zu parkenden Autos 1 Meter, wenn man näher heranfahren muss wegen einer Engstelle / Gegenverkehr ohne dass man eine Lücke hat um Platz zu machen maximal Schrittgeschwindigkeit (10 km/h)",
+          "content": [
+            {
+              "type": "text",
+              "content": "Der Sicherheitsabstand zu parkenden Autos beträgt mindestens 1 Meter. Bei Engstellen oder Gegenverkehr, wo dieser Abstand nicht eingehalten werden kann, reduzieren Sie die Geschwindigkeit auf maximal 10 km/h (Schrittgeschwindigkeit). Dies gilt besonders, wenn keine Ausweichmöglichkeit vorhanden ist."
+            },
+            {
+              "type": "image",
+              "url": "/static/images/basic_driving/parked_cars_distance/parked_cars_distance.png"
+            },
+            {
+              "type": "list",
+              "items": [
+                "Normalabstand: 1 Meter",
+                "Bei Engstellen: Schrittgeschwindigkeit (max. 10 km/h)",
+                "Besondere Vorsicht bei sich öffnenden Türen",
+                "Auf Fußgänger zwischen parkenden Autos achten"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "correct-turning",
+          "name": "Korrektes Abbiegen (Correct turning)",
+          "description": "Ensure proper signaling, lane positioning, and checking for pedestrians and other vehicles.",
+          "content": [
+            {
+              "type": "image",
+              "url": "/static/images/correct-turning.jpg"
+            },
+            {
+              "type": "image",
+              "url": "/static/images/correct-turning-2.jpg"
+            }
+          ]
+        },
+        {
+          "id": "turning-steps",
+          "name": "Abbiegeschritte (Turning steps)",
+          "description": "Detailed steps for making right and left turns, including mirror-checks, blind spot checks, and signaling."
+        },
+        {
+          "id": "lane-keeping",
+          "name": "Spurhaltung (Lane keeping)",
+          "description": "Staying in the correct lane, understanding lane markings, and avoiding unintentional swerving."
+        }
+      ]
+    },
+    {
+      "id": "grundfahraufgabe",
+      "name": "Fünf Grundfahraufgaben (Five basic driving tasks)",
+      "description": "This section includes five basic driving skill tests.",
+      "image": "/static/images/grundfahraufgabe.jpg",
+      "subcategories": [
+        {
+          "id": "seitliches-einparken",
+          "name": "Seitliches Einparken (Parallel parking)",
+          "description": "How to perform parallel parking on the street between vehicles.",
+          "content": [
+            {
+              "type": "text",
+              "content": "Parallel zum vorderen Fahrzeug ausrichten, wobei die B-Säule Ihres Fahrzeugs einen Abstand von 30-40 cm zum hinteren Ende des vorderen Fahrzeugs haben sollte"
+            },
+            {
+              "type": "image",
+              "url": "/static/images/five_skills/Parallel_parking/step1.png"
+            },
+            {
+              "type": "text",
+              "content": "Lenkrad voll zum Bordstein einschlagen und rückwärts fahren, bis die Fahrzeugfront die Parallellinie zum hinteren Ende des vorderen Fahrzeugs erreicht"
+            },
+            {
+              "type": "image",
+              "url": "/static/images/five_skills/Parallel_parking/step2.png"
+            },
+            {
+              "type": "text",
+              "content": "Lenkrad in die Gegenrichtung voll einschlagen, bis das Fahrzeug parallel steht"
+            },
+            {
+              "type": "image",
+              "url": "/static/images/five_skills/Parallel_parking/step3.png"
+            },
+            {
+              "type": "text",
+              "content": "Position durch Vor- und Zurückfahren mittig in der Parklücke ausrichten"
+            },
+            {
+              "type": "image",
+              "url": "/static/images/five_skills/Parallel_parking/step4.png"
+            }
+          ]
+        },
+        {
+          "id": "rueckwaerts-einparken",
+          "name": "Rückwärtiges Einparken (Reverse parking)",
+          "description": "Backing into a parking spot with precision.",
+          "content": [
+            {
+              "type": "text",
+              "content": "Fahrzeug so positionieren, dass der linke/rechte Außenspiegel mit der Mittelachse des Bezugsfahrzeugs übereinstimmt"
+            },
+            {
+              "type": "image",
+              "url": "/static/images/five_skills/Reverse_parking/step1.png"
+            },
+            {
+              "type": "text",
+              "content": "Lenkrad voll nach außen einschlagen und rückwärts fahren, bis das kleine Dreieck am Seitenfenster mit der Mittelachse des Bezugsfahrzeugs übereinstimmt"
+            },
+            {
+              "type": "image",
+              "url": "/static/images/five_skills/Reverse_parking/step2.png"
+            },
+            {
+              "type": "text",
+              "content": "Lenkrad in die Gegenrichtung voll einschlagen und rückwärts fahren, bis das Fahrzeug parallel steht und die Außenspiegel auf gleicher Höhe sind"
+            },
+            {
+              "type": "image",
+              "url": "/static/images/five_skills/Reverse_parking/step3.png"
+            }
+          ]
+        },
+        {
+          "id": "bogenrueckwaertsfahrt",
+          "name": "Kurvenfahrt Rückwärts (Reverse curve driving)",
+          "description": "Maneuvering in reverse along a curved path."
+        },
+        {
+          "id": "notbremsung",
+          "name": "Gefahrenbremsung (Emergency braking)",
+          "description": "Performing a sudden stop safely and effectively."
+        },
+        {
+          "id": "wenden",
+          "name": "Wenden/Umkehren (U-turn)",
+          "description": "Making a proper U-turn when necessary."
+        }
+      ]
+    },
+    {
+      "id": "30-zone",
+      "name": "30-Zone Bereiche (30 km/h speed limit zones)",
+      "description": "This section covers driving rules and considerations in 30 km/h speed limit zones.",
+      "image": "/static/images/30-zone.jpg",
+      "subcategories": [
+        {
+          "id": "geschwindigkeitsbegrenzung",
+          "name": "Geschwindigkeitsbegrenzungen (Speed limits)",
+          "description": "Recognizing and adhering to the 30 km/h speed limit zones."
+        },
+        {
+          "id": "vorfahrtsregeln",
+          "name": "Rechts-vor-links Regelung (Right-before-left rule)",
+          "description": "Understanding priority at intersections.",
+          "content": [
+            {
+              "type": "image",
+              "url": "/static/images/30_zone/right_before_left_1.png"
+            }
+          ]
+        },
+        {
+          "id": "zweirichtungsverkehr",
+          "name": "Zweirichtungsverkehr (Two-way traffic)",
+          "description": "Navigating two-way traffic in narrow streets."
+        },
+        {
+          "id": "fussgaengerueberweg",
+          "name": "Fußgängerüberwege (Pedestrian crossings)",
+          "description": "Yielding to pedestrians and using pedestrian crossings correctly."
+        },
+        {
+          "id": "fussgaenger-radfahrer",
+          "name": "Fußgänger/Radfahrer (Pedestrians/Cyclists)",
+          "description": "Being aware of and yielding to pedestrians and cyclists."
+        },
+        {
+          "id": "kreisverkehr",
+          "name": "Kreisverkehre und Nicht-Kreisverkehre (Roundabouts and non-roundabouts)",
+          "description": "Navigating roundabouts and other circular junctions."
+        },
+        {
+          "id": "busverkehr",
+          "name": "Busverkehr/Busspuren (Bus traffic/Bus lanes)",
+          "description": "Rules for driving near or in bus lanes."
+        },
+        {
+          "id": "verkehrsschilder",
+          "name": "Besondere Verkehrsschilder (Special road signs)",
+          "description": "Recognizing and responding to special road signs."
+        }
+      ]
+    },
+    {
+      "id": "stadt-zone",
+      "name": "Stadtzonen (City zones)",
+      "description": "This section covers driving rules and considerations in city areas.",
+      "image": "/static/images/stadt-zone.jpg",
+      "subcategories": [
+        {
+          "id": "geschwindigkeitsbegrenzung-stadt",
+          "name": "Geschwindigkeitsbegrenzungen (Speed limits)",
+          "description": "Speed limits in city areas, often marked by yellow road signs."
+        },
+        {
+          "id": "linksabbiegen",
+          "name": "Linksabbiegen auf die rechte Spur (Left turn into right lane)",
+          "description": "Correct procedure for turning left and merging into the right lane."
+        },
+        {
+          "id": "vorfahrt-stadt",
+          "name": "Vorfahrt (Right of way)",
+          "description": "Understanding priority and right-of-way rules in city driving."
+        },
+        {
+          "id": "busspuren-stadt",
+          "name": "Busspuren/Busverkehr (Bus lanes/Bus traffic)",
+          "description": "Special attention to bus lanes and their usage."
+        },
+        {
+          "id": "bahnuebergaenge",
+          "name": "Bahnübergänge passieren (Crossing railway crossings)",
+          "description": "Correct procedures for approaching and crossing railway crossings in city areas."
+        }
+      ]
+    },
+    {
+      "id": "landstrasse",
+      "name": "Landstraßen (Country roads)",
+      "description": "This section covers driving rules and considerations on suburban/country roads.",
+      "image": "/static/images/landstrasse.jpg",
+      "subcategories": [
+        {
+          "id": "geschwindigkeit-landstrasse",
+          "name": "Geschwindigkeitsbegrenzungen (Speed limits)",
+          "description": "Driving at speeds of 70, 80, or 100 km/h on country roads."
+        },
+        {
+          "id": "einfahren-landstrasse",
+          "name": "Einmündungen auf Straßen (Joining roads)",
+          "description": "Correct procedures for joining country roads from smaller streets."
+        },
+        {
+          "id": "kontinuierlicher-spurwechsel",
+          "name": "Kontinuierlicher Spurwechsel (Continuous lane change)",
+          "description": "Handling lane changes on roads with multiple lanes."
+        },
+        {
+          "id": "ampeln",
+          "name": "Ampeln (Traffic lights)",
+          "description": "Understanding and responding to traffic lights on country roads."
+        },
+        {
+          "id": "bahnuebergaenge-landstrasse",
+          "name": "Bahnübergänge passieren (Crossing railway crossings)",
+          "description": "Rules for safely crossing railway tracks in suburban areas."
+        }
+      ]
+    },
+    {
+      "id": "autobahn",
+      "name": "Autobahnen (Highways)",
+      "description": "This section covers driving rules and considerations on highways.",
+      "image": "/static/images/autobahn.jpg",
+      "subcategories": [
+        {
+          "id": "einfahren-autobahn",
+          "name": "Autobahnauffahrten (Highway entrances)",
+          "description": "Entering highways safely and at the appropriate speed."
+        },
+        {
+          "id": "spurwechsel-autobahn",
+          "name": "Spurwechsel bei hohen Geschwindigkeiten (Lane changes at high speeds)",
+          "description": "Changing lanes at high speeds while maintaining control and awareness."
+        },
+        {
+          "id": "ueberholen-autobahn",
+          "name": "Überholen auf der Autobahn (Overtaking on the highway)",
+          "description": "Proper procedures for overtaking on the highway."
+        },
+        {
+          "id": "abfahren-autobahn",
+          "name": "Abfahren von der Autobahn (Exiting the highway)",
+          "description": "Safely exiting the highway."
+        }
+      ]
+    },
+    {
+      "id": "technical-question",
+      "name": "Technische Fragen (Technical questions)",
+      "description": "Understanding vehicle technical aspects and maintenance requirements.",
+      "image": "/static/images/technical_question.jpg",
+      "subcategories": [
+        {
+          "id": "engine",
+          "name": "Motor (Engine)",
+          "description": "Basic knowledge about engine function and maintenance."
+        },
+        {
+          "id": "fluids",
+          "name": "Betriebsflüssigkeiten (Operating fluids)",
+          "description": "Understanding different fluids in the vehicle."
+        },
+        {
+          "id": "tires",
+          "name": "Reifen (Tires)",
+          "description": "Tire maintenance and safety checks."
+        },
+        {
+          "id": "lights",
+          "name": "Beleuchtung (Lighting)",
+          "description": "Vehicle lighting system checks and maintenance."
+        },
+        {
+          "id": "safety-systems",
+          "name": "Sicherheitssysteme (Safety systems)",
+          "description": "Understanding vehicle safety systems."
+        }
+      ]
+    },
+    {
+      "id": "adas",
+      "name": "Fahrerassistenzsysteme (ADAS)",
+      "description": "Advanced Driver Assistance Systems and their functions.",
+      "image": "/static/images/ADAS.jpg",
+      "subcategories": [
+        {
+          "id": "acc",
+          "name": "Adaptiver Tempomat (Adaptive Cruise Control)",
+          "description": "Understanding and using ACC system."
+        },
+        {
+          "id": "lane-assist",
+          "name": "Spurhalteassistent (Lane Keeping Assist)",
+          "description": "Lane departure warning and correction systems."
+        },
+        {
+          "id": "parking-assist",
+          "name": "Einparkhilfe (Parking Assistance)",
+          "description": "Parking sensors and camera systems."
+        },
+        {
+          "id": "emergency-brake",
+          "name": "Notbremsassistent (Emergency Brake Assist)",
+          "description": "Automatic emergency braking system."
+        },
+        {
+          "id": "blind-spot",
+          "name": "Totwinkelassistent (Blind Spot Detection)",
+          "description": "Blind spot monitoring and warning system."
+        }
+      ]
+    }
+  ]
+}

@@ -20,6 +20,10 @@
     <main>
         {% block content %}{% endblock %}
     </main>
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    
+    <!-- Load modular JavaScript (ES6 modules) -->
+    <script type="module" src="{{ url_for('static', filename='js/script.js') }}"></script>
+    
+    {% block scripts %}{% endblock %}
 </body>
 </html>

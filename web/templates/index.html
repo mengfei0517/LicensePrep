@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Reusable Q&A section -->
+{% include "_qa_block.html" %}
+
+<!-- Existing Categories Grid -->
+<div class="section-divider">
+    <h2 class="section-title">📚 Knowledge Categories</h2>
+</div>
+
+<div class="category-grid">
+    {% for category in categories %}
+    <div class="category-card" data-category-id="{{ category.id }}">
+        {% if category.image %}
+        <div class="category-image">
+            <img src="{{ category.image }}" alt="{{ category.name }}">
+        </div>
+        {% endif %}
+        <h3>{{ category.name }}</h3>
+        <p class="category-description">{{ category.description }}</p>
+
+        <div class="subcategory-grid">
+            {% for subcategory in category.subcategories %}
+            <div class="subcategory-card {% if subcategory.visited %}visited{% endif %}"
+                 data-subcategory-id="{{ subcategory.id }}">
+                <div class="subcategory-content">
+                    <h4>{{ subcategory.name }}</h4>
+                    <p class="subcategory-description">{{ subcategory.description }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}{% endblock %}

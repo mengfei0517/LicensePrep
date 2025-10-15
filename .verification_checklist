@@ -1,0 +1,21 @@
+# ✅ Verification Checklist
+
+## Fixed Issues:
+1. ✅ Subcategory expansion - works with smooth animation
+2. ✅ Q&A 404 error - fixed JS path from app.js to script.js
+3. ✅ Subcategory navigation - clicking subcategory card now navigates to detail page
+
+## Files Updated:
+- web/templates/base.html: Fixed JS path (app.js → script.js)
+
+## Test Steps:
+1. Restart Flask: python app.py
+2. Hard refresh browser: Ctrl+Shift+R
+3. Test expansion: Click category card → subcategories expand
+4. Test navigation: Click subcategory → navigate to /subcategory/<cat>/<sub>
+5. Test Q&A: Enter question → get answer
+
+## Expected Behavior:
+- Console log: [Category] Navigating to subcategory basic-driving/straight-driving
+- Browser navigates to detail page
+- No 404 errors in Network tab

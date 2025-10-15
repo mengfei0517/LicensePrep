@@ -1,0 +1,39 @@
+<div class="qa-section">
+    <div class="qa-card">
+      <div class="qa-header">
+        <span class="qa-icon">🤖</span>
+        <h2>Ask the Driving Coach</h2>
+        <span class="qa-icon">💬</span>
+      </div>
+      <p class="qa-description">
+        Have questions about German driving rules? Ask our AI assistant powered by NVIDIA NIM!
+      </p>
+  
+      <form id="qa-form" class="qa-form">
+        <div class="input-group">
+          <input id="question" type="text"
+                 placeholder="例如: 在30区无信号灯路口需要让谁？/ e.g., Who has right of way in 30 zone intersections?"
+                 required />
+          <button type="submit" class="ask-button">
+            <span class="button-text">Ask</span>
+            <span class="button-icon">→</span>
+          </button>
+        </div>
+      </form>
+  
+      <div id="answer-box" class="answer-box hidden">
+        <div class="answer-header">
+          <strong>💡 Answer:</strong>
+          <button id="clear-answer" class="clear-button">✕</button>
+        </div>
+        <div id="answer-content" class="answer-content">
+          <div class="loading">
+            <span class="loading-dot"></span>
+            <span class="loading-dot"></span>
+            <span class="loading-dot"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  

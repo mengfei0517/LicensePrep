@@ -4,11 +4,110 @@
 <!-- Reusable Q&A section -->
 {% include "_qa_block.html" %}
 
-<!-- Existing Categories Grid -->
-<div class="section-divider">
-    <h2 class="section-title">📚 Knowledge Categories</h2>
+<!-- New Feature Sections -->
+<div class="features-section">
+    <!-- Driving Route Record -->
+    <div class="feature-card">
+        <div class="feature-header">
+            <span class="feature-icon">📍</span>
+            <h3>Driving Route Record</h3>
+        </div>
+        <p class="feature-description">Recently recorded driving data</p>
+        <div class="feature-content">
+            <div id="recent-routes" class="route-list">
+                <div class="empty-state">
+                    <span class="empty-icon">🚗</span>
+                    <p>No recent routes recorded yet</p>
+                    <button class="feature-button" id="start-recording">Start Recording</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recorded Data Review -->
+    <div class="feature-card">
+        <div class="feature-header">
+            <span class="feature-icon">📊</span>
+            <h3>Recorded Data Review</h3>
+        </div>
+        <p class="feature-description">Review and analyze your recorded data</p>
+        <div class="feature-content">
+            <div id="recorded-data" class="data-list">
+                <div class="empty-state">
+                    <span class="empty-icon">📈</span>
+                    <p>No recorded data available</p>
+                    <button class="feature-button" id="view-history">View History</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exam Route Simulate -->
+    <div class="feature-card">
+        <div class="feature-header">
+            <span class="feature-icon">🗺️</span>
+            <h3>Exam Route Simulate</h3>
+        </div>
+        <p class="feature-description">Simulate exam routes with start and end positions</p>
+        <div class="feature-content">
+            <form id="route-simulator" class="simulator-form">
+                <div class="input-row">
+                    <div class="input-field">
+                        <label for="start-pos">Start Position</label>
+                        <input type="text" id="start-pos" placeholder="Enter start address" />
+                    </div>
+                    <div class="input-field">
+                        <label for="end-pos">End Position</label>
+                        <input type="text" id="end-pos" placeholder="Enter end address" />
+                    </div>
+                </div>
+                <button type="submit" class="feature-button feature-button-primary">
+                    <span>Simulate Route</span>
+                    <span class="button-arrow">→</span>
+                </button>
+            </form>
+            <div id="simulation-result" class="simulation-result hidden">
+                <!-- Results will be displayed here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Personal Driving Notes -->
+    <div class="feature-card">
+        <div class="feature-header">
+            <span class="feature-icon">📝</span>
+            <h3>Personal Driving Notes</h3>
+        </div>
+        <p class="feature-description">Categorize and organize your driving notes</p>
+        <div class="feature-content">
+            <div class="notes-categories">
+                <div class="note-category" data-category="mistakes">
+                    <div class="category-badge">❌</div>
+                    <span>Mistakes to Avoid</span>
+                    <span class="note-count">0</span>
+                </div>
+                <div class="note-category" data-category="tips">
+                    <div class="category-badge">💡</div>
+                    <span>Tips & Tricks</span>
+                    <span class="note-count">0</span>
+                </div>
+                <div class="note-category" data-category="practice">
+                    <div class="category-badge">🎯</div>
+                    <span>Practice Points</span>
+                    <span class="note-count">0</span>
+                </div>
+                <div class="note-category" data-category="exam">
+                    <div class="category-badge">📋</div>
+                    <span>Exam Preparation</span>
+                    <span class="note-count">0</span>
+                </div>
+            </div>
+            <button class="feature-button" id="add-note">Add New Note</button>
+        </div>
+    </div>
 </div>
 
+<!-- Existing Categories Grid -->
 <div class="category-grid">
     {% for category in categories %}
     <div class="category-card" data-category-id="{{ category.id }}">

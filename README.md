@@ -125,16 +125,3 @@ curl -X POST http://127.0.0.1:5000/api/qa/ask \
 - Add tests and CI
 
 
-建议建立 6 种「卡片类型」，每张卡片一个独立文件，便于复用与引用：
-
-Rule：法规/原则（StVO 摘要、判定标准）
-
-Procedure：操作步骤（如“左转步骤”“并线步骤”）
-
-Scenario：情景/考点（“30 区无控路口”“环岛出口”）
-
-CommonError：常见错误（带扣分点/示例）
-
-Checklist：检查清单（考前/上车后/换道前）
-
-Glossary：术语/路牌解释

@@ -5,20 +5,27 @@
 import { log } from './utils.js';
 import { initQA } from './qa.js';
 import { initCategories } from './category.js';
+import { initFeatures } from './features.js';
 
 document.addEventListener('DOMContentLoaded', function() {
     log('App', '🚀 LicensePrep application starting...');
     
     try {
-        initQA(); // Q&A 模块
+        initQA(); // Q&A module
     } catch (error) {
         console.error('[App] Error initializing Q&A module:', error);
     }
 
     try {
-        initCategories(); // 分类模块
+        initCategories(); // Categories module
     } catch (error) {
         console.error('[App] Error initializing category module:', error);
+    }
+
+    try {
+        initFeatures(); // Features module (route recording, notes, etc.)
+    } catch (error) {
+        console.error('[App] Error initializing features module:', error);
     }
 
     log('App', '✅ Application initialized successfully');

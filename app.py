@@ -34,6 +34,11 @@ def route_recorder():
     """GPS Route Recorder page (Using OpenStreetMap)"""
     return render_template("route_recorder.html")
 
+@app.route("/route-review/<route_id>")
+def route_review(route_id):
+    """Route Review and Replay page"""
+    return render_template("route_review.html", route_id=route_id)
+
 # Register API blueprints
 from api.routes_rule_qa import bp as bp_rule_qa
 from api.routes_replay import bp as bp_replay

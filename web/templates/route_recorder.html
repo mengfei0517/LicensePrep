@@ -574,7 +574,8 @@
                         lat: pos[0],
                         lng: pos[1],
                         timestamp: new Date().toISOString(),
-                        accuracy: position.coords.accuracy
+                        accuracy: position.coords.accuracy,
+                        speed: position.coords.speed ? (position.coords.speed * 3.6).toFixed(2) : 0 // Convert m/s to km/h
                     };
 
                     recordedPoints.push(point);

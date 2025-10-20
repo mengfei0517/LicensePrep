@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Route Review - LicensePrep</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Chart.js for speed visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            overflow: hidden;
+        }
+
+        .review-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Header */
+        .review-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-title h1 {
+            font-size: 1.5em;
+            margin: 0;
+        }
+
+        .route-name {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .close-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Main Content */
+        .review-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Left Panel - Map */
+        .map-panel {
+            flex: 1;
+            position: relative;
+            background: white;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Right Panel - Info & Controls */
+        .info-panel {
+            width: 380px;
+            background: white;
+            border-left: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Statistics Section */
+        .stats-section {
+            padding: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .stats-section h3 {
+            margin: 0 0 15px 0;
+            color: #495057;
+            font-size: 1.1em;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        /* Speed Analysis Section */
+        .speed-analysis-section {
+            border-bottom: 2px solid #f0f0f0;
+            padding: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .speed-analysis-section h3 {
+            margin: 0 0 15px 0;
+            color: #495057;
+            font-size: 1.1em;
+        }
+
+        .speed-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .speed-stat-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .speed-stat-label {
+            font-size: 0.8em;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+
+        .speed-stat-value {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .speed-stat-value.warning {
+            color: #ffc107;
+        }
+
+        .speed-stat-value.danger {
+            color: #ee0979;
+        }
+
+        .speed-chart-container {
+            height: 150px;
+            margin-top: 10px;
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .analysis-toggle {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            color: #495057;
+            padding: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-btn.active {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+
+        /* Voice Notes Section */
+        .voice-notes-section {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .voice-notes-section h3 {
+            margin: 0 0 15px 0;
+            color: #495057;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .note-count {
+            font-size: 0.9em;
+            color: #667eea;
+            font-weight: normal;
+        }
+
+        .voice-note-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .voice-note-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 3px solid #667eea;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .voice-note-card:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .voice-note-card.active {
+            background: #667eea;
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .voice-note-card.active .note-time,
+        .voice-note-card.active .note-location {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .note-time {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 0.95em;
+        }
+
+        .note-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .note-action-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.3s ease;
+        }
+
+        .note-action-btn:hover {
+            background: #5568d3;
+        }
+
+        .voice-note-card.active .note-action-btn {
+            background: white;
+            color: #667eea;
+        }
+
+        .note-location {
+            font-size: 0.85em;
+            color: #6c757d;
+        }
+
+        .empty-notes {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+
+        .empty-notes-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        /* Playback Control Panel */
+        .playback-controls {
+            background: white;
+            border-top: 2px solid #f0f0f0;
+            padding: 20px;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .control-buttons {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .control-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+            min-width: 60px;
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .control-btn.play-btn {
+            padding: 12px 30px;
+            font-size: 1.2em;
+        }
+
+        .speed-control {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .speed-btn {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            color: #495057;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .speed-btn.active {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+
+        .progress-bar-container {
+            background: #e9ecef;
+            height: 8px;
+            border-radius: 4px;
+            position: relative;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        .progress-marker {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #667eea;
+            border-radius: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .time-display {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+
+        /* Map Markers */
+        .car-marker {
+            font-size: 2em;
+            animation: car-pulse 1.5s infinite;
+        }
+
+        @keyframes car-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .voice-marker {
+            background: #667eea;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.5);
+            animation: voice-pulse 2s infinite;
+        }
+
+        @keyframes voice-pulse {
+            0%, 100% { 
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
+            }
+            50% { 
+                box-shadow: 0 0 0 10px rgba(102, 126, 234, 0);
+            }
+        }
+
+        /* Loading State */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Speed Legend */
+        .speed-legend {
+            position: absolute;
+            bottom: 40px;
+            left: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            font-size: 0.85em;
+        }
+
+        .speed-legend h4 {
+            margin: 0 0 10px 0;
+            font-size: 0.9em;
+            color: #495057;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 4px;
+            border-radius: 2px;
+        }
+
+        .legend-label {
+            color: #6c757d;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .info-panel {
+                width: 320px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .review-content {
+                flex-direction: column;
+            }
+
+            .info-panel {
+                width: 100%;
+                height: 50vh;
+            }
+
+            .map-panel {
+                height: 50vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="review-container">
+        <!-- Header -->
+        <div class="review-header">
+            <div class="header-title">
+                <h1>📍 Route Review</h1>
+                <div class="route-name" id="routeName">Loading...</div>
+            </div>
+            <button class="close-btn" onclick="window.close()">✕ Close</button>
+        </div>
+
+        <!-- Main Content -->
+        <div class="review-content">
+            <!-- Map Panel -->
+            <div class="map-panel">
+                <div id="map"></div>
+                
+                <!-- Speed Legend -->
+                <div class="speed-legend">
+                    <h4>🌡️ Speed</h4>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #38ef7d;"></div>
+                        <span class="legend-label">0-30 km/h</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ffd700;"></div>
+                        <span class="legend-label">30-50 km/h</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ff9500;"></div>
+                        <span class="legend-label">50-80 km/h</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ee0979;"></div>
+                        <span class="legend-label">80+ km/h</span>
+                    </div>
+                </div>
+                
+                <div class="loading-overlay" id="loadingOverlay">
+                    <div class="loading-spinner"></div>
+                    <p style="margin-top: 20px; color: #667eea; font-weight: 600;">Loading route data...</p>
+                </div>
+            </div>
+
+            <!-- Info Panel -->
+            <div class="info-panel">
+                <!-- Statistics -->
+                <div class="stats-section">
+                    <h3>📊 Route Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Duration</div>
+                            <div class="stat-value" id="statDuration">--:--:--</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Distance</div>
+                            <div class="stat-value" id="statDistance">-- km</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">GPS Points</div>
+                            <div class="stat-value" id="statPoints">--</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Voice Notes</div>
+                            <div class="stat-value" id="statNotes">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Speed Analysis Section -->
+                <div class="speed-analysis-section">
+                    <h3>📈 Speed Analysis</h3>
+                    
+                    <div class="analysis-toggle">
+                        <button class="toggle-btn active" data-view="stats">Statistics</button>
+                        <button class="toggle-btn" data-view="chart">Chart</button>
+                    </div>
+
+                    <div id="speedStatsView">
+                        <div class="speed-stats">
+                            <div class="speed-stat-item">
+                                <div class="speed-stat-label">Avg Speed</div>
+                                <div class="speed-stat-value" id="avgSpeed">-- km/h</div>
+                            </div>
+                            <div class="speed-stat-item">
+                                <div class="speed-stat-label">Max Speed</div>
+                                <div class="speed-stat-value" id="maxSpeed">-- km/h</div>
+                            </div>
+                            <div class="speed-stat-item">
+                                <div class="speed-stat-label">Acceleration</div>
+                                <div class="speed-stat-value" id="accelCount">-- times</div>
+                            </div>
+                            <div class="speed-stat-item">
+                                <div class="speed-stat-label">Braking</div>
+                                <div class="speed-stat-value" id="brakeCount">-- times</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="speedChartView" style="display: none;">
+                        <div class="speed-chart-container">
+                            <canvas id="speedChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Voice Notes List -->
+                <div class="voice-notes-section">
+                    <h3>
+                        🎙️ Voice Notes
+                        <span class="note-count" id="noteCount">(0)</span>
+                    </h3>
+                    <div class="voice-note-list" id="voiceNoteList">
+                        <div class="empty-notes">
+                            <div class="empty-notes-icon">🎵</div>
+                            <p>No voice notes in this route</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Playback Controls -->
+        <div class="playback-controls">
+            <div class="control-buttons">
+                <button class="control-btn" id="skipBackBtn" title="Previous Note">⏮️</button>
+                <button class="control-btn" id="rewindBtn" title="Rewind">⏪</button>
+                <button class="control-btn play-btn" id="playPauseBtn">▶️</button>
+                <button class="control-btn" id="forwardBtn" title="Fast Forward">⏩</button>
+                <button class="control-btn" id="skipForwardBtn" title="Next Note">⏭️</button>
+            </div>
+
+            <div class="speed-control">
+                <button class="speed-btn" data-speed="0.5">0.5x</button>
+                <button class="speed-btn active" data-speed="1">1x</button>
+                <button class="speed-btn" data-speed="2">2x</button>
+                <button class="speed-btn" data-speed="4">4x</button>
+            </div>
+
+            <div class="progress-bar-container" id="progressContainer">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+
+            <div class="time-display">
+                <span id="currentTime">00:00:00</span>
+                <span id="totalTime">00:00:00</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        // Route ID from Flask template
+        const ROUTE_ID = "{{ route_id }}";
+        
+        // Global variables
+        let map;
+        let routeData = null;
+        let routePath = null;
+        let carMarker = null;
+        let voiceMarkers = [];
+        let isPlaying = false;
+        let currentTime = 0;
+        let playbackSpeed = 1;
+        let animationFrame = null;
+        let startTimestamp = null;
+
+        // Initialize on load
+        window.onload = function() {
+            initMap();
+            loadRouteData();
+        };
+
+        // Initialize map
+        function initMap() {
+            const defaultLocation = [51.1657, 10.4515]; // Germany center
+            
+            map = L.map('map').setView(defaultLocation, 6);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(map);
+        }
+
+        // Load route data from localStorage
+        function loadRouteData() {
+            try {
+                const routes = JSON.parse(localStorage.getItem('recordedRoutes') || '[]');
+                routeData = routes.find(r => r.id == ROUTE_ID);
+
+                if (!routeData) {
+                    alert('Route not found!');
+                    window.close();
+                    return;
+                }
+
+                console.log('Route data loaded:', routeData);
+                
+                initializeRoute();
+                hideLoading();
+            } catch (error) {
+                console.error('Error loading route:', error);
+                alert('Failed to load route data');
+                window.close();
+            }
+        }
+
+        // Initialize route visualization
+        function initializeRoute() {
+            // Update header
+            document.getElementById('routeName').textContent = routeData.name;
+
+            // Update statistics
+            document.getElementById('statDuration').textContent = routeData.duration;
+            document.getElementById('statDistance').textContent = routeData.distance + ' km';
+            document.getElementById('statPoints').textContent = routeData.points.length;
+            document.getElementById('statNotes').textContent = (routeData.voiceNotes || []).length;
+            document.getElementById('totalTime').textContent = routeData.duration;
+
+            // Draw route on map
+            drawRoute();
+
+            // Add voice notes
+            displayVoiceNotes();
+
+            // Analyze speed data
+            analyzeSpeedData();
+
+            // Initialize playback
+            initializePlayback();
+        }
+
+        // Analyze speed data
+        let speedChart = null;
+        let speedAnalysis = null;
+
+        function analyzeSpeedData() {
+            const points = routeData.points || [];
+            
+            if (points.length === 0) {
+                console.warn('No GPS points with speed data');
+                return;
+            }
+
+            // Calculate speed statistics
+            const speeds = points.map(p => p.speed || 0).filter(s => s > 0);
+            
+            if (speeds.length === 0) {
+                console.warn('No speed data available');
+                document.getElementById('avgSpeed').textContent = 'N/A';
+                document.getElementById('maxSpeed').textContent = 'N/A';
+                return;
+            }
+
+            const avgSpeed = (speeds.reduce((a, b) => a + b, 0) / speeds.length).toFixed(1);
+            const maxSpeed = Math.max(...speeds).toFixed(1);
+
+            // Identify acceleration and braking events
+            const segments = identifySpeedSegments(points);
+            const accelCount = segments.filter(s => s.type === 'accelerating').length;
+            const brakeCount = segments.filter(s => s.type === 'braking').length;
+
+            // Store analysis
+            speedAnalysis = {
+                avgSpeed,
+                maxSpeed,
+                accelCount,
+                brakeCount,
+                segments,
+                speeds,
+                timestamps: points.map((p, i) => i)
+            };
+
+            // Update UI
+            document.getElementById('avgSpeed').textContent = avgSpeed + ' km/h';
+            document.getElementById('maxSpeed').textContent = maxSpeed + ' km/h';
+            document.getElementById('accelCount').textContent = accelCount;
+            document.getElementById('brakeCount').textContent = brakeCount;
+
+            // Add color if speed is high
+            if (maxSpeed > 100) {
+                document.getElementById('maxSpeed').classList.add('danger');
+            } else if (maxSpeed > 80) {
+                document.getElementById('maxSpeed').classList.add('warning');
+            }
+
+            // Setup toggle buttons
+            setupAnalysisToggle();
+        }
+
+        // Identify speed segments (acceleration, braking, steady)
+        function identifySpeedSegments(points) {
+            const segments = [];
+            const ACCEL_THRESHOLD = 2; // km/h per second
+            const BRAKE_THRESHOLD = -2;
+
+            for (let i = 1; i < points.length; i++) {
+                const prevSpeed = points[i - 1].speed || 0;
+                const currSpeed = points[i].speed || 0;
+                const timeDiff = (points[i].timestamp - points[i - 1].timestamp) / 1000; // seconds
+
+                if (timeDiff === 0) continue;
+
+                const acceleration = (currSpeed - prevSpeed) / timeDiff;
+
+                let type = 'steady';
+                if (acceleration > ACCEL_THRESHOLD) {
+                    type = 'accelerating';
+                } else if (acceleration < BRAKE_THRESHOLD) {
+                    type = 'braking';
+                }
+
+                // Merge consecutive segments of same type
+                if (segments.length > 0 && segments[segments.length - 1].type === type) {
+                    segments[segments.length - 1].endIndex = i;
+                } else {
+                    segments.push({
+                        type,
+                        startIndex: i - 1,
+                        endIndex: i
+                    });
+                }
+            }
+
+            return segments;
+        }
+
+        // Setup analysis toggle
+        function setupAnalysisToggle() {
+            document.querySelectorAll('.toggle-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const view = btn.dataset.view;
+                    
+                    // Update active state
+                    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+
+                    // Toggle views
+                    if (view === 'stats') {
+                        document.getElementById('speedStatsView').style.display = 'block';
+                        document.getElementById('speedChartView').style.display = 'none';
+                    } else if (view === 'chart') {
+                        document.getElementById('speedStatsView').style.display = 'none';
+                        document.getElementById('speedChartView').style.display = 'block';
+                        
+                        // Initialize chart if not already done
+                        if (!speedChart && speedAnalysis) {
+                            initSpeedChart();
+                        }
+                    }
+                });
+            });
+        }
+
+        // Initialize speed chart
+        function initSpeedChart() {
+            const ctx = document.getElementById('speedChart').getContext('2d');
+            
+            speedChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: speedAnalysis.timestamps.map((_, i) => {
+                        if (i % Math.floor(speedAnalysis.timestamps.length / 10) === 0) {
+                            return formatTimestamp(routeData.points[i].timestamp);
+                        }
+                        return '';
+                    }),
+                    datasets: [{
+                        label: 'Speed (km/h)',
+                        data: speedAnalysis.speeds,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            display: true,
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'km/h'
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+        }
+
+        // Get color based on speed (heatmap)
+        function getSpeedColor(speed) {
+            // Speed ranges: 0-30 (green), 30-50 (yellow), 50-80 (orange), 80+ (red)
+            if (speed < 30) {
+                return '#38ef7d'; // Green - slow
+            } else if (speed < 50) {
+                return '#ffd700'; // Yellow - moderate
+            } else if (speed < 80) {
+                return '#ff9500'; // Orange - fast
+            } else {
+                return '#ee0979'; // Red - very fast
+            }
+        }
+
+        // Draw route on map with speed heatmap
+        function drawRoute() {
+            const points = routeData.points;
+            
+            // Draw route segments with speed-based colors
+            for (let i = 0; i < points.length - 1; i++) {
+                const p1 = points[i];
+                const p2 = points[i + 1];
+                const speed = p1.speed || 0;
+                
+                // Get color based on speed
+                const color = getSpeedColor(speed);
+                
+                L.polyline(
+                    [[p1.lat, p1.lng], [p2.lat, p2.lng]],
+                    {
+                        color: color,
+                        weight: 4,
+                        opacity: 0.8
+                    }
+                ).addTo(map);
+            }
+
+            // Create a reference polyline for bounds (invisible)
+            const coordinates = points.map(p => [p.lat, p.lng]);
+            const boundsLine = L.polyline(coordinates, { opacity: 0 }).addTo(map);
+            
+            // Fit map to route bounds
+            map.fitBounds(boundsLine.getBounds(), { padding: [50, 50] });
+
+            // Add start marker
+            L.marker(coordinates[0], {
+                icon: L.divIcon({
+                    className: 'start-marker',
+                    html: '🏁',
+                    iconSize: [30, 30]
+                })
+            }).addTo(map).bindPopup('Start');
+
+            // Add end marker
+            L.marker(coordinates[coordinates.length - 1], {
+                icon: L.divIcon({
+                    className: 'end-marker',
+                    html: '🎯',
+                    iconSize: [30, 30]
+                })
+            }).addTo(map).bindPopup('End');
+
+            // Initialize car marker (hidden initially)
+            carMarker = L.marker(coordinates[0], {
+                icon: L.divIcon({
+                    className: 'car-marker',
+                    html: '🚗',
+                    iconSize: [40, 40]
+                })
+            }).addTo(map);
+            carMarker.setOpacity(0);
+        }
+
+        // Display voice notes
+        function displayVoiceNotes() {
+            const voiceNotes = routeData.voiceNotes || [];
+            const container = document.getElementById('voiceNoteList');
+            document.getElementById('noteCount').textContent = `(${voiceNotes.length})`;
+
+            if (voiceNotes.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-notes">
+                        <div class="empty-notes-icon">🎵</div>
+                        <p>No voice notes in this route</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+
+            voiceNotes.forEach((note, index) => {
+                // Add marker to map
+                if (note.location && note.location.lat && note.location.lng) {
+                    const marker = L.marker([note.location.lat, note.location.lng], {
+                        icon: L.divIcon({
+                            className: 'voice-marker',
+                            html: `${index + 1}`,
+                            iconSize: [30, 30]
+                        })
+                    }).addTo(map);
+                    
+                    marker.noteId = note.id;
+                    voiceMarkers.push(marker);
+
+                    marker.on('click', () => {
+                        jumpToNote(index);
+                    });
+                }
+
+                // Add to list
+                const noteCard = document.createElement('div');
+                noteCard.className = 'voice-note-card';
+                noteCard.dataset.noteId = note.id;
+                noteCard.dataset.noteIndex = index;
+
+                const timeStr = formatTimestamp(note.timestamp || 0);
+                const locationStr = (note.location && note.location.lat && note.location.lng)
+                    ? `📍 ${note.location.lat.toFixed(6)}, ${note.location.lng.toFixed(6)}`
+                    : '📍 No GPS location';
+
+                noteCard.innerHTML = `
+                    <div class="note-header">
+                        <div class="note-time">🎤 Note #${index + 1} - ${timeStr}</div>
+                        <div class="note-actions">
+                            <button class="note-action-btn" onclick="jumpToNote(${index})">Jump</button>
+                            <button class="note-action-btn" onclick="playNote('${note.id}')">▶️</button>
+                        </div>
+                    </div>
+                    <div class="note-location">${locationStr}</div>
+                `;
+
+                noteCard.addEventListener('click', (e) => {
+                    if (!e.target.classList.contains('note-action-btn')) {
+                        jumpToNote(index);
+                    }
+                });
+
+                container.appendChild(noteCard);
+            });
+        }
+
+        // Format timestamp
+        function formatTimestamp(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+
+            if (hours > 0) {
+                return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            }
+            return `${minutes}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        // Play voice note
+        window.playNote = function(noteId) {
+            const note = (routeData.voiceNotes || []).find(n => n.id === noteId);
+            if (!note || !note.audioData) return;
+
+            const audio = new Audio(note.audioData);
+            audio.play().catch(error => {
+                console.error('Error playing audio:', error);
+                alert('Failed to play voice note');
+            });
+        };
+
+        // Jump to specific note
+        window.jumpToNote = function(noteIndex) {
+            const voiceNotes = routeData.voiceNotes || [];
+            if (noteIndex >= voiceNotes.length) return;
+
+            const note = voiceNotes[noteIndex];
+            currentTime = note.timestamp;
+            updatePlayback();
+
+            // Highlight note card
+            document.querySelectorAll('.voice-note-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            document.querySelector(`[data-note-index="${noteIndex}"]`)?.classList.add('active');
+
+            // Pan to location
+            if (note.location && note.location.lat && note.location.lng) {
+                map.setView([note.location.lat, note.location.lng], 16, { animate: true });
+            }
+        };
+
+        // Initialize playback controls
+        function initializePlayback() {
+            // Play/Pause button
+            document.getElementById('playPauseBtn').addEventListener('click', togglePlayPause);
+
+            // Skip buttons
+            document.getElementById('skipBackBtn').addEventListener('click', () => jumpToPreviousNote());
+            document.getElementById('skipForwardBtn').addEventListener('click', () => jumpToNextNote());
+
+            // Rewind/Forward buttons
+            document.getElementById('rewindBtn').addEventListener('click', () => skip(-10000)); // -10 seconds
+            document.getElementById('forwardBtn').addEventListener('click', () => skip(10000)); // +10 seconds
+
+            // Speed buttons
+            document.querySelectorAll('.speed-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    playbackSpeed = parseFloat(btn.dataset.speed);
+                });
+            });
+
+            // Progress bar
+            document.getElementById('progressContainer').addEventListener('click', (e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const percent = (e.clientX - rect.left) / rect.width;
+                const totalDuration = parseDuration(routeData.duration);
+                currentTime = totalDuration * percent;
+                updatePlayback();
+            });
+        }
+
+        // Toggle play/pause
+        function togglePlayPause() {
+            isPlaying = !isPlaying;
+            const btn = document.getElementById('playPauseBtn');
+            btn.textContent = isPlaying ? '⏸️' : '▶️';
+
+            if (isPlaying) {
+                startPlayback();
+            } else {
+                stopPlayback();
+            }
+        }
+
+        // Start playback
+        function startPlayback() {
+            carMarker.setOpacity(1);
+            startTimestamp = Date.now() - currentTime;
+            animatePlayback();
+        }
+
+        // Stop playback
+        function stopPlayback() {
+            if (animationFrame) {
+                cancelAnimationFrame(animationFrame);
+                animationFrame = null;
+            }
+        }
+
+        // Animate playback
+        function animatePlayback() {
+            if (!isPlaying) return;
+
+            currentTime = (Date.now() - startTimestamp) * playbackSpeed;
+            const totalDuration = parseDuration(routeData.duration);
+
+            if (currentTime >= totalDuration) {
+                currentTime = totalDuration;
+                isPlaying = false;
+                document.getElementById('playPauseBtn').textContent = '▶️';
+                carMarker.setOpacity(0);
+                return;
+            }
+
+            updatePlayback();
+            animationFrame = requestAnimationFrame(animatePlayback);
+        }
+
+        // Update playback position
+        function updatePlayback() {
+            const totalDuration = parseDuration(routeData.duration);
+            const progress = (currentTime / totalDuration) * 100;
+
+            // Update progress bar
+            document.getElementById('progressBar').style.width = `${progress}%`;
+            document.getElementById('currentTime').textContent = formatTimestamp(currentTime);
+
+            // Update car position
+            const pointIndex = Math.floor((currentTime / totalDuration) * routeData.points.length);
+            if (pointIndex < routeData.points.length) {
+                const point = routeData.points[pointIndex];
+                carMarker.setLatLng([point.lat, point.lng]);
+            }
+
+            // Check for voice notes at current time
+            checkVoiceNotesAtTime(currentTime);
+        }
+
+        // Check and highlight active voice notes
+        function checkVoiceNotesAtTime(time) {
+            const voiceNotes = routeData.voiceNotes || [];
+            voiceNotes.forEach((note, index) => {
+                const noteCard = document.querySelector(`[data-note-index="${index}"]`);
+                if (Math.abs(note.timestamp - time) < 2000) { // 2 second window
+                    noteCard?.classList.add('active');
+                } else {
+                    noteCard?.classList.remove('active');
+                }
+            });
+        }
+
+        // Skip forward/backward
+        function skip(ms) {
+            currentTime = Math.max(0, Math.min(currentTime + ms, parseDuration(routeData.duration)));
+            updatePlayback();
+        }
+
+        // Jump to previous/next note
+        function jumpToPreviousNote() {
+            const voiceNotes = routeData.voiceNotes || [];
+            const prevNote = [...voiceNotes].reverse().find(n => n.timestamp < currentTime - 1000);
+            if (prevNote) {
+                currentTime = prevNote.timestamp;
+                updatePlayback();
+            }
+        }
+
+        function jumpToNextNote() {
+            const voiceNotes = routeData.voiceNotes || [];
+            const nextNote = voiceNotes.find(n => n.timestamp > currentTime + 1000);
+            if (nextNote) {
+                currentTime = nextNote.timestamp;
+                updatePlayback();
+            }
+        }
+
+        // Parse duration string to milliseconds
+        function parseDuration(durationStr) {
+            const parts = durationStr.split(':').map(Number);
+            if (parts.length === 3) {
+                return (parts[0] * 3600 + parts[1] * 60 + parts[2]) * 1000;
+            } else if (parts.length === 2) {
+                return (parts[0] * 60 + parts[1]) * 1000;
+            }
+            return 0;
+        }
+
+        // Hide loading overlay
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
+

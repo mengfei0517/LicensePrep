@@ -135,7 +135,12 @@ window.loadRecentRoutes = function() {
                     <span>📏 ${route.distance} km</span>
                 </div>
             </div>
-            <button class="route-action-btn" onclick="viewRouteDetails('${route.id}')">View</button>
+            <div style="display: flex; gap: 8px;">
+                <button class="route-action-btn" onclick="openRouteReview('${route.id}')" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                    📊 Review
+                </button>
+                <button class="route-action-btn" onclick="viewRouteDetails('${route.id}')">View</button>
+            </div>
         `;
         recentRoutesContainer.appendChild(routeItem);
     });
@@ -498,6 +503,12 @@ window.playRouteVoiceNote = function(routeId, noteId) {
 window.startSimulation = function() {
     log('RouteSimulator', 'Starting route simulation...');
     alert('Starting interactive route simulation...\n\nThis feature will:\n- Show the route on a map\n- Highlight key decision points\n- Test your knowledge at intersections\n- Provide real-time feedback');
+};
+
+// Open route review page
+window.openRouteReview = function(routeId) {
+    log('RouteReview', `Opening review for route: ${routeId}`);
+    window.open(`/route-review/${routeId}`, 'RouteReview', 'width=1400,height=900');
 };
 
 window.clearAllRoutes = function() {

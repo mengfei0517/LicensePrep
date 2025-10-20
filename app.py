@@ -29,6 +29,11 @@ def subcategory(category_id, subcategory_id):
             return render_template("subcategory.html", category=category, subcategory=subcat)
     return "Subcategory not found", 404
 
+@app.route("/route-recorder")
+def route_recorder():
+    """GPS Route Recorder page (Using OpenStreetMap)"""
+    return render_template("route_recorder.html")
+
 # Register API blueprints
 from api.routes_rule_qa import bp as bp_rule_qa
 from api.routes_replay import bp as bp_replay

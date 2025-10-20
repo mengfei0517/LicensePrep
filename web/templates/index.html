@@ -21,6 +21,14 @@
                     <button class="feature-button" id="start-recording">Start Recording</button>
                 </div>
             </div>
+            <div class="route-storage-info" id="storage-info" style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px; font-size: 0.85em; color: #6c757d; display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span id="storage-text">Storage: 0 routes</span>
+                    <button class="feature-button" onclick="clearAllRoutes()" style="padding: 6px 12px; font-size: 0.8em;">
+                        🗑️ Clear All
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -72,66 +80,110 @@
         </div>
     </div>
 
-    <!-- Personal Driving Notes -->
-    <div class="feature-card">
+    <!-- Knowledge Hub & Notes -->
+    <div class="feature-card feature-card-knowledge" id="knowledge-hub-card">
         <div class="feature-header">
-            <span class="feature-icon">📝</span>
-            <h3>Personal Driving Notes</h3>
+            <span class="feature-icon">📚</span>
+            <h3>Knowledge Hub & Notes</h3>
         </div>
-        <p class="feature-description">Categorize and organize your driving notes</p>
+        <p class="feature-description">Access all driving knowledge and personal notes</p>
         <div class="feature-content">
-            <div class="notes-categories">
-                <div class="note-category" data-category="mistakes">
-                    <div class="category-badge">❌</div>
-                    <span>Mistakes to Avoid</span>
-                    <span class="note-count">0</span>
+            <div class="knowledge-hub-preview">
+                <div class="hub-stat">
+                    <div class="stat-number">{{ categories|length }}</div>
+                    <div class="stat-label">Topics</div>
                 </div>
-                <div class="note-category" data-category="tips">
-                    <div class="category-badge">💡</div>
-                    <span>Tips & Tricks</span>
-                    <span class="note-count">0</span>
-                </div>
-                <div class="note-category" data-category="practice">
-                    <div class="category-badge">🎯</div>
-                    <span>Practice Points</span>
-                    <span class="note-count">0</span>
-                </div>
-                <div class="note-category" data-category="exam">
-                    <div class="category-badge">📋</div>
-                    <span>Exam Preparation</span>
-                    <span class="note-count">0</span>
+                <div class="hub-stat">
+                    <div class="stat-number">0</div>
+                    <div class="stat-label">My Notes</div>
                 </div>
             </div>
-            <button class="feature-button" id="add-note">Add New Note</button>
+            <button class="feature-button feature-button-primary" id="open-knowledge-hub">
+                <span>Open Knowledge Hub</span>
+                <span class="button-arrow">→</span>
+            </button>
         </div>
     </div>
 </div>
 
-<!-- Existing Categories Grid -->
-<div class="category-grid">
-    {% for category in categories %}
-    <div class="category-card" data-category-id="{{ category.id }}">
-        {% if category.image %}
-        <div class="category-image">
-            <img src="{{ category.image }}" alt="{{ category.name }}">
+<!-- Knowledge Hub Modal/Overlay -->
+<div id="knowledge-hub-overlay" class="knowledge-overlay hidden">
+    <div class="knowledge-container">
+        <div class="knowledge-header">
+            <h2>📚 Knowledge Hub & Notes</h2>
+            <button class="close-knowledge-btn" id="close-knowledge-hub">✕</button>
         </div>
-        {% endif %}
-        <h3>{{ category.name }}</h3>
-        <p class="category-description">{{ category.description }}</p>
+        
+        <div class="knowledge-tabs">
+            <button class="tab-button active" data-tab="topics">Knowledge Topics</button>
+            <button class="tab-button" data-tab="notes">My Notes</button>
+        </div>
 
-        <div class="subcategory-grid">
-            {% for subcategory in category.subcategories %}
-            <div class="subcategory-card {% if subcategory.visited %}visited{% endif %}"
-                 data-subcategory-id="{{ subcategory.id }}">
-                <div class="subcategory-content">
-                    <h4>{{ subcategory.name }}</h4>
-                    <p class="subcategory-description">{{ subcategory.description }}</p>
+        <div class="knowledge-content">
+            <!-- Topics Tab -->
+            <div class="tab-content active" id="topics-tab">
+                <div class="category-grid">
+                    {% for category in categories %}
+                    <div class="category-card" data-category-id="{{ category.id }}">
+                        {% if category.image %}
+                        <div class="category-image">
+                            <img src="{{ category.image }}" alt="{{ category.name }}">
+                        </div>
+                        {% endif %}
+                        <h3>{{ category.name }}</h3>
+                        <p class="category-description">{{ category.description }}</p>
+
+                        <div class="subcategory-grid">
+                            {% for subcategory in category.subcategories %}
+                            <div class="subcategory-card {% if subcategory.visited %}visited{% endif %}"
+                                 data-subcategory-id="{{ subcategory.id }}">
+                                <div class="subcategory-content">
+                                    <h4>{{ subcategory.name }}</h4>
+                                    <p class="subcategory-description">{{ subcategory.description }}</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
-            {% endfor %}
+
+            <!-- Notes Tab -->
+            <div class="tab-content" id="notes-tab">
+                <div class="notes-section">
+                    <div class="notes-categories">
+                        <div class="note-category" data-category="mistakes">
+                            <div class="category-badge">❌</div>
+                            <span>Mistakes to Avoid</span>
+                            <span class="note-count">0</span>
+                        </div>
+                        <div class="note-category" data-category="tips">
+                            <div class="category-badge">💡</div>
+                            <span>Tips & Tricks</span>
+                            <span class="note-count">0</span>
+                        </div>
+                        <div class="note-category" data-category="practice">
+                            <div class="category-badge">🎯</div>
+                            <span>Practice Points</span>
+                            <span class="note-count">0</span>
+                        </div>
+                        <div class="note-category" data-category="exam">
+                            <div class="category-badge">📋</div>
+                            <span>Exam Preparation</span>
+                            <span class="note-count">0</span>
+                        </div>
+                    </div>
+                    <button class="feature-button" id="add-note">
+                        <span>+ Add New Note</span>
+                    </button>
+                    <div class="notes-list">
+                        <p class="empty-notes-message">No notes yet. Click "Add New Note" to create your first note!</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-    {% endfor %}
 </div>
 {% endblock %}
 

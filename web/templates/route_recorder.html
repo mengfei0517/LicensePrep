@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPS Route Recorder (Leaflet)</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+        }
+
+        .recorder-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.8em;
+        }
+
+        .close-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .map-container {
+            position: relative;
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        #map {
+            width: 100%;
+            height: 500px;
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            flex: 1;
+            min-width: 150px;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .start-btn {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(17, 153, 142, 0.4);
+        }
+
+        .stop-btn {
+            background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);
+            color: white;
+        }
+
+        .stop-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(238, 9, 121, 0.4);
+        }
+
+        .save-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .save-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .status-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .status-item:last-child {
+            border-bottom: none;
+        }
+
+        .status-label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .status-value {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .recording-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: #ee0979;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.5;
+                transform: scale(1.2);
+            }
+        }
+
+        /* Pulsing marker CSS */
+        .pulsing-marker {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #ee0979;
+            position: relative;
+            box-shadow: 0 0 0 rgba(238, 9, 121, 0.4);
+            animation: marker-pulse 2s infinite;
+        }
+
+        @keyframes marker-pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(238, 9, 121, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(238, 9, 121, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(238, 9, 121, 0);
+            }
+        }
+
+        .info-banner {
+            background: #e7f3ff;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #2c5282;
+        }
+
+        .info-banner strong {
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="recorder-container">
+        <div class="header">
+            <h1>📍 GPS Route Recorder</h1>
+            <button class="close-btn" onclick="window.close()">Close Window</button>
+        </div>
+
+        <div class="info-banner">
+            <strong>🗺️ Using OpenStreetMap</strong> - Open source maps, no API key required!
+        </div>
+
+        <div class="map-container" id="map-capture">
+            <div id="map"></div>
+            
+            <div class="controls">
+                <button class="control-btn start-btn" id="startBtn">
+                    <span>▶️ Start Recording</span>
+                </button>
+                <button class="control-btn stop-btn" id="stopBtn" disabled>
+                    <span id="stopBtnText">⏹️ Stop Recording</span>
+                </button>
+                <button class="control-btn save-btn" id="saveBtn" disabled>
+                    <span>💾 Save Route</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="status-panel">
+            <div class="status-item">
+                <span class="status-label">Status:</span>
+                <span class="status-value" id="statusText">Ready</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Points Recorded:</span>
+                <span class="status-value" id="pointsCount">0</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Duration:</span>
+                <span class="status-value" id="duration">00:00:00</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Distance:</span>
+                <span class="status-value" id="distance">0.00 km</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- html2canvas for screenshot -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <script>
+        let map;
+        let currentMarker;
+        let routePath;
+        let routeCoordinates = [];
+        let recordedPoints = [];
+        let isRecording = false;
+        let watchId = null;
+        let startTime = null;
+        let durationInterval = null;
+        let totalDistance = 0;
+
+        // Initialize map with Leaflet
+        function initMap() {
+            // Default location (Germany)
+            const defaultLocation = [51.1657, 10.4515];
+            
+            map = L.map('map').setView(defaultLocation, 6);
+
+            // Add OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(map);
+
+            // Initialize polyline for route
+            routePath = L.polyline([], {
+                color: '#667eea',
+                weight: 4,
+                opacity: 0.8
+            }).addTo(map);
+
+            // Try to get user's current location
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const pos = [position.coords.latitude, position.coords.longitude];
+                        map.setView(pos, 15);
+                        addCurrentLocationMarker(pos);
+                    },
+                    () => {
+                        console.log('Error: The Geolocation service failed.');
+                    }
+                );
+            }
+        }
+
+        // Add current location marker with pulsing effect
+        function addCurrentLocationMarker(position) {
+            if (currentMarker) {
+                map.removeLayer(currentMarker);
+            }
+
+            const pulsingIcon = L.divIcon({
+                className: 'pulsing-marker',
+                iconSize: [30, 30],
+                html: '<div style="width: 100%; height: 100%; background: #ee0979; border-radius: 50%; border: 3px solid white;"></div>'
+            });
+
+            currentMarker = L.marker(position, { icon: pulsingIcon }).addTo(map);
+        }
+
+        // Start recording
+        function startRecording() {
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser');
+                return;
+            }
+
+            isRecording = true;
+            startTime = Date.now();
+            routeCoordinates = [];
+            recordedPoints = [];
+            totalDistance = 0;
+            routePath.setLatLngs([]);
+
+            // Update UI
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+            document.getElementById('saveBtn').disabled = true;
+            document.getElementById('statusText').innerHTML = '<span class="recording-indicator"></span>Recording...';
+            document.getElementById('pointsCount').textContent = '0';
+            document.getElementById('distance').textContent = '0.00 km';
+
+            // Start duration counter
+            durationInterval = setInterval(updateDuration, 1000);
+
+            // Start watching position
+            watchId = navigator.geolocation.watchPosition(
+                (position) => {
+                    const pos = [position.coords.latitude, position.coords.longitude];
+
+                    const point = {
+                        lat: pos[0],
+                        lng: pos[1],
+                        timestamp: new Date().toISOString(),
+                        accuracy: position.coords.accuracy
+                    };
+
+                    recordedPoints.push(point);
+                    routeCoordinates.push(pos);
+
+                    // Update polyline
+                    routePath.setLatLngs(routeCoordinates);
+
+                    // Update current marker
+                    addCurrentLocationMarker(pos);
+
+                    // Center map on current position
+                    map.panTo(pos);
+
+                    // Calculate distance
+                    if (routeCoordinates.length > 1) {
+                        const lastPos = routeCoordinates[routeCoordinates.length - 2];
+                        totalDistance += calculateDistance(
+                            { lat: lastPos[0], lng: lastPos[1] },
+                            { lat: pos[0], lng: pos[1] }
+                        );
+                    }
+
+                    // Update UI
+                    document.getElementById('pointsCount').textContent = recordedPoints.length;
+                    document.getElementById('distance').textContent = totalDistance.toFixed(2) + ' km';
+                },
+                (error) => {
+                    console.error('Error getting position:', error);
+                    alert('GPS Error: ' + error.message + '\nPlease allow location access.');
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 5000,
+                    maximumAge: 0
+                }
+            );
+        }
+
+        // Stop recording
+        function stopRecording() {
+            isRecording = false;
+
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+            }
+
+            if (durationInterval) {
+                clearInterval(durationInterval);
+                durationInterval = null;
+            }
+
+            // Update UI
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('saveBtn').disabled = false;
+            document.getElementById('statusText').textContent = 'Stopped';
+        }
+
+        // Save route
+        async function saveRoute() {
+            if (recordedPoints.length === 0) {
+                alert('No route data to save!');
+                return;
+            }
+
+            document.getElementById('statusText').textContent = 'Saving...';
+
+            try {
+                // Capture map as image with optimized settings
+                const mapElement = document.getElementById('map-capture');
+                const canvas = await html2canvas(mapElement, {
+                    useCORS: true,
+                    allowTaint: true,
+                    scale: 1,  // Reduced from 2 to save space
+                    width: 800,  // Limit width
+                    height: 600  // Limit height
+                });
+
+                // Compress image to JPEG with lower quality to reduce size
+                const imageData = canvas.toDataURL('image/jpeg', 0.6);  // 60% quality JPEG
+
+                // Prepare route data
+                const routeData = {
+                    id: Date.now(),
+                    name: `Route ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`,
+                    date: new Date().toISOString(),
+                    points: recordedPoints,
+                    duration: document.getElementById('duration').textContent,
+                    distance: totalDistance.toFixed(2),
+                    image: imageData,
+                    startLocation: recordedPoints[0] ? `${recordedPoints[0].lat.toFixed(6)}, ${recordedPoints[0].lng.toFixed(6)}` : 'Unknown',
+                    endLocation: recordedPoints[recordedPoints.length - 1] ? `${recordedPoints[recordedPoints.length - 1].lat.toFixed(6)}, ${recordedPoints[recordedPoints.length - 1].lng.toFixed(6)}` : 'Unknown'
+                };
+
+                // Check image size
+                const estimatedSize = new Blob([imageData]).size;
+                console.log('Image size:', (estimatedSize / 1024 / 1024).toFixed(2) + 'MB');
+                
+                // Save to localStorage with error handling
+                let routes = JSON.parse(localStorage.getItem('recordedRoutes') || '[]');
+                routes.unshift(routeData);
+                
+                // Try to save, if quota exceeded, reduce the number of stored routes
+                let maxRoutes = 10;
+                let saved = false;
+                
+                while (!saved && maxRoutes > 0) {
+                    try {
+                        // Keep only the most recent routes
+                        const routesToSave = routes.slice(0, maxRoutes);
+                        localStorage.setItem('recordedRoutes', JSON.stringify(routesToSave));
+                        saved = true;
+                        
+                        if (maxRoutes < 10) {
+                            console.log(`Saved with ${maxRoutes} routes (removed older routes to save space)`);
+                        }
+                    } catch (e) {
+                        if (e.name === 'QuotaExceededError' || e.code === 22) {
+                            // Quota exceeded, try with fewer routes
+                            maxRoutes--;
+                            if (maxRoutes === 0) {
+                                throw new Error('Storage full. Please delete some old routes from the main page.');
+                            }
+                        } else {
+                            throw e;
+                        }
+                    }
+                }
+
+                document.getElementById('statusText').textContent = 'Saved Successfully!';
+                
+                alert(`Route saved successfully!${maxRoutes < 10 ? '\n\nNote: Storage is getting full. Some older routes were removed.' : ''}`);
+                
+                // Reset for new recording
+                setTimeout(() => {
+                    resetRecorder();
+                }, 1000);
+
+            } catch (error) {
+                console.error('Error saving route:', error);
+                
+                let errorMsg = error.message;
+                if (error.message.includes('Storage full')) {
+                    errorMsg = 'Storage is full!\n\nPlease go back to the main page and delete some old routes, then try again.';
+                }
+                
+                alert('Error saving route:\n' + errorMsg);
+                document.getElementById('statusText').textContent = 'Error Saving';
+            }
+        }
+
+        // Reset recorder
+        function resetRecorder() {
+            routeCoordinates = [];
+            recordedPoints = [];
+            totalDistance = 0;
+            routePath.setLatLngs([]);
+            
+            document.getElementById('pointsCount').textContent = '0';
+            document.getElementById('distance').textContent = '0.00 km';
+            document.getElementById('duration').textContent = '00:00:00';
+            document.getElementById('statusText').textContent = 'Ready';
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('saveBtn').disabled = true;
+        }
+
+        // Update duration display
+        function updateDuration() {
+            if (!startTime) return;
+            
+            const elapsed = Date.now() - startTime;
+            const hours = Math.floor(elapsed / 3600000);
+            const minutes = Math.floor((elapsed % 3600000) / 60000);
+            const seconds = Math.floor((elapsed % 60000) / 1000);
+            
+            const durationText = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            document.getElementById('duration').textContent = durationText;
+        }
+
+        // Calculate distance between two points (Haversine formula)
+        function calculateDistance(pos1, pos2) {
+            const R = 6371; // Earth's radius in km
+            const dLat = toRad(pos2.lat - pos1.lat);
+            const dLng = toRad(pos2.lng - pos1.lng);
+            
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(toRad(pos1.lat)) * Math.cos(toRad(pos2.lat)) *
+                      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+            
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        function toRad(degrees) {
+            return degrees * Math.PI / 180;
+        }
+
+        // Event listeners
+        document.getElementById('startBtn').addEventListener('click', startRecording);
+        document.getElementById('stopBtn').addEventListener('click', stopRecording);
+        document.getElementById('saveBtn').addEventListener('click', saveRoute);
+
+        // Initialize map on load
+        window.onload = initMap;
+    </script>
+</body>
+</html>
+

@@ -13,7 +13,7 @@ export function initFeatures() {
     initRouteRecording();
     initDataReview();
     initRouteSimulator();
-    initPersonalNotes();
+    initKnowledgeHub();
     
     log('Features', 'Features module initialized successfully');
 }
@@ -27,48 +27,107 @@ function initRouteRecording() {
     
     if (!startRecordingBtn) return;
     
+    // Load recent routes on initialization
+    loadRecentRoutes();
+    
+    // Open route recorder in new window
     startRecordingBtn.addEventListener('click', function() {
-        log('RouteRecord', 'Starting route recording...');
+        log('RouteRecord', 'Opening route recorder...');
         
-        // Simulate starting recording
-        this.textContent = 'Recording...';
-        this.style.background = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
+        // Open in new window/tab
+        const width = 1200;
+        const height = 800;
+        const left = (screen.width - width) / 2;
+        const top = (screen.height - height) / 2;
         
-        // TODO: Implement actual GPS tracking
-        setTimeout(() => {
-            this.textContent = 'Stop Recording';
-            addRecentRoute();
-        }, 1000);
+        window.open(
+            '/route-recorder',
+            'RouteRecorder',
+            `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`
+        );
+    });
+    
+    // Listen for storage changes (when new route is saved)
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'recordedRoutes') {
+            loadRecentRoutes();
+        }
+    });
+    
+    // Also refresh routes when window gets focus
+    window.addEventListener('focus', function() {
+        loadRecentRoutes();
     });
 }
 
 /**
- * Add a recent route to the list
+ * Load recent routes from localStorage
  */
-function addRecentRoute() {
+window.loadRecentRoutes = function() {
     const recentRoutesContainer = document.getElementById('recent-routes');
-    const emptyState = recentRoutesContainer.querySelector('.empty-state');
+    const storageInfo = document.getElementById('storage-info');
+    const storageText = document.getElementById('storage-text');
     
-    if (emptyState) {
-        emptyState.remove();
+    if (!recentRoutesContainer) return;
+    
+    const routes = JSON.parse(localStorage.getItem('recordedRoutes') || '[]');
+    
+    // Update storage info
+    if (storageInfo && storageText) {
+        if (routes.length > 0) {
+            storageInfo.style.display = 'block';
+            
+            // Calculate approximate storage size
+            const storageSize = new Blob([JSON.stringify(routes)]).size;
+            const sizeMB = (storageSize / 1024 / 1024).toFixed(2);
+            storageText.textContent = `Storage: ${routes.length} route${routes.length > 1 ? 's' : ''} (~${sizeMB}MB)`;
+        } else {
+            storageInfo.style.display = 'none';
+        }
     }
     
-    const routeItem = document.createElement('div');
-    routeItem.className = 'route-item';
-    routeItem.innerHTML = `
-        <div class="route-info">
-            <div class="route-name">Route ${Date.now()}</div>
-            <div class="route-meta">
-                <span>📍 ${new Date().toLocaleDateString()}</span>
-                <span>⏱️ ${Math.floor(Math.random() * 30 + 10)} min</span>
+    if (routes.length === 0) {
+        recentRoutesContainer.innerHTML = `
+            <div class="empty-state">
+                <span class="empty-icon">🚗</span>
+                <p>No recent routes recorded yet</p>
+                <button class="feature-button" id="start-recording">Start Recording</button>
             </div>
-        </div>
-        <button class="route-action-btn" onclick="viewRoute(this)">View</button>
-    `;
+        `;
+        // Re-attach event listener
+        const btn = document.getElementById('start-recording');
+        if (btn) {
+            btn.addEventListener('click', function() {
+                window.open('/route-recorder', 'RouteRecorder', 'width=1200,height=800');
+            });
+        }
+        return;
+    }
     
-    recentRoutesContainer.insertBefore(routeItem, recentRoutesContainer.firstChild);
-    log('RouteRecord', 'Route added to recent list');
+    // Display recent routes (limit to 5 most recent)
+    recentRoutesContainer.innerHTML = '';
+    routes.slice(0, 5).forEach(route => {
+        const routeItem = document.createElement('div');
+        routeItem.className = 'route-item';
+        routeItem.innerHTML = `
+            <div class="route-preview" style="cursor: pointer;">
+                <img src="${route.image}" alt="Route preview" style="width: 60px; height: 60px; border-radius: 8px; object-fit: cover; margin-right: 15px;">
+            </div>
+            <div class="route-info">
+                <div class="route-name">${route.name}</div>
+                <div class="route-meta">
+                    <span>📍 ${new Date(route.date).toLocaleDateString()}</span>
+                    <span>⏱️ ${route.duration}</span>
+                    <span>📏 ${route.distance} km</span>
+                </div>
+            </div>
+            <button class="route-action-btn" onclick="viewRouteDetails('${route.id}')">View</button>
+        `;
+        recentRoutesContainer.appendChild(routeItem);
+    });
 }
+
+// Removed old addRecentRoute function - now using loadRecentRoutes
 
 /**
  * Recorded Data Review Feature
@@ -129,9 +188,74 @@ function initRouteSimulator() {
 }
 
 /**
- * Personal Notes Feature
+ * Knowledge Hub Feature
  */
-function initPersonalNotes() {
+function initKnowledgeHub() {
+    const openBtn = document.getElementById('open-knowledge-hub');
+    const closeBtn = document.getElementById('close-knowledge-hub');
+    const overlay = document.getElementById('knowledge-hub-overlay');
+    const tabButtons = document.querySelectorAll('.tab-button');
+    
+    // Open Knowledge Hub
+    if (openBtn) {
+        openBtn.addEventListener('click', function() {
+            log('KnowledgeHub', 'Opening Knowledge Hub...');
+            overlay.classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        });
+    }
+    
+    // Close Knowledge Hub
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function() {
+            log('KnowledgeHub', 'Closing Knowledge Hub...');
+            overlay.classList.add('hidden');
+            document.body.style.overflow = ''; // Restore scrolling
+        });
+    }
+    
+    // Close on overlay click (outside modal)
+    if (overlay) {
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) {
+                closeBtn.click();
+            }
+        });
+        
+        // Close on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && !overlay.classList.contains('hidden')) {
+                closeBtn.click();
+            }
+        });
+    }
+    
+    // Tab switching
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const tabName = this.dataset.tab;
+            log('KnowledgeHub', `Switching to ${tabName} tab`);
+            
+            // Update active tab button
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Update active tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+        });
+    });
+    
+    // Initialize notes functionality in the hub
+    initNotesInHub();
+}
+
+/**
+ * Initialize notes functionality within the Knowledge Hub
+ */
+function initNotesInHub() {
     const noteCategories = document.querySelectorAll('.note-category');
     const addNoteBtn = document.getElementById('add-note');
     
@@ -156,10 +280,48 @@ function initPersonalNotes() {
                 // TODO: Save note to backend
                 const category = prompt('Category (mistakes/tips/practice/exam):') || 'tips';
                 incrementNoteCount(category);
+                addNoteToList(noteContent, category);
                 log('PersonalNotes', `Note added to ${category}`);
             }
         });
     }
+}
+
+/**
+ * Add note to the notes list
+ */
+function addNoteToList(content, category) {
+    const notesList = document.querySelector('.notes-list');
+    const emptyMessage = notesList.querySelector('.empty-notes-message');
+    
+    if (emptyMessage) {
+        emptyMessage.remove();
+    }
+    
+    const noteItem = document.createElement('div');
+    noteItem.className = 'note-item';
+    noteItem.innerHTML = `
+        <div class="note-header">
+            <span class="note-category-badge">${getCategoryEmoji(category)}</span>
+            <span class="note-date">${new Date().toLocaleDateString()}</span>
+        </div>
+        <div class="note-content">${content}</div>
+    `;
+    
+    notesList.insertBefore(noteItem, notesList.firstChild);
+}
+
+/**
+ * Get emoji for note category
+ */
+function getCategoryEmoji(category) {
+    const emojis = {
+        mistakes: '❌',
+        tips: '💡',
+        practice: '🎯',
+        exam: '📋'
+    };
+    return emojis[category] || '📝';
 }
 
 /**
@@ -175,15 +337,110 @@ function incrementNoteCount(categoryType) {
 }
 
 // Global functions for inline onclick handlers
-window.viewRoute = function(button) {
-    const routeItem = button.closest('.route-item');
-    const routeName = routeItem.querySelector('.route-name').textContent;
-    log('RouteRecord', `Viewing route: ${routeName}`);
-    alert(`Viewing details for ${routeName}.\n\nThis will show:\n- GPS tracking data\n- Speed analysis\n- Mistakes identified\n- Practice points`);
+window.viewRouteDetails = function(routeId) {
+    const routes = JSON.parse(localStorage.getItem('recordedRoutes') || '[]');
+    const route = routes.find(r => r.id == routeId);
+    
+    if (!route) {
+        alert('Route not found!');
+        return;
+    }
+    
+    log('RouteRecord', `Viewing route: ${route.name}`);
+    
+    // Create modal to show route details
+    const modal = document.createElement('div');
+    modal.className = 'route-detail-modal';
+    modal.innerHTML = `
+        <div class="route-detail-container">
+            <div class="route-detail-header">
+                <h2>📍 ${route.name}</h2>
+                <button class="close-route-detail" onclick="this.closest('.route-detail-modal').remove()">✕</button>
+            </div>
+            <div class="route-detail-content">
+                <div class="route-detail-image">
+                    <img src="${route.image}" alt="Route map" style="width: 100%; border-radius: 10px;">
+                </div>
+                <div class="route-detail-info">
+                    <div class="detail-item">
+                        <strong>📅 Date:</strong> ${new Date(route.date).toLocaleString()}
+                    </div>
+                    <div class="detail-item">
+                        <strong>⏱️ Duration:</strong> ${route.duration}
+                    </div>
+                    <div class="detail-item">
+                        <strong>📏 Distance:</strong> ${route.distance} km
+                    </div>
+                    <div class="detail-item">
+                        <strong>📊 Points Recorded:</strong> ${route.points.length}
+                    </div>
+                    <div class="detail-item">
+                        <strong>🗺️ Start Location:</strong> ${route.startLocation}
+                    </div>
+                    <div class="detail-item">
+                        <strong>🏁 End Location:</strong> ${route.endLocation}
+                    </div>
+                </div>
+                <div class="route-actions">
+                    <button class="feature-button" onclick="downloadRouteData('${routeId}')">
+                        📥 Download GPS Data
+                    </button>
+                    <button class="feature-button" onclick="deleteRoute('${routeId}')">
+                        🗑️ Delete Route
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    document.body.style.overflow = 'hidden';
+};
+
+window.downloadRouteData = function(routeId) {
+    const routes = JSON.parse(localStorage.getItem('recordedRoutes') || '[]');
+    const route = routes.find(r => r.id == routeId);
+    
+    if (!route) return;
+    
+    const dataStr = JSON.stringify(route.points, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `route_${routeId}_gps_data.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+};
+
+window.deleteRoute = function(routeId) {
+    if (!confirm('Are you sure you want to delete this route?')) return;
+    
+    let routes = JSON.parse(localStorage.getItem('recordedRoutes') || '[]');
+    routes = routes.filter(r => r.id != routeId);
+    localStorage.setItem('recordedRoutes', JSON.stringify(routes));
+    
+    // Close modal and refresh
+    document.querySelector('.route-detail-modal')?.remove();
+    document.body.style.overflow = '';
+    loadRecentRoutes();
 };
 
 window.startSimulation = function() {
     log('RouteSimulator', 'Starting route simulation...');
     alert('Starting interactive route simulation...\n\nThis feature will:\n- Show the route on a map\n- Highlight key decision points\n- Test your knowledge at intersections\n- Provide real-time feedback');
+};
+
+window.clearAllRoutes = function() {
+    if (!confirm('Are you sure you want to delete ALL recorded routes?\n\nThis action cannot be undone.')) {
+        return;
+    }
+    
+    localStorage.removeItem('recordedRoutes');
+    log('RouteRecord', 'All routes cleared');
+    alert('All routes have been deleted.');
+    
+    // Refresh the display
+    loadRecentRoutes();
 };
 

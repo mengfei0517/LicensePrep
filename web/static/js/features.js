@@ -106,6 +106,20 @@ window.loadRecentRoutes = function() {
     
     // Display recent routes (limit to 5 most recent)
     recentRoutesContainer.innerHTML = '';
+    
+    // Add "Start New Recording" button at the top
+    const newRecordingBtn = document.createElement('button');
+    newRecordingBtn.className = 'feature-button';
+    newRecordingBtn.id = 'start-recording-top';
+    newRecordingBtn.style.width = '100%';
+    newRecordingBtn.style.marginBottom = '15px';
+    newRecordingBtn.innerHTML = '▶️ Start New Recording';
+    newRecordingBtn.addEventListener('click', function() {
+        window.open('/route-recorder', 'RouteRecorder', 'width=1200,height=800');
+    });
+    recentRoutesContainer.appendChild(newRecordingBtn);
+    
+    // Display routes
     routes.slice(0, 5).forEach(route => {
         const routeItem = document.createElement('div');
         routeItem.className = 'route-item';
@@ -380,7 +394,37 @@ window.viewRouteDetails = function(routeId) {
                     <div class="detail-item">
                         <strong>🏁 End Location:</strong> ${route.endLocation}
                     </div>
+                    <div class="detail-item">
+                        <strong>🎙️ Voice Notes:</strong> ${route.voiceNotes && route.voiceNotes.length > 0 ? route.voiceNotes.length : '0'}
+                    </div>
                 </div>
+                ${route.voiceNotes && Array.isArray(route.voiceNotes) && route.voiceNotes.length > 0 ? `
+                <div class="route-voice-notes" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                    <h4 style="margin: 0 0 15px 0; color: #495057;">🎙️ Voice Notes</h4>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        ${route.voiceNotes.map((note, index) => {
+                            const timeStr = formatNoteTimestamp(note.timestamp || 0);
+                            const locationStr = (note.location && note.location.lat && note.location.lng) 
+                                ? `📍 ${note.location.lat.toFixed(6)}, ${note.location.lng.toFixed(6)}` 
+                                : '📍 No GPS location';
+                            return `
+                            <div style="background: white; padding: 12px; border-radius: 8px; border-left: 3px solid #667eea;">
+                                <div style="font-weight: 600; color: #667eea; margin-bottom: 5px;">
+                                    🎤 Note #${index + 1} - ${timeStr}
+                                </div>
+                                <div style="font-size: 0.85em; color: #6c757d; margin-bottom: 8px;">
+                                    ${locationStr}
+                                </div>
+                                <button class="voice-action-btn" onclick="playRouteVoiceNote('${routeId}', '${note.id}')" 
+                                        style="background: #667eea; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85em;">
+                                    ▶️ Play
+                                </button>
+                            </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+                ` : ''}
                 <div class="route-actions">
                     <button class="feature-button" onclick="downloadRouteData('${routeId}')">
                         📥 Download GPS Data
@@ -424,6 +468,31 @@ window.deleteRoute = function(routeId) {
     document.querySelector('.route-detail-modal')?.remove();
     document.body.style.overflow = '';
     loadRecentRoutes();
+};
+
+// Helper function to format voice note timestamp
+function formatNoteTimestamp(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+// Play voice note from saved route
+window.playRouteVoiceNote = function(routeId, noteId) {
+    const routes = JSON.parse(localStorage.getItem('recordedRoutes') || '[]');
+    const route = routes.find(r => r.id == routeId);
+    
+    if (!route || !route.voiceNotes) return;
+    
+    const note = route.voiceNotes.find(n => n.id === noteId);
+    if (!note) return;
+    
+    const audio = new Audio(note.audioData);
+    audio.play().catch(error => {
+        console.error('Error playing audio:', error);
+        alert('Failed to play voice note');
+    });
 };
 
 window.startSimulation = function() {

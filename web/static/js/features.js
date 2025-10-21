@@ -119,12 +119,12 @@ window.loadRecentRoutes = function() {
     });
     recentRoutesContainer.appendChild(newRecordingBtn);
     
-    // Display routes
+    // Display routes (only show basic info and View button)
     routes.slice(0, 5).forEach(route => {
         const routeItem = document.createElement('div');
         routeItem.className = 'route-item';
         routeItem.innerHTML = `
-            <div class="route-preview" style="cursor: pointer;">
+            <div class="route-preview" style="cursor: pointer;" onclick="viewRouteDetails('${route.id}')">
                 <img src="${route.image}" alt="Route preview" style="width: 60px; height: 60px; border-radius: 8px; object-fit: cover; margin-right: 15px;">
             </div>
             <div class="route-info">
@@ -136,10 +136,7 @@ window.loadRecentRoutes = function() {
                 </div>
             </div>
             <div style="display: flex; gap: 8px;">
-                <button class="route-action-btn" onclick="openRouteReview('${route.id}')" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
-                    📊 Review
-                </button>
-                <button class="route-action-btn" onclick="viewRouteDetails('${route.id}')">View</button>
+                <button class="route-action-btn" onclick="viewRouteDetails('${route.id}')">👁️ View</button>
             </div>
         `;
         recentRoutesContainer.appendChild(routeItem);
@@ -152,15 +149,68 @@ window.loadRecentRoutes = function() {
  * Recorded Data Review Feature
  */
 function initDataReview() {
-    const viewHistoryBtn = document.getElementById('view-history');
+    // Load routes for review on initialization
+    loadRoutesForReview();
     
-    if (!viewHistoryBtn) return;
+    // Refresh when window gets focus or storage changes
+    window.addEventListener('focus', function() {
+        loadRoutesForReview();
+    });
     
-    viewHistoryBtn.addEventListener('click', function() {
-        log('DataReview', 'Opening data history...');
-        
-        // TODO: Open modal or new page with recorded data
-        alert('Data review feature coming soon! This will show all your recorded driving sessions.');
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'recordedRoutes') {
+            loadRoutesForReview();
+        }
+    });
+}
+
+/**
+ * Load routes for detailed review and analysis
+ */
+window.loadRoutesForReview = function() {
+    const reviewContainer = document.getElementById('recorded-data');
+    
+    if (!reviewContainer) return;
+    
+    const routes = JSON.parse(localStorage.getItem('recordedRoutes') || '[]');
+    
+    if (routes.length === 0) {
+        reviewContainer.innerHTML = `
+            <div class="empty-state">
+                <span class="empty-icon">📈</span>
+                <p>No recorded data available</p>
+                <p style="font-size: 0.9em; color: #6c757d; margin-top: 10px;">Record a route to start analyzing your driving!</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Display all routes with Review button
+    reviewContainer.innerHTML = '';
+    
+    routes.forEach(route => {
+        const reviewItem = document.createElement('div');
+        reviewItem.className = 'route-item';
+        reviewItem.innerHTML = `
+            <div class="route-preview" style="cursor: pointer;" onclick="openRouteReview('${route.id}')">
+                <img src="${route.image}" alt="Route preview" style="width: 60px; height: 60px; border-radius: 8px; object-fit: cover; margin-right: 15px;">
+            </div>
+            <div class="route-info">
+                <div class="route-name">${route.name}</div>
+                <div class="route-meta">
+                    <span>📍 ${new Date(route.date).toLocaleDateString()}</span>
+                    <span>⏱️ ${route.duration}</span>
+                    <span>📏 ${route.distance} km</span>
+                    ${route.voiceNotes && route.voiceNotes.length > 0 ? `<span>🎙️ ${route.voiceNotes.length} notes</span>` : ''}
+                </div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button class="route-action-btn" onclick="openRouteReview('${route.id}')" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white;">
+                    📊 Analyze
+                </button>
+            </div>
+        `;
+        reviewContainer.appendChild(reviewItem);
     });
 }
 

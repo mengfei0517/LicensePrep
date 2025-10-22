@@ -169,6 +169,18 @@
     font-weight: 600;
 }
 
+.error-message {
+    background: #fff5f5;
+    border-left: 4px solid #e74c3c;
+    padding: 20px;
+    border-radius: 6px;
+    color: #333;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+    line-height: 1.8;
+    white-space: pre-wrap;
+}
+
 .loading {
     display: flex;
     gap: 8px;
@@ -200,6 +212,68 @@
     40% {
         transform: scale(1);
     }
+}
+
+/* F1.1 Structured Answer Styles */
+.structured-answer {
+    padding: 10px 0;
+}
+
+.offline-badge {
+    display: inline-block;
+    background: #ff9800;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 600;
+    margin-bottom: 15px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.answer-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-left: 4px solid #667eea;
+    border-radius: 6px;
+}
+
+.answer-section:last-child {
+    margin-bottom: 0;
+}
+
+.answer-section h3 {
+    margin: 0 0 10px 0;
+    color: #667eea;
+    font-size: 1.1em;
+    font-weight: 600;
+}
+
+.answer-section p {
+    margin: 0;
+    line-height: 1.6;
+    color: #333;
+}
+
+.answer-section ul {
+    margin: 10px 0 0 0;
+    padding-left: 20px;
+}
+
+.answer-section li {
+    margin: 8px 0;
+    color: #444;
+    line-height: 1.5;
 }
 
 .section-divider {

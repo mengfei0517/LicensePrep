@@ -49,4 +49,12 @@ app.register_blueprint(bp_replay)
 app.register_blueprint(bp_planner)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Bind to 0.0.0.0 to allow both localhost and 127.0.0.1 access
+    # Chrome Prompt API requires Secure Context - use localhost for testing
+    print("\n" + "="*60)
+    print("🚀 LicensePrep Server Starting...")
+    print("="*60)
+    print("📍 Access URL: http://localhost:5000/")
+    print("⚠️  For Chrome Prompt API, MUST use 'localhost' not '127.0.0.1'")
+    print("="*60 + "\n")
+    app.run(host='0.0.0.0', port=5000, debug=True)

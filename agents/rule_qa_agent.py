@@ -1,13 +1,24 @@
-"""RuleQA Agent using RAG + LLM."""
+"""
+RuleQA Agent - Knowledge Retrieval Only
+Designed for Chrome Built-in AI Challenge 2025
+
+This agent ONLY handles knowledge retrieval (RAG's "R" - Retrieval).
+AI generation is handled client-side using Chrome Prompt API.
+"""
 from __future__ import annotations
 from typing import List, Dict
-import os
 
 from core.rag_pipeline import RAGPipeline
-from core.nim_client import chat_completion
 
 
 class RuleQAgent:
+    """
+    Knowledge retrieval agent for German driving rules.
+    
+    Philosophy: Keep the backend simple - just retrieve knowledge.
+    Let Chrome Prompt API handle the AI generation on the client.
+    """
+    
     def __init__(self, rag: RAGPipeline | None = None):
         self.rag = rag or RAGPipeline()
         self._is_initialized = False
@@ -24,25 +35,40 @@ class RuleQAgent:
                 print(f"[RuleQAgent] Warning: Failed to load knowledge base: {e}")
                 self._is_initialized = False
 
-    def answer(self, question: str) -> str:
-        """Answer a driving rule question using RAG + LLM."""
-        self._ensure_initialized()
+    def retrieve_context(self, question: str, k: int = 5) -> List[Dict]:
+        """
+        Retrieve relevant knowledge chunks for a question.
         
-        # Retrieve relevant contexts from knowledge base
+        Args:
+            question: User's driving rule question
+            k: Number of relevant chunks to retrieve
+            
+        Returns:
+            List of knowledge chunks with metadata
+        """
+        self._ensure_initialized()
+        contexts = self.rag.retrieve(question, k=k)
+        
+        print(f"[RuleQAgent] Retrieved {len(contexts)} context chunks for: {question}")
+        return contexts
+    
+    def answer(self, question: str) -> str:
+        """
+        Legacy endpoint for backward compatibility.
+        Returns plain text with retrieved context.
+        
+        NOTE: This is deprecated. Use retrieve_context() instead
+        and let Chrome Prompt API do the generation.
+        """
+        self._ensure_initialized()
         contexts = self.rag.retrieve(question, k=5)
         
         if not contexts:
-            lower_q = question.lower()
-            if "30" in lower_q or "zone" in lower_q:
-                simulated = "In a 30 Zone (Tempo-30 area), you must give way to the right at uncontrolled intersections and keep below 30 km/h."
-            elif "autobahn" in lower_q or "highway" in lower_q:
-                simulated = "On the Autobahn, keep right except when overtaking; the recommended speed is 130 km/h."
-            elif "landstraße" in lower_q or "country road" in lower_q:
-                simulated = "On a Landstraße, the general speed limit for cars is 100 km/h; watch for curves and wildlife."
-            else:
-                simulated = "I couldn’t find an exact rule, but always follow the StVO: observe signs, speed limits, and right-before-left."
-
-            return f"🤖 **Simulated answer:** {simulated}"
+            return (
+                "⚠️ No relevant knowledge found in the database.\n\n"
+                f"Question: {question}\n\n"
+                "Suggestion: Try rephrasing your question or check if the knowledge base is loaded."
+            )
 
         # Format context for display
         context_text = "\n".join([
@@ -50,27 +76,12 @@ class RuleQAgent:
             for c in contexts
         ])
         
-        # Check if NIM endpoint is configured
-        nim_endpoint = os.getenv("NIM_LLM_ENDPOINT", "")
-        
-        if nim_endpoint:
-            # Use real LLM via NIM
-            messages = [
-                {"role": "system", "content": "You are a helpful driving exam rule assistant for Germany. Answer questions clearly and concisely based on the provided context."},
-                {"role": "user", "content": f"Question: {question}\n\nRelevant knowledge:\n{context_text}\n\nPlease provide a clear answer."},
-            ]
-            try:
-                return chat_completion(messages)
-            except Exception as e:
-                return f"⚠️ LLM error: {str(e)}\n\nRetrieved context:\n{context_text}"
-        else:
-            # Development mode: return simulated answer with retrieved context
-            top_match = contexts[0]
-            return (
-                f"🤖 **Development Mode** (NIM not configured)\n\n"
-                f"**Your question:** {question}\n\n"
-                f"**Top match:** {top_match.get('category')} → {top_match.get('subcategory')}\n"
-                f"**Relevance score:** {top_match.get('score', 0):.3f}\n\n"
-                f"**Retrieved {len(contexts)} relevant sections:**\n{context_text}\n\n"
-                f"💡 *To get AI-generated answers, configure NIM_LLM_ENDPOINT in your .env file.*"
-            )
+        top_match = contexts[0]
+        return (
+            f"📚 **Knowledge Retrieved** (Use Chrome Prompt API for AI answers)\n\n"
+            f"**Your question:** {question}\n\n"
+            f"**Top match:** {top_match.get('category')} → {top_match.get('subcategory')}\n"
+            f"**Relevance score:** {top_match.get('score', 0):.3f}\n\n"
+            f"**Retrieved {len(contexts)} relevant sections:**\n{context_text}\n\n"
+            f"💡 *This is raw knowledge data. For AI-generated answers, use Chrome Prompt API on the client side.*"
+        )

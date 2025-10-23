@@ -1,6 +1,6 @@
 # LicensePrep Chrome Extension - Git Ignore
 
-# 打包文件
+# Packaged files
 *.crx
 *.pem
 *.zip
@@ -8,14 +8,14 @@
 # macOS
 .DS_Store
 
-# 开发工具
+# Development tools
 .vscode/
 .idea/
 
-# 临时文件
+# Temporary files
 *.log
 *.tmp
 
-# 用户数据（测试时可能生成）
+# User data (generated during testing)
 user-data/
 

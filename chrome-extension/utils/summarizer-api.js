@@ -1,16 +1,14 @@
 /**
- * Chrome Built-in AI - Summarizer API 封装
- * 用于优化和精简 AI 生成的答案
+ * Chrome Built-in AI - Summarizer API wrapper
+ * Used to optimize and simplify AI-generated answers
  */
 
 export class SummarizerAPIClient {
   constructor() {
     this.summarizer = null;
   }
-
-  /**
-   * 检查 Summarizer API 是否可用
-   */
+  
+  // Check if Summarizer API is available
   async checkAvailability() {
     try {
       if (!window.ai || !window.ai.summarizer) {
@@ -29,9 +27,7 @@ export class SummarizerAPIClient {
     }
   }
 
-  /**
-   * 创建摘要器
-   */
+  // Create summarizer
   async createSummarizer(options = {}) {
     try {
       const defaultOptions = {
@@ -53,9 +49,7 @@ export class SummarizerAPIClient {
     }
   }
 
-  /**
-   * 总结文本
-   */
+  // Summarize text
   async summarize(text, type = 'key-points') {
     try {
       if (!this.summarizer) {
@@ -78,9 +72,7 @@ export class SummarizerAPIClient {
     }
   }
 
-  /**
-   * 提取关键点
-   */
+  // Extract key points
   async extractKeyPoints(text) {
     try {
       await this.createSummarizer({ type: 'key-points', format: 'markdown' });
@@ -92,9 +84,7 @@ export class SummarizerAPIClient {
     }
   }
 
-  /**
-   * 生成 TL;DR
-   */
+  // Generate TL;DR
   async generateTLDR(text) {
     try {
       await this.createSummarizer({ type: 'tl;dr', length: 'short' });
@@ -106,9 +96,7 @@ export class SummarizerAPIClient {
     }
   }
 
-  /**
-   * 清理资源
-   */
+  // Clean up resources
   async destroy() {
     if (this.summarizer) {
       try {
@@ -122,6 +110,6 @@ export class SummarizerAPIClient {
   }
 }
 
-// 创建全局实例
+// Create global instance
 export const summarizerAPI = new SummarizerAPIClient();
 

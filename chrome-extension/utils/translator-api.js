@@ -10,7 +10,7 @@ export class TranslatorAPIClient {
   }
 
   /**
-   * 检查 Translator API 是否可用
+   * Check if Translator API is available
    */
   async checkAvailability() {
     try {
@@ -19,11 +19,11 @@ export class TranslatorAPIClient {
         return false;
       }
 
-      // 检查语言检测器
+      // Check language detector
       const detectorAvailable = await window.translation.canDetect();
       console.log('[TranslatorAPI] Detector available:', detectorAvailable);
 
-      // 检查翻译器（德语 <-> 英语）
+      // Check translator (German <-> English)
       const canTranslateDeEn = await window.translation.canTranslate({
         sourceLanguage: 'de',
         targetLanguage: 'en'
@@ -48,7 +48,7 @@ export class TranslatorAPIClient {
   }
 
   /**
-   * 检测文本语言
+   * Detect text language
    */
   async detectLanguage(text) {
     try {
@@ -58,7 +58,7 @@ export class TranslatorAPIClient {
 
       const results = await this.detector.detect(text);
       
-      // 返回置信度最高的语言
+      // Return the language with the highest confidence
       if (results && results.length > 0) {
         const topResult = results[0];
         console.log(`[TranslatorAPI] Detected language: ${topResult.detectedLanguage} (confidence: ${topResult.confidence})`);
@@ -74,16 +74,16 @@ export class TranslatorAPIClient {
   }
 
   /**
-   * 翻译文本
+   * Translate text
    */
   async translate(text, targetLang = 'en', sourceLang = null) {
     try {
-      // 如果没有指定源语言，先检测
+      // If no source language is specified, detect it first
       if (!sourceLang) {
         sourceLang = await this.detectLanguage(text);
       }
 
-      // 如果源语言和目标语言相同，直接返回
+      // If source and target languages are the same, return immediately
       if (sourceLang === targetLang) {
         console.log('[TranslatorAPI] Source and target languages are the same');
         return {
@@ -94,13 +94,13 @@ export class TranslatorAPIClient {
         };
       }
 
-      // 创建翻译器
+      // Create translator
       const translator = await window.translation.createTranslator({
         sourceLanguage: sourceLang,
         targetLanguage: targetLang
       });
 
-      // 执行翻译
+      // Execute translation
       const translatedText = await translator.translate(text);
       console.log(`[TranslatorAPI] Translated ${sourceLang} -> ${targetLang}`);
 
@@ -118,7 +118,7 @@ export class TranslatorAPIClient {
   }
 
   /**
-   * 智能翻译：自动检测并翻译到目标语言
+   * Smart translation: automatically detect and translate to target language
    */
   async autoTranslate(text, preferredLang = 'en') {
     try {
@@ -151,6 +151,6 @@ export class TranslatorAPIClient {
   }
 }
 
-// 创建全局实例
+// Create global instance
 export const translatorAPI = new TranslatorAPIClient();
 

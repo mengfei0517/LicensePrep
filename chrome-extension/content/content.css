@@ -1,9 +1,9 @@
 /**
  * LicensePrep Chrome Extension - Content Script Styles
- * 注入到网页的样式
+ * Styles injected into web pages
  */
 
-/* 翻译面板 */
+/* Translation panel */
 .licenseprep-translate-panel {
   background: white;
   border-radius: 12px;
@@ -103,7 +103,7 @@
   to { transform: rotate(360deg); }
 }
 
-/* 高亮样式 */
+/* Highlight style */
 .licenseprep-highlight {
   background-color: #fef08a !important;
   padding: 2px 4px !important;
@@ -116,7 +116,7 @@
   background-color: #fde047 !important;
 }
 
-/* 笔记标记 */
+/* Note marker */
 .licenseprep-note-marker {
   position: absolute;
   width: 24px;

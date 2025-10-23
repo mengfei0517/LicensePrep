@@ -1,18 +1,16 @@
 /**
- * Chrome Built-in AI - Prompt API 封装
- * 优先使用本地 Gemini Nano，失败时 Fallback 到云端 API
+ * Chrome Built-in AI - Prompt API wrapper
+ * Prioritize local Gemini Nano, fallback to cloud API if fails
  */
 
 export class PromptAPIClient {
   constructor() {
     this.session = null;
     this.apiAvailable = false;
-    this.backendUrl = 'http://localhost:5000'; // 开发环境
+    this.backendUrl = 'http://localhost:5000'; // Development environment
   }
 
-  /**
-   * 检查 Prompt API 是否可用
-   */
+  // Check if Prompt API is available
   async checkAvailability() {
     try {
       if (!window.ai || !window.ai.languageModel) {
@@ -30,7 +28,7 @@ export class PromptAPIClient {
 
       if (capabilities.available === 'after-download') {
         console.log('[PromptAPI] Model needs download, initiating...');
-        // 用户需要先下载模型
+        // User needs to download the model first
         return 'downloading';
       }
 
@@ -44,7 +42,7 @@ export class PromptAPIClient {
   }
 
   /**
-   * 创建 AI 会话
+   * Create AI session
    */
   async createSession(systemPrompt = null) {
     try {
@@ -79,26 +77,24 @@ Guidelines:
     }
   }
 
-  /**
-   * 本地 AI 问答（Prompt API）
-   */
+  // Local AI query (Prompt API)
   async queryLocal(question, context = '') {
     const startTime = Date.now();
 
     try {
-      // 确保会话存在
+      // Ensure session exists
       if (!this.session) {
         await this.createSession();
       }
 
-      // 构建 prompt
+      // Build prompt
       let prompt = '';
       if (context) {
         prompt = `Context from Knowledge Base:\n${context}\n\n`;
       }
       prompt += `User Question: ${question}\n\nProvide a clear and helpful answer:`;
 
-      // 调用本地模型
+      // Call local model
       const response = await this.session.prompt(prompt);
       const latency = Date.now() - startTime;
 
@@ -120,7 +116,7 @@ Guidelines:
   }
 
   /**
-   * Fallback 到云端 Gemini API
+   * Fallback to cloud Gemini API
    */
   async queryCloud(question, context = '') {
     const startTime = Date.now();
@@ -164,15 +160,15 @@ Guidelines:
   }
 
   /**
-   * Hybrid 查询：优先本地，自动 Fallback 到云端
+   * Hybrid query: prioritize local, automatically fallback to cloud
    */
   async queryHybrid(question, context = '') {
     console.log('[HybridAPI] Starting hybrid query...');
 
-    // Step 1: 检查本地 API 可用性
+    // Step 1: Check local API availability
     const available = await this.checkAvailability();
 
-    // Step 2: 尝试本地 AI
+    // Step 2: Try local AI
     if (available === true) {
       try {
         const result = await this.queryLocal(question, context);
@@ -184,12 +180,12 @@ Guidelines:
       console.log('[HybridAPI] Local AI not available, using cloud directly');
     }
 
-    // Step 3: Fallback 到云端
+    // Step 3: Fallback to cloud
     return await this.queryCloud(question, context);
   }
 
   /**
-   * 清理会话
+   * Clean up session
    */
   async destroy() {
     if (this.session) {
@@ -204,6 +200,6 @@ Guidelines:
   }
 }
 
-// 创建全局实例
+// Create global instance
 export const promptAPI = new PromptAPIClient();
 

@@ -1,6 +1,6 @@
 /**
- * Chrome Storage API 封装
- * 用于存储用户数据、笔记、历史记录等
+ * Chrome Storage API wrapper
+ * Used to store user data, notes, history records, etc.
  */
 
 export class StorageManager {
@@ -8,9 +8,7 @@ export class StorageManager {
     this.storage = chrome.storage.local;
   }
 
-  /**
-   * 保存数据
-   */
+  // Save data
   async set(key, value) {
     try {
       await this.storage.set({ [key]: value });
@@ -22,9 +20,7 @@ export class StorageManager {
     }
   }
 
-  /**
-   * 获取数据
-   */
+  // Get data
   async get(key, defaultValue = null) {
     try {
       const result = await this.storage.get(key);
@@ -35,9 +31,7 @@ export class StorageManager {
     }
   }
 
-  /**
-   * 删除数据
-   */
+  // Delete data
   async remove(key) {
     try {
       await this.storage.remove(key);
@@ -49,9 +43,7 @@ export class StorageManager {
     }
   }
 
-  /**
-   * 清空所有数据
-   */
+  // Clear all data
   async clear() {
     try {
       await this.storage.clear();
@@ -63,9 +55,7 @@ export class StorageManager {
     }
   }
 
-  /**
-   * 保存 Q&A 历史
-   */
+  // Save Q&A history
   async saveQAHistory(question, answer, metadata = {}) {
     try {
       const history = await this.get('qa_history', []);
@@ -78,9 +68,9 @@ export class StorageManager {
         ...metadata
       };
 
-      history.unshift(entry); // 最新的在前面
+      history.unshift(entry); // The latest one is in front
       
-      // 限制历史记录数量（最多100条）
+      // Limit history record count (maximum 100)
       if (history.length > 100) {
         history.pop();
       }
@@ -95,9 +85,7 @@ export class StorageManager {
     }
   }
 
-  /**
-   * 获取 Q&A 历史
-   */
+  // Get Q&A history
   async getQAHistory(limit = 20) {
     try {
       const history = await this.get('qa_history', []);
@@ -108,9 +96,7 @@ export class StorageManager {
     }
   }
 
-  /**
-   * 保存笔记
-   */
+  // Save note
   async saveNote(note) {
     try {
       const notes = await this.get('notes', []);
@@ -133,9 +119,7 @@ export class StorageManager {
     }
   }
 
-  /**
-   * 获取所有笔记
-   */
+  // Get all notes
   async getNotes() {
     try {
       return await this.get('notes', []);
@@ -145,9 +129,7 @@ export class StorageManager {
     }
   }
 
-  /**
-   * 删除笔记
-   */
+  // Delete note
   async deleteNote(noteId) {
     try {
       const notes = await this.get('notes', []);
@@ -161,9 +143,7 @@ export class StorageManager {
     }
   }
 
-  /**
-   * 保存用户设置
-   */
+  // Save user settings
   async saveSettings(settings) {
     try {
       const currentSettings = await this.get('settings', {});
@@ -177,9 +157,7 @@ export class StorageManager {
     }
   }
 
-  /**
-   * 获取用户设置
-   */
+  // Get user settings
   async getSettings() {
     try {
       return await this.get('settings', {
@@ -195,6 +173,6 @@ export class StorageManager {
   }
 }
 
-// 创建全局实例
+// Create global instance
 export const storage = new StorageManager();
 

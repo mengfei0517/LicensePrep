@@ -1,21 +1,29 @@
 from __future__ import annotations
 from flask import Blueprint, request, jsonify
-from agents.rule_qa_agent import RuleQAgent
+from core.simple_retrieval import get_retriever
+from core.gemini_client import get_gemini_client
 
 bp = Blueprint("rule_qa", __name__, url_prefix="/api/qa")
 
-# Initialize agent (will lazy-load RAG on first use)
-agent = None
+# Initialize retriever and Gemini client
+retriever = None
+gemini_client = None
 
-def get_agent():
-    global agent
-    if agent is None:
-        agent = RuleQAgent()
-    return agent
+def get_retriever_instance():
+    global retriever
+    if retriever is None:
+        retriever = get_retriever()
+    return retriever
+
+def get_gemini_instance():
+    global gemini_client
+    if gemini_client is None:
+        gemini_client = get_gemini_client()
+    return gemini_client
 
 @bp.post("/retrieve_context")
 def retrieve_context():
-    """Retrieve relevant knowledge chunks for RAG (F1.1 - Step 1)."""
+    """Retrieve relevant knowledge chunks using simple keyword matching."""
     data = request.get_json(silent=True) or {}
     query = data.get("query", "")
     k = data.get("k", 5)
@@ -26,18 +34,18 @@ def retrieve_context():
     print(f"[RuleQA API] Retrieving context for: {query}")
     
     try:
-        agent_instance = get_agent()
-        agent_instance._ensure_initialized()
+        retriever_instance = get_retriever_instance()
         
-        # Retrieve context chunks
-        contexts = agent_instance.rag.retrieve(query, k=k)
+        # Retrieve context chunks using keyword matching
+        contexts = retriever_instance.retrieve(query, k=k)
         
         # Format for client
         chunks = [
             {
-                "text": f"{c.get('category', 'Unknown')} / {c.get('subcategory', 'Unknown')}",
+                "text": c.get('content', ''),
                 "category": c.get('category', 'Unknown'),
                 "subcategory": c.get('subcategory', 'Unknown'),
+                "description": c.get('description', ''),
                 "score": c.get('score', 0.0)
             }
             for c in contexts
@@ -54,12 +62,10 @@ def retrieve_context():
 @bp.post("/generate")
 def generate():
     """
-    Fallback endpoint for when Chrome Prompt API is unavailable.
+    使用 Google Gemini API 生成答案（云端调用）
     
-    NOTE: This is a development fallback only. Production apps should
-    use Chrome Prompt API for AI generation.
-    
-    Returns simulated structured answer based on retrieved knowledge.
+    这个端点直接调用 Google Cloud Gemini API，
+    不再依赖 Chrome 本地模型。
     """
     data = request.get_json(silent=True) or {}
     query = data.get("query", "")
@@ -68,40 +74,40 @@ def generate():
     if not query:
         return jsonify({"error": "query is required"}), 400
     
-    print(f"[RuleQA API] Fallback generation requested for: {query}")
-    print(f"[RuleQA API] ⚠️ Chrome Prompt API should be used instead!")
+    print(f"[RuleQA API] Generating answer using Google Gemini API for: {query}")
     
-    # Return simulated structured answer for development/testing
-    return jsonify({
-        "answer": {
-            "answer": f"⚠️ Fallback Mode: Chrome Prompt API is not available. This is a simulated response.",
-            "explanation": (
-                "To get AI-generated answers, please:\n"
-                "1. Use Chrome Dev/Canary browser\n"
-                "2. Enable chrome://flags/#prompt-api-for-gemini-nano\n"
-                "3. Enable chrome://flags/#optimization-guide-on-device-model\n"
-                "4. Restart Chrome and wait for Gemini Nano model to download\n"
-                "5. Access via http://localhost:5000/"
-            ),
-            "examples": [
-                "Example: Check the status indicator at top-right of the page",
-                "Example: Run checkPromptAPI() in browser console for diagnostics"
-            ],
-            "related_topics": [
-                "Chrome Built-in AI Challenge 2025",
-                "Gemini Nano Model",
-                "Client-side AI"
-            ]
-        },
-        "source": "fallback",
-        "chrome_api_available": False,
-        "retrieved_context": context[:200] + "..." if len(context) > 200 else context
-    })
+    try:
+        gemini = get_gemini_instance()
+        
+        # 生成结构化答案
+        answer = gemini.generate_structured_answer(query, context, temperature=0.3)
+        
+        print(f"[RuleQA API] Answer generated successfully")
+        return jsonify({
+            "answer": answer,
+            "source": "google_gemini_api",
+            "api_used": "Google Gemini Pro"
+        })
+        
+    except Exception as e:
+        print(f"[RuleQA API] Gemini API error: {e}")
+        return jsonify({
+            "error": f"Gemini API error: {str(e)}",
+            "fallback_answer": {
+                "answer": f"Error calling Gemini API: {str(e)}",
+                "explanation": "Please check your API key and internet connection.",
+                "examples": [],
+                "related_topics": []
+            }
+        }), 500
 
 
 @bp.post("/ask")
 def ask():
-    """Handle Q&A requests from the frontend (Legacy endpoint)."""
+    """
+    Handle Q&A requests from the frontend (Legacy endpoint).
+    Now uses Google Gemini API.
+    """
     data = request.get_json(silent=True) or {}
     question = data.get("question", "")
     
@@ -111,10 +117,25 @@ def ask():
     print(f"[RuleQA API] Received question: {question}")
     
     try:
-        agent_instance = get_agent()
-        answer = agent_instance.answer(question)
+        # Get relevant context
+        retriever_instance = get_retriever_instance()
+        contexts = retriever_instance.retrieve(question, k=5)
+        
+        # Format context
+        context_text = "\n".join([
+            f"{c.get('category')} / {c.get('subcategory')}: {c.get('content', '')[:200]}"
+            for c in contexts
+        ])
+        
+        # Generate answer using Gemini
+        gemini = get_gemini_instance()
+        answer = gemini.generate_content(
+            f"Question: {question}\n\nContext: {context_text}\n\nProvide a clear answer based on the context above."
+        )
+        
         print(f"[RuleQA API] Returning answer (length: {len(answer)})")
         return jsonify({"answer": answer})
+        
     except Exception as e:
         print(f"[RuleQA API] Error: {e}")
         return jsonify({"error": f"Internal error: {str(e)}"}), 500

@@ -9,13 +9,8 @@ class Settings:
     FLASK_TEMPLATE_FOLDER: str = os.getenv("FLASK_TEMPLATE_FOLDER", os.path.join("web", "templates"))
     FLASK_STATIC_FOLDER: str = os.getenv("FLASK_STATIC_FOLDER", os.path.join("web", "static"))
 
-    # Vector store backend: faiss or pgvector
-    VECTOR_STORE_BACKEND: str = os.getenv("VECTOR_STORE_BACKEND", "faiss")
-
-    # NVIDIA NIM endpoints
-    NIM_LLM_ENDPOINT: str = os.getenv("NIM_LLM_ENDPOINT", "")
-    NIM_EMBEDDING_ENDPOINT: str = os.getenv("NIM_EMBEDDING_ENDPOINT", "")
-    NIM_API_KEY: str = os.getenv("NIM_API_KEY", "")
+    # Google Gemini API (Cloud-based AI)
+    GOOGLE_GEMINI_API_KEY: str = os.getenv("GOOGLE_GEMINI_API_KEY", "AIzaSyBpB5EzrxJ1-Py5rK5NsdmE1Grrlc0ln6o")
 
     # AWS settings
     AWS_REGION: str = os.getenv("AWS_REGION", "eu-central-1")

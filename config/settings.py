@@ -10,7 +10,8 @@ class Settings:
     FLASK_STATIC_FOLDER: str = os.getenv("FLASK_STATIC_FOLDER", os.path.join("web", "static"))
 
     # Google Gemini API (Cloud-based AI)
-    GOOGLE_GEMINI_API_KEY: str = os.getenv("GOOGLE_GEMINI_API_KEY", "AIzaSyBpB5EzrxJ1-Py5rK5NsdmE1Grrlc0ln6o")
+    # IMPORTANT: Set this in .env file, never commit API keys to git!
+    GOOGLE_GEMINI_API_KEY: str = os.getenv("GOOGLE_GEMINI_API_KEY", "")
 
     # AWS settings
     AWS_REGION: str = os.getenv("AWS_REGION", "eu-central-1")

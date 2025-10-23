@@ -1,347 +1,344 @@
-# 🚗 LicensePrep - German Driving Test Preparation
+# LicensePrep - Hybrid AI Driving Coach Platform
 
-An AI-powered platform for German driving test preparation, using **Hybrid AI Architecture** combining **Chrome Built-in AI** and **Google Gemini API**.
+**AI-Powered German Driving Test Preparation**
 
-**Latest Update (v3.0):** Hybrid AI Architecture - Chrome Extension + Web App dual platform support
+LicensePrep is a comprehensive hybrid AI platform combining **Web App (Next.js)**, **Chrome Extension**, and **Mobile App** (planned) to provide the ultimate German driving test preparation experience.
 
-## 🏗️ Hybrid AI Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    LicensePrep Platform                     │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  📱 Mobile App          🌐 Web App       🧩 Chrome Extension│
-│  (React Native)         (Flask/Next.js)  (Manifest V3)     │
-│  ├─ GPS Recording       ├─ Data Analysis ├─ Local AI Q&A   │
-│  ├─ Voice Notes         ├─ Route Review  ├─ Translation    │
-│  └─ Real-time Sync      ├─ Exam Planning ├─ Summarization  │
-│                         └─ Cloud Fallback└─ Context Notes  │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-                              ▼
-          ┌───────────────────────────────────────┐
-          │      Firebase Backend (Planned)       │
-          │  ├─ Authentication                    │
-          │  ├─ Real-time Database                │
-          │  ├─ Cloud Functions                   │
-          │  └─ Storage (Voice Notes, GPS)        │
-          └───────────────────────────────────────┘
-                              ▼
-          ┌───────────────────────────────────────┐
-          │          AI Services                  │
-          │  ├─ Chrome Built-in AI (Local) 🔒    │
-          │  │   • Prompt API (Gemini Nano)      │
-          │  │   • Translator API                 │
-          │  │   • Summarizer API                 │
-          │  └─ Google Gemini API (Cloud) ☁️     │
-          │      • Gemini 2.5 Flash               │
-          └───────────────────────────────────────┘
-```
-
-## 📁 Repository Structure
-
-```
-LicensePrep/
-├── app.py                        # Flask web server entry point
-│
-├── chrome-extension/             # 🧩 Chrome Extension (NEW!)
-│   ├── manifest.json             # Manifest V3 configuration
-│   ├── popup/                    # Popup UI (AI Q&A)
-│   ├── background/               # Service worker
-│   ├── content/                  # Content scripts
-│   ├── utils/                    # API clients (Prompt, Translator, etc.)
-│   └── README.md                 # Extension documentation
-│
-├── data/                         # Knowledge base and resources
-│   ├── rules/                    # Rule templates and examples
-│   ├── samples/                  # Practice samples (GPS, screenshots)
-│   └── metadata/
-│       └── content.json          # Structured knowledge base
-│
-├── core/                         # Core business logic
-│   ├── gemini_client.py          # Google Gemini API client
-│   ├── simple_retrieval.py       # Keyword-based knowledge retrieval
-│   └── utils.py                  # Shared utilities
-│
-├── agents/                       # AI agents (in development)
-│   ├── replay_agent.py           # Practice replay analysis
-│   └── planner_agent.py          # Route planning
-│
-├── web/                          # Frontend assets
-│   ├── templates/                # Jinja2 HTML templates
-│   └── static/                   # CSS, JavaScript, images
-│
-├── api/                          # REST API endpoints
-│   ├── routes_rule_qa.py         # Q&A API endpoints
-│   ├── routes_replay.py          # Replay analysis endpoints
-│   └── routes_planner.py         # Planning endpoints
-│
-├── config/                       # Configuration
-│   └── settings.py               # Application settings
-│
-├── .env                          # Environment variables (not in git)
-├── .gitignore                    # Git ignore rules
-├── requirements.txt              # Python dependencies
-└── README.md                     # This file
-```
-
-## 🚀 Quick Start
-
-### Choose Your Platform
-
-#### 🧩 Chrome Extension (Recommended - Local AI Priority)
-Complete local AI experience with privacy protection and offline capability.
-
-👉 **[View Extension Installation Guide](chrome-extension/README.md)**
-
-**Core Features:**
-- 🔒 Local AI Q&A (Gemini Nano)
-- 🌐 Multi-language translation
-- 📝 Smart summarization
-- 💾 Context notes
-
-#### 🌐 Web App (Cloud AI)
-Cross-browser support, no installation required, ready to use.
-
-👉 **Continue to Web App setup below**
+[![Chrome Built-in AI](https://img.shields.io/badge/Chrome-Built--in%20AI-blue)](https://developer.chrome.com/docs/ai)
+[![Next.js](https://img.shields.io/badge/Next.js-14-black)](https://nextjs.org/)
+[![Flask](https://img.shields.io/badge/Flask-API-green)](https://flask.palletsprojects.com/)
 
 ---
 
-## 🛠️ Web App Setup
+## 🏗️ Platform Architecture
 
-### 1. System Requirements
-
-**Python**: 3.11+
-
-**Optional System Dependencies** (for Chrome Extension icon generation):
-- **ImageMagick**: For generating extension icons
-
-```bash
-# Ubuntu/Debian
-sudo apt-get install imagemagick
-
-# macOS
-brew install imagemagick
-
-# Fedora/RHEL
-sudo dnf install imagemagick
+```
+┌─────────────────────┐
+│  Chrome Extension   │ ← Chrome Built-in AI (Gemini Nano)
+│   - Q&A Assistant   │   + Cloud Gemini API Fallback
+│   - Context Menus   │
+└──────────┬──────────┘
+           │
+           ├──────────────┐
+           │              │
+┌──────────▼──────┐   ┌──▼──────────────┐
+│  Next.js Web    │   │  Flask Backend  │
+│   - Learning    │◄──┤   - API Server  │◄── Google Gemini API
+│   - Q&A         │   │   - RAG System  │
+│   - Simulation  │   └─────────────────┘
+│   - Progress    │
+└──────────┬──────┘           │
+           │                  │
+           ├──────────────────┤
+           │                  │
+       ┌───▼────────┐    ┌───▼────────┐
+       │  Firebase  │    │  React     │
+       │  (Planned) │    │  Native    │
+       │  - Auth    │    │  (Planned) │
+       │  - Firestore    │  - Routes  │
+       └────────────┘    └────────────┘
 ```
 
-### 2. Clone the Repository
-```bash
-git clone https://github.com/mengfei0517/LicensePrep.git
-cd LicensePrep
-```
-
-### 3. Create Python Environment
-```bash
-# Using conda (recommended)
-conda create -n license-prep-env python=3.11 -y
-conda activate license-prep-env
-
-# Or using venv
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-### 4. Install Python Dependencies
-```bash
-pip install -r requirements.txt
-```
-
-### 5. Configure API Key (Important!)
-
-Create a `.env` file in the project root:
-
-```bash
-# Create .env file
-cat > .env << EOF
-GOOGLE_GEMINI_API_KEY=your_actual_api_key_here
-APP_NAME=LicensePrep
-EOF
-```
-
-Get your API key from: https://aistudio.google.com/app/apikey
-
-**⚠️ Security Note:** Never commit `.env` file to git! It's already in `.gitignore`.
-
-## ▶️ Run
-
-```bash
-# Start the web application
-python app.py
-```
-
-The server will start on `http://localhost:5000/`
-
-**Access the application:**
-- Open your browser and visit: http://localhost:5000/
-- Use any modern browser (Chrome, Firefox, Safari, Edge)
-- No model download required!
-
-## 🔌 API Endpoints
-
-### 1. Retrieve Context
-Get relevant knowledge chunks for a query.
-
-**Endpoint:** `POST /api/qa/retrieve_context`
-
-```json
-{
-  "query": "What is the speed limit on autobahn?",
-  "k": 5
-}
-```
-
-### 2. Generate Answer
-Generate AI-powered answer using Google Gemini API.
-
-**Endpoint:** `POST /api/qa/generate`
-
-```json
-{
-  "query": "What is the speed limit on autobahn?",
-  "context": "Retrieved knowledge context..."
-}
-```
-
-### 3. Q&A (Combined)
-All-in-one endpoint that retrieves and generates.
-
-**Endpoint:** `POST /api/qa/ask`
-
-```json
-{
-  "question": "What is the speed limit in 30 zone?"
-}
-```
-
-Response:
-```json
-{
-  "answer": "In a 30 km/h zone, the maximum speed limit is 30 km/h..."
-}
-```
-
-## 🧪 Testing
-
-```bash
-# Test with curl
-curl -X POST http://localhost:5000/api/qa/ask \
-  -H "Content-Type: application/json" \
-  -d '{"question": "What is the speed limit on autobahn?"}'
-
-# Or use the web interface at http://localhost:5000/
-```
+---
 
 ## ✨ Features
 
-### 🧩 Chrome Extension Features
-- 🔒 **Local AI Priority**: Gemini Nano local inference (privacy protection)
-- ☁️ **Cloud Fallback**: Auto-switch to cloud API (reliability guarantee)
-- 🌐 **Multi-language**: German ↔ English auto-translation
-- 📝 **Smart Summarization**: Extract key points, condense long answers
-- 💾 **Context Notes**: Save notes from any webpage
-- 📜 **Q&A History**: Local storage, quick re-questioning
+### 🌐 Web App (Next.js)
+- ✅ Modern learning platform with 8 categories, 42+ subcategories
+- ✅ AI-powered Q&A system with Gemini API
+- ✅ Interactive content (images, guides, step-by-step instructions)
+- ✅ Responsive design (desktop, tablet, mobile)
+- ✅ Type-safe with TypeScript
+- 🔜 Firebase authentication and progress tracking
 
-### 🌐 Web App Features
-- 🤖 **AI-Powered Q&A**: Google Gemini 2.5 Flash
-- 📚 **Knowledge Hub**: Complete German driving rules database
-- 🔍 **Smart Retrieval**: Keyword-based search system
-- 🌐 **Cross-Browser**: Any modern browser
-- 🚀 **No Setup**: Cloud AI, no model download required
-- 📱 **Responsive Design**: Desktop and mobile adapted
+### 🧩 Chrome Extension
+- ✅ Chrome Built-in AI (Gemini Nano) for local, private processing
+- ✅ Cloud Gemini API fallback for reliability
+- ✅ Hybrid architecture: privacy + availability
+- ✅ Context menus for quick access
+- ✅ Custom API key support
+- ✅ Multi-language support (German ↔ English)
+
+### 🎮 Exam Simulation
+- ✅ GPS route recording with OpenStreetMap
+- ✅ Voice notes with GPS coordinates
+- ✅ Speed analysis and visualization
+- ✅ Route playback with variable speed
+- ✅ Local storage (browser-based)
 
 ### 📱 Mobile App (Planned)
-- 📍 **GPS Route Recording**: Real-time driving route recording
-- 🎙️ **Voice Notes**: Voice-mark key moments
-- 🔄 **Real-time Sync**: Sync data with Web App
+- 🔜 GPS route recording with React Native
+- 🔜 Real-time Firebase sync
+- 🔜 Offline-first architecture
+- 🔜 AI-powered driving analysis
 
-## 📝 Recent Updates
-
-### v3.0.0 - Hybrid AI Architecture (2025-10-23)
-- ✅ **Chrome Extension Release**: Complete local AI support
-- ✅ **Hybrid Fallback**: Local-first + cloud backup
-- ✅ **Multi-API Integration**: Prompt, Translator, Summarizer APIs
-- ✅ **Privacy Protection**: Local processing, data doesn't leave device
-- ✅ **Cross-Platform Architecture**: Extension + Web App + Mobile (planned)
-
-### v2.0.0 - Architecture Refactoring (2025-01-21)
-- ✅ Migrated to Google Gemini API
-- ✅ Implemented keyword-based retrieval
-- ✅ Cross-browser compatibility
-
-### v1.0.0 - Initial Release
-- Chrome Prompt API with Gemini Nano
-- FAISS vector embeddings
-
-## 🔐 Security
-
-- **API Key Protection**: `.env` file is git-ignored to protect your API key
-- **Never commit secrets**: Always use `.env` for sensitive data
-- **Create your own `.env`**: Follow the setup instructions to configure your API key
-
-## 🌩️ Roadmap
-
-### Phase 1: Extension ✅ (Completed)
-- ✅ Chrome Extension base framework
-- ✅ Prompt API integration (local AI)
-- ✅ Translator & Summarizer APIs
-- ✅ Hybrid Fallback mechanism
-
-### Phase 2: Web App Upgrade (In Progress)
-- 🔄 Migration to Next.js
-- 🔄 Hybrid AI frontend integration
-- 🔄 Extension data sync
-
-### Phase 3: Mobile App (Planned)
-- 📱 React Native/Expo development
-- 📍 GPS route recording
-- 🎙️ Voice notes functionality
-- 🔄 Firebase real-time sync
-
-### Phase 4: Complete Ecosystem (Planned)
-- 📊 Driving data analysis
-- 🗺️ Exam route planning
-- 📈 Learning progress tracking
-- 💰 Freemium subscription model
+### 🤖 AI Backend (Flask)
+- ✅ Google Gemini 2.5 Flash integration
+- ✅ RAG system for accurate answers
+- ✅ Route planning agent
+- ✅ Replay analysis agent
+- ✅ RESTful API for all clients
 
 ---
 
-## 🎯 Hackathon Highlights
+## 🚀 Quick Start
 
-This project participates in **Google Chrome Built-in AI Hackathon**, core highlights:
+### Prerequisites
 
-### 1. Deep Multi-API Integration
-- ✅ **Prompt API** - Core Q&A functionality
-- ✅ **Translator API** - Multi-language support
-- ✅ **Summarizer API** - Content optimization
-- ✅ **Language Detector API** - Auto-detection
+- **Python**: 3.11+
+- **Node.js**: 18+
+- **Google Gemini API Key**: Get from [Google AI Studio](https://aistudio.google.com/app/apikey)
 
-### 2. Hybrid AI Architecture Innovation
-- 🔒 **Local-First**: Priority local processing (privacy)
-- ☁️ **Cloud Fallback**: Intelligent degradation (reliability)
-- 🌐 **Cross-Platform**: Multi-platform collaboration
+### 1. Backend Setup (Flask)
 
-### 3. Real-World Application
-- 🎓 Solves real learning pain points (German driving license)
-- 💼 Complete business model (Freemium)
-- 🌍 Internationalization potential (multi-language, multi-market)
+```bash
+# Clone repository
+git clone https://github.com/yourusername/LicensePrep.git
+cd LicensePrep
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Set API key
+export GOOGLE_API_KEY="your-gemini-api-key"
+
+# Run server
+python app.py
+```
+
+Backend runs on: **http://localhost:5000**
+
+### 2. Frontend Setup (Next.js)
+
+```bash
+# Open new terminal
+cd web-app
+
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+```
+
+Web app runs on: **http://localhost:3000**
+
+### 3. Chrome Extension Setup
+
+```bash
+cd chrome-extension
+
+# Load in Chrome
+# 1. Open chrome://extensions/
+# 2. Enable "Developer mode"
+# 3. Click "Load unpacked"
+# 4. Select chrome-extension folder
+```
+
+**Testing**: Click extension icon or press `Ctrl+Shift+L` (Mac: `Cmd+Shift+L`)
 
 ---
 
 ## 📚 Documentation
 
-- [Chrome Extension README](chrome-extension/README.md)
-- [Architecture Design](ARCHITECTURE.md)
+- **[API Specification](docs/API_SPECIFICATION.md)** - Complete API reference
+- **[Architecture](docs/ARCHITECTURE.md)** - System design and overview
+- **[Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Production deployment
+- **[Documentation Index](docs/DOCUMENTATION_INDEX.md)** - Guide to all documentation
+- **[Chrome Extension](chrome-extension/README.md)** - Extension documentation
+- **[Web App](web-app/README.md)** - Next.js app documentation
+- **[Chrome API Setup](docs/CHROME_API_SETUP.md)** - Chrome Built-in AI configuration
+
+---
+
+## 🏛️ Project Structure
+
+```
+LicensePrep/
+├── app.py                  # Flask backend entry point
+├── api/                    # Flask API routes
+│   ├── routes_content.py   # Content API
+│   ├── routes_rule_qa.py   # Q&A API
+│   ├── routes_replay.py    # Route analysis
+│   └── routes_planner.py   # Route planning
+├── core/                   # Backend services
+│   ├── gemini_client.py    # Gemini API client
+│   └── simple_retrieval.py # RAG retrieval
+├── agents/                 # AI agents
+│   ├── planner_agent.py
+│   └── replay_agent.py
+├── data/                   # Learning content
+│   ├── metadata/
+│   └── rules/
+├── web/                    # Flask static files & templates
+│   ├── static/images/      # Learning content images
+│   └── templates/          # Route recorder/review (for simulate)
+├── web-app/                # Next.js frontend
+│   ├── app/                # Next.js pages
+│   ├── components/         # React components
+│   ├── lib/                # API client & hooks
+│   └── public/             # Static assets
+└── chrome-extension/       # Chrome Extension
+    ├── manifest.json
+    ├── popup/
+    ├── background/
+    └── utils/
+```
+
+---
+
+## 🔥 Key Features Explained
+
+### Hybrid AI Architecture
+
+**Why Hybrid?**
+- **Privacy**: Chrome Built-in AI (Gemini Nano) processes data locally
+- **Reliability**: Cloud fallback ensures service availability
+- **Performance**: Local AI = instant responses, no network latency
+- **Cost**: Reduced API costs with local processing
+
+### Learning Content
+
+- **8 Categories**: Basic driving, Five skills, 30-zone, City zones, Country roads, Highways, Technical questions, ADAS
+- **42+ Subcategories**: Detailed topics with images and instructions
+- **Interactive**: Step-by-step guides with visual aids
+
+### Exam Simulation
+
+1. **Record**: GPS route recording with voice notes
+2. **Analyze**: Speed analysis, acceleration, braking patterns
+3. **Review**: Route playback with synchronized voice notes
+4. **Improve**: AI-powered feedback on performance
+
+---
+
+## 🎯 Hackathon Highlights
+
+### Chrome Built-in AI Integration
+- ✅ Uses Gemini Nano for local, private AI processing
+- ✅ Automatic fallback to Cloud Gemini API
+- ✅ Demonstrates hybrid architecture benefits
+- ✅ Custom API key support for power users
+
+### Innovation
+- ✅ Hybrid AI platform (Web + Extension + Mobile planned)
+- ✅ Privacy-first with local AI processing
+- ✅ Seamless fallback ensures reliability
+- ✅ Multi-platform content synchronization (planned)
+
+### Technical Excellence
+- ✅ Modern tech stack (Next.js, React, TypeScript)
+- ✅ API-first design for cross-platform support
+- ✅ Type-safe development with full TypeScript coverage
+- ✅ Well-documented and maintainable code
+
+---
+
+## 📊 Tech Stack
+
+### Frontend
+- **Next.js 14** - React framework with App Router
+- **TypeScript** - Type-safe development
+- **Tailwind CSS** - Utility-first styling
+- **SWR** - Data fetching and caching
+
+### Backend
+- **Flask** - Python web framework
+- **Google Gemini API** - AI language model
+- **FAISS** - Vector similarity search (RAG)
+- **Langchain** - LLM application framework
+
+### Chrome Extension
+- **Manifest V3** - Latest extension architecture
+- **Chrome Built-in AI APIs** - Gemini Nano integration
+- **Vanilla JavaScript** - No framework dependencies
+
+### Planned
+- **React Native** - Mobile app development
+- **Firebase** - Authentication, Firestore, Storage
+- **Expo** - React Native toolchain
 
 ---
 
 ## 🤝 Contributing
 
-Contributions welcome! Please check:
+We welcome contributions! Please:
 
-1. **Issues**: https://github.com/mengfei0517/LicensePrep/issues
-2. **Pull Requests**: https://github.com/mengfei0517/LicensePrep/pulls
-3. **Discussions**: https://github.com/mengfei0517/LicensePrep/discussions
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit changes: `git commit -m 'Add amazing feature'`
+4. Push to branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see LICENSE file for details.
+
+---
+
+## 🆘 Troubleshooting
+
+### Backend Issues
+
+**Flask won't start**
+```bash
+# Ensure correct environment
+conda activate license-prep-env  # or source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Check API key
+echo $GOOGLE_API_KEY
+```
+
+### Frontend Issues
+
+**Next.js can't connect to backend**
+```bash
+# Check Flask is running
+curl http://localhost:5000/api/content/categories
+
+# Verify CORS in app.py
+# Should have: CORS(app, origins=["http://localhost:3000", ...])
+```
+
+**Images not displaying**
+- Ensure Flask backend is running on port 5000
+- Check `web-app/next.config.ts` rewrites configuration
+- Restart Next.js: `npm run dev`
+
+### Chrome Extension Issues
+
+**Extension not working**
+- Ensure Flask backend is running (for cloud API)
+- Check browser console for errors
+- Try using custom API key in Settings
+- Reload extension after changes
+
+---
+
+## 📞 Support
+
+- **Documentation**: See markdown files in project root and subdirectories
+- **Issues**: Open a GitHub issue
+- **Questions**: Check existing documentation first
+
+---
+
+## 🎉 Getting Started
+
+1. **Clone the repository**
+2. **Get your Gemini API key** from Google AI Studio
+3. **Start Flask backend**: `python app.py`
+4. **Start Next.js frontend**: `cd web-app && npm run dev`
+5. **Load Chrome Extension**: Follow instructions in `chrome-extension/README.md`
+6. **Open browser**: Visit http://localhost:3000
+
+**Happy Learning! 🚗📚**

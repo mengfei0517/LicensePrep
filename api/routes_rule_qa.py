@@ -62,10 +62,10 @@ def retrieve_context():
 @bp.post("/generate")
 def generate():
     """
-    使用 Google Gemini API 生成答案（云端调用）
+    Generate answer using Google Gemini API (cloud-based)
     
-    这个端点直接调用 Google Cloud Gemini API，
-    不再依赖 Chrome 本地模型。
+    This endpoint directly calls Google Cloud Gemini API.
+    No longer dependent on Chrome local model.
     """
     data = request.get_json(silent=True) or {}
     query = data.get("query", "")
@@ -79,7 +79,7 @@ def generate():
     try:
         gemini = get_gemini_instance()
         
-        # 生成结构化答案
+        # Generate structured answer
         answer = gemini.generate_structured_answer(query, context, temperature=0.3)
         
         print(f"[RuleQA API] Answer generated successfully")

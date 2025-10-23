@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LicensePrep - AI Driving Coach</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <img src="../icons/icon48.png" alt="LicensePrep" class="logo-icon">
+        <h1 class="logo-text">LicensePrep</h1>
+      </div>
+      <div class="status-indicator" id="apiStatus">
+        <span class="status-dot"></span>
+        <span class="status-text">Checking...</span>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Question Input -->
+      <div class="input-section">
+        <textarea 
+          id="questionInput" 
+          class="question-input" 
+          placeholder="Ask me anything about German driving rules...
+          
+Examples:
+• What is Rechts vor Links?
+• How to enter the Autobahn?
+• Speed limit in 30 zone?"
+          rows="4"
+        ></textarea>
+        
+        <div class="input-actions">
+          <button id="askButton" class="btn btn-primary">
+            <span class="btn-icon">🤖</span>
+            Ask Driving Coach
+          </button>
+          <button id="translateButton" class="btn btn-secondary" title="Translate question">
+            <span class="btn-icon">🌐</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Answer Display -->
+      <div id="answerSection" class="answer-section hidden">
+        <div class="answer-header">
+          <h3>Answer</h3>
+          <div class="answer-metadata">
+            <span id="aiMode" class="badge"></span>
+            <span id="latency" class="latency"></span>
+          </div>
+        </div>
+        
+        <div id="answerContent" class="answer-content">
+          <!-- AI 答案将显示在这里 -->
+        </div>
+
+        <div class="answer-actions">
+          <button id="summarizeButton" class="btn btn-sm">
+            <span class="btn-icon">📝</span>
+            Summarize
+          </button>
+          <button id="saveButton" class="btn btn-sm">
+            <span class="btn-icon">💾</span>
+            Save to Notes
+          </button>
+          <button id="copyButton" class="btn btn-sm">
+            <span class="btn-icon">📋</span>
+            Copy
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div id="loadingState" class="loading-state hidden">
+        <div class="spinner"></div>
+        <p>Thinking...</p>
+      </div>
+
+      <!-- Error State -->
+      <div id="errorState" class="error-state hidden">
+        <div class="error-icon">⚠️</div>
+        <p id="errorMessage">Something went wrong</p>
+        <button id="retryButton" class="btn btn-secondary">Retry</button>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-links">
+        <a href="#" id="historyLink">📜 History</a>
+        <a href="#" id="settingsLink">⚙️ Settings</a>
+        <a href="#" id="openWebAppLink">🌐 Open Web App</a>
+      </div>
+      <div class="footer-info">
+        <small>Powered by Chrome Built-in AI</small>
+      </div>
+    </footer>
+  </div>
+
+  <!-- History Panel (隐藏的侧边面板) -->
+  <div id="historyPanel" class="side-panel hidden">
+    <div class="panel-header">
+      <h3>Q&A History</h3>
+      <button id="closeHistoryButton" class="btn-close">✕</button>
+    </div>
+    <div id="historyList" class="history-list">
+      <!-- 历史记录将显示在这里 -->
+    </div>
+  </div>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
+

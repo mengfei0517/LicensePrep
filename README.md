@@ -1,14 +1,57 @@
 # 🚗 LicensePrep - German Driving Test Preparation
 
-An AI-powered application for German driving test preparation, featuring intelligent Q&A powered by **Google Gemini API** and a comprehensive knowledge hub.
+An AI-powered platform for German driving test preparation, using **Hybrid AI Architecture** combining **Chrome Built-in AI** and **Google Gemini API**.
 
-**Latest Update:** Migrated from Chrome Built-in AI to Google Gemini API for improved reliability and cross-browser compatibility.
+**Latest Update (v3.0):** Hybrid AI Architecture - Chrome Extension + Web App dual platform support
+
+## 🏗️ Hybrid AI Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    LicensePrep Platform                     │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  📱 Mobile App          🌐 Web App       🧩 Chrome Extension│
+│  (React Native)         (Flask/Next.js)  (Manifest V3)     │
+│  ├─ GPS Recording       ├─ Data Analysis ├─ Local AI Q&A   │
+│  ├─ Voice Notes         ├─ Route Review  ├─ Translation    │
+│  └─ Real-time Sync      ├─ Exam Planning ├─ Summarization  │
+│                         └─ Cloud Fallback└─ Context Notes  │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+                              ▼
+          ┌───────────────────────────────────────┐
+          │      Firebase Backend (Planned)       │
+          │  ├─ Authentication                    │
+          │  ├─ Real-time Database                │
+          │  ├─ Cloud Functions                   │
+          │  └─ Storage (Voice Notes, GPS)        │
+          └───────────────────────────────────────┘
+                              ▼
+          ┌───────────────────────────────────────┐
+          │          AI Services                  │
+          │  ├─ Chrome Built-in AI (Local) 🔒    │
+          │  │   • Prompt API (Gemini Nano)      │
+          │  │   • Translator API                 │
+          │  │   • Summarizer API                 │
+          │  └─ Google Gemini API (Cloud) ☁️     │
+          │      • Gemini 2.5 Flash               │
+          └───────────────────────────────────────┘
+```
 
 ## 📁 Repository Structure
 
 ```
 LicensePrep/
 ├── app.py                        # Flask web server entry point
+│
+├── chrome-extension/             # 🧩 Chrome Extension (NEW!)
+│   ├── manifest.json             # Manifest V3 configuration
+│   ├── popup/                    # Popup UI (AI Q&A)
+│   ├── background/               # Service worker
+│   ├── content/                  # Content scripts
+│   ├── utils/                    # API clients (Prompt, Translator, etc.)
+│   └── README.md                 # Extension documentation
 │
 ├── data/                         # Knowledge base and resources
 │   ├── rules/                    # Rule templates and examples
@@ -43,15 +86,55 @@ LicensePrep/
 └── README.md                     # This file
 ```
 
-## 🛠️ Setup
+## 🚀 Quick Start
 
-### 1. Clone the Repository
+### Choose Your Platform
+
+#### 🧩 Chrome Extension (Recommended - Local AI Priority)
+Complete local AI experience with privacy protection and offline capability.
+
+👉 **[View Extension Installation Guide](chrome-extension/README.md)**
+
+**Core Features:**
+- 🔒 Local AI Q&A (Gemini Nano)
+- 🌐 Multi-language translation
+- 📝 Smart summarization
+- 💾 Context notes
+
+#### 🌐 Web App (Cloud AI)
+Cross-browser support, no installation required, ready to use.
+
+👉 **Continue to Web App setup below**
+
+---
+
+## 🛠️ Web App Setup
+
+### 1. System Requirements
+
+**Python**: 3.11+
+
+**Optional System Dependencies** (for Chrome Extension icon generation):
+- **ImageMagick**: For generating extension icons
+
+```bash
+# Ubuntu/Debian
+sudo apt-get install imagemagick
+
+# macOS
+brew install imagemagick
+
+# Fedora/RHEL
+sudo dnf install imagemagick
+```
+
+### 2. Clone the Repository
 ```bash
 git clone https://github.com/mengfei0517/LicensePrep.git
 cd LicensePrep
 ```
 
-### 2. Create Python Environment
+### 3. Create Python Environment
 ```bash
 # Using conda (recommended)
 conda create -n license-prep-env python=3.11 -y
@@ -62,12 +145,12 @@ python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
-### 3. Install Dependencies
+### 4. Install Python Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Configure API Key (Important!)
+### 5. Configure API Key (Important!)
 
 Create a `.env` file in the project root:
 
@@ -154,26 +237,44 @@ curl -X POST http://localhost:5000/api/qa/ask \
 
 ## ✨ Features
 
-- 🤖 **AI-Powered Q&A**: Intelligent answers powered by Google Gemini 2.5 Flash
-- 📚 **Knowledge Hub**: Structured content covering all aspects of German driving rules
-- 🔍 **Smart Retrieval**: Keyword-based knowledge retrieval system
-- 🌐 **Cross-Browser**: Works on any modern browser
-- 🚀 **No Local Models**: Cloud-based AI, no downloads required
-- 📱 **Responsive Design**: Works on desktop and mobile devices
+### 🧩 Chrome Extension Features
+- 🔒 **Local AI Priority**: Gemini Nano local inference (privacy protection)
+- ☁️ **Cloud Fallback**: Auto-switch to cloud API (reliability guarantee)
+- 🌐 **Multi-language**: German ↔ English auto-translation
+- 📝 **Smart Summarization**: Extract key points, condense long answers
+- 💾 **Context Notes**: Save notes from any webpage
+- 📜 **Q&A History**: Local storage, quick re-questioning
+
+### 🌐 Web App Features
+- 🤖 **AI-Powered Q&A**: Google Gemini 2.5 Flash
+- 📚 **Knowledge Hub**: Complete German driving rules database
+- 🔍 **Smart Retrieval**: Keyword-based search system
+- 🌐 **Cross-Browser**: Any modern browser
+- 🚀 **No Setup**: Cloud AI, no model download required
+- 📱 **Responsive Design**: Desktop and mobile adapted
+
+### 📱 Mobile App (Planned)
+- 📍 **GPS Route Recording**: Real-time driving route recording
+- 🎙️ **Voice Notes**: Voice-mark key moments
+- 🔄 **Real-time Sync**: Sync data with Web App
 
 ## 📝 Recent Updates
 
-### v2.0.0 - Architecture Refactoring (2025-01-21)
-- ✅ Migrated from Chrome Built-in AI to Google Gemini API
-- ✅ Removed complex vector-based RAG pipeline
-- ✅ Implemented simple keyword-based retrieval
-- ✅ Improved reliability and cross-browser compatibility
-- ✅ Simplified codebase for easier maintenance
+### v3.0.0 - Hybrid AI Architecture (2025-10-23)
+- ✅ **Chrome Extension Release**: Complete local AI support
+- ✅ **Hybrid Fallback**: Local-first + cloud backup
+- ✅ **Multi-API Integration**: Prompt, Translator, Summarizer APIs
+- ✅ **Privacy Protection**: Local processing, data doesn't leave device
+- ✅ **Cross-Platform Architecture**: Extension + Web App + Mobile (planned)
 
-### Previous Version (v1.0.0)
-- Used Chrome Prompt API with local Gemini Nano model
-- Required Chrome Dev/Canary browser
-- Complex vector embeddings with FAISS
+### v2.0.0 - Architecture Refactoring (2025-01-21)
+- ✅ Migrated to Google Gemini API
+- ✅ Implemented keyword-based retrieval
+- ✅ Cross-browser compatibility
+
+### v1.0.0 - Initial Release
+- Chrome Prompt API with Gemini Nano
+- FAISS vector embeddings
 
 ## 🔐 Security
 
@@ -181,12 +282,66 @@ curl -X POST http://localhost:5000/api/qa/ask \
 - **Never commit secrets**: Always use `.env` for sensitive data
 - **Create your own `.env`**: Follow the setup instructions to configure your API key
 
-## 🌩️ Future Enhancements
+## 🌩️ Roadmap
 
-- 📊 Practice replay analysis with GPS tracking
-- 🗺️ Intelligent route planning for driving tests
-- 📈 Progress tracking and analytics
-- 🎯 Personalized study recommendations
-- 🌍 Multi-language support
+### Phase 1: Extension ✅ (Completed)
+- ✅ Chrome Extension base framework
+- ✅ Prompt API integration (local AI)
+- ✅ Translator & Summarizer APIs
+- ✅ Hybrid Fallback mechanism
 
+### Phase 2: Web App Upgrade (In Progress)
+- 🔄 Migration to Next.js
+- 🔄 Hybrid AI frontend integration
+- 🔄 Extension data sync
 
+### Phase 3: Mobile App (Planned)
+- 📱 React Native/Expo development
+- 📍 GPS route recording
+- 🎙️ Voice notes functionality
+- 🔄 Firebase real-time sync
+
+### Phase 4: Complete Ecosystem (Planned)
+- 📊 Driving data analysis
+- 🗺️ Exam route planning
+- 📈 Learning progress tracking
+- 💰 Freemium subscription model
+
+---
+
+## 🎯 Hackathon Highlights
+
+This project participates in **Google Chrome Built-in AI Hackathon**, core highlights:
+
+### 1. Deep Multi-API Integration
+- ✅ **Prompt API** - Core Q&A functionality
+- ✅ **Translator API** - Multi-language support
+- ✅ **Summarizer API** - Content optimization
+- ✅ **Language Detector API** - Auto-detection
+
+### 2. Hybrid AI Architecture Innovation
+- 🔒 **Local-First**: Priority local processing (privacy)
+- ☁️ **Cloud Fallback**: Intelligent degradation (reliability)
+- 🌐 **Cross-Platform**: Multi-platform collaboration
+
+### 3. Real-World Application
+- 🎓 Solves real learning pain points (German driving license)
+- 💼 Complete business model (Freemium)
+- 🌍 Internationalization potential (multi-language, multi-market)
+
+---
+
+## 📚 Documentation
+
+- [Chrome Extension README](chrome-extension/README.md)
+- [Architecture Design](ARCHITECTURE.md)
+
+---
+
+## 🤝 Contributing
+
+Contributions welcome! Please check:
+
+1. **Issues**: https://github.com/mengfei0517/LicensePrep/issues
+2. **Pull Requests**: https://github.com/mengfei0517/LicensePrep/pulls
+3. **Discussions**: https://github.com/mengfei0517/LicensePrep/discussions

@@ -38,7 +38,6 @@ LicensePrep/
 │   └── settings.py               # Application settings
 │
 ├── .env                          # Environment variables (not in git)
-├── .env.example                  # Environment template
 ├── .gitignore                    # Git ignore rules
 ├── requirements.txt              # Python dependencies
 └── README.md                     # This file
@@ -69,19 +68,18 @@ pip install -r requirements.txt
 ```
 
 ### 4. Configure API Key (Important!)
-```bash
-# Copy the example environment file
-cp .env.example .env
 
-# Edit .env and add your Google Gemini API key
-# Get your API key from: https://aistudio.google.com/app/apikey
-nano .env  # or use any text editor
-```
+Create a `.env` file in the project root:
 
-Edit `.env` file:
 ```bash
+# Create .env file
+cat > .env << EOF
 GOOGLE_GEMINI_API_KEY=your_actual_api_key_here
+APP_NAME=LicensePrep
+EOF
 ```
+
+Get your API key from: https://aistudio.google.com/app/apikey
 
 **⚠️ Security Note:** Never commit `.env` file to git! It's already in `.gitignore`.
 
@@ -181,7 +179,7 @@ curl -X POST http://localhost:5000/api/qa/ask \
 
 - **API Key Protection**: `.env` file is git-ignored to protect your API key
 - **Never commit secrets**: Always use `.env` for sensitive data
-- **Use `.env.example`**: Template for others to configure their own keys
+- **Create your own `.env`**: Follow the setup instructions to configure your API key
 
 ## 🌩️ Future Enhancements
 

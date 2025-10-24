@@ -33,7 +33,7 @@ export default function LearnPage() {
             {error.message || 'Failed to load learning categories'}
           </p>
           <p className="text-sm text-red-600 mt-2">
-            Make sure the Flask backend is running on http://localhost:5000
+            Ensure the Flask backend is running and reachable (default http://localhost:5000)
           </p>
         </div>
       </div>
@@ -102,4 +102,3 @@ export default function LearnPage() {
     </div>
   );
 }
-

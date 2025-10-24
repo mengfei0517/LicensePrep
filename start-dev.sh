@@ -17,11 +17,12 @@ if [[ -z "$VIRTUAL_ENV" ]] && [[ -z "$CONDA_DEFAULT_ENV" ]]; then
     exit 1
 fi
 
-# Check if GOOGLE_API_KEY is set
-if [[ -z "$GOOGLE_API_KEY" ]]; then
-    echo "⚠️  Warning: GOOGLE_API_KEY not set!"
+# Check if Gemini API key is set
+if [[ -z "$GOOGLE_GEMINI_API_KEY" && -z "$GOOGLE_API_KEY" ]]; then
+    echo "⚠️  Warning: Google Gemini API key not set!"
     echo "Please set your API key:"
-    echo "  export GOOGLE_API_KEY='your-api-key-here'"
+    echo "  export GOOGLE_GEMINI_API_KEY='your-api-key-here'"
+    echo "  # or keep using legacy GOOGLE_API_KEY"
     exit 1
 fi
 

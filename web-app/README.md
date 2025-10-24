@@ -55,11 +55,13 @@ web-app/
 
 ### Flask Backend
 
-The web app connects to the Flask backend at `http://localhost:5000/api`.
+The web app proxies all API calls through Next.js to the Flask backend defined by `FLASK_BACKEND_URL` (defaults to `http://localhost:5000`). Client requests are made to `/backend/api/*`, avoiding CORS issues even when opening the site from another device on the network.
 
-Configure in `.env.local`:
+Configure in `web-app/.env.local`:
 ```env
-NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api
+FLASK_BACKEND_URL=http://localhost:5000
+# Optional: override proxy target for the browser
+# NEXT_PUBLIC_API_BASE_URL=https://api.example.com/api
 ```
 
 ### Available Endpoints
@@ -69,6 +71,9 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api
 - `GET /api/content/subcategory/:categoryId/:subcategoryId` - Content
 - `POST /api/qa/ask` - Ask questions
 - `POST /api/qa/generate` - Structured answers
+- `GET /api/mobile/routes` - Mobile-recorded route summaries
+- `GET /api/mobile/routes/:sessionId` - Detailed session payload (GPS + audio metadata)
+- `DELETE /api/mobile/routes/:sessionId` - Remove a recorded session and audio blobs
 - More documented in `/docs/API_SPECIFICATION.md`
 
 ## 🎨 Features
@@ -81,10 +86,11 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api
 - **Type Safety**: Full TypeScript coverage
 - **Data Fetching**: SWR for efficient caching and revalidation
 - **Error Handling**: Graceful error states with fallbacks
+- **Mobile Route Sync**: Finished sessions from the Expo app appear automatically in the dashboard
 
 ### 🚧 In Development
 
-- **Route Recording**: Mobile app integration
+- **Advanced Route Analytics**: Segment analysis, scoring, and heatmaps
 - **Progress Tracking**: Firebase-backed user progress
 - **Authentication**: Firebase Auth integration
 - **Offline Support**: Service workers and caching

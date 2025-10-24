@@ -712,6 +712,8 @@
         // Global variables
         let map;
         let routeData = null;
+        let startTimestampMs = null;
+        let totalDurationSeconds = 0;
         let routePath = null;
         let carMarker = null;
         let voiceMarkers = [];
@@ -739,25 +741,85 @@
             }).addTo(map);
         }
 
-        // Load route data from localStorage
-        function loadRouteData() {
+        // Load route data from backend API
+        async function loadRouteData() {
             try {
-                const routes = JSON.parse(localStorage.getItem('recordedRoutes') || '[]');
-                routeData = routes.find(r => r.id == ROUTE_ID);
-
-                if (!routeData) {
-                    alert('Route not found!');
-                    window.close();
-                    return;
+                const response = await fetch(`/backend/api/mobile/routes/${ROUTE_ID}`);
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({}));
+                    throw new Error(error.error || `HTTP ${response.status}`);
                 }
 
+                const data = await response.json();
+                if (!data || !data.session) {
+                    throw new Error('Route session payload missing');
+                }
+
+                const summary = data.route || {};
+                const session = data.session;
+                const points = (session.gps_points || [])
+                    .filter(p => p && p.latitude !== undefined && p.longitude !== undefined)
+                    .sort((a, b) => {
+                        const ta = a.timestamp ? Date.parse(a.timestamp) : 0;
+                        const tb = b.timestamp ? Date.parse(b.timestamp) : 0;
+                        return ta - tb;
+                    });
+                startTimestampMs = points.length && points[0].timestamp ? Date.parse(points[0].timestamp) : Date.now();
+                totalDurationSeconds = points.length && points[points.length - 1].timestamp
+                    ? Math.max(0, Math.floor((Date.parse(points[points.length - 1].timestamp) - startTimestampMs) / 1000))
+                    : Math.floor((summary.duration_min || 0) * 60);
+
+                const normalizedPoints = points.map((p, index) => {
+                    const timeMs = p.timestamp ? Date.parse(p.timestamp) - startTimestampMs : index * 1000;
+                    return {
+                        lat: p.latitude,
+                        lng: p.longitude,
+                        speed: p.speed ?? 0,
+                        accuracy: p.accuracy ?? null,
+                        timestamp: p.timestamp,
+                        timeMs: Math.max(0, timeMs),
+                    };
+                });
+
+                const toBackendUrl = (path) => path ? `/backend${path}` : null;
+
+                const audioNotes = (session.audio_notes || []).map((note, idx) => {
+                    const tsMs = note.timestamp ? Date.parse(note.timestamp) : startTimestampMs;
+                    return {
+                        id: note.filename || `note_${idx}`,
+                        timestamp: note.timestamp,
+                        relativeMs: Math.max(0, tsMs - startTimestampMs),
+                        location: (note.latitude !== null && note.latitude !== undefined && note.longitude !== null && note.longitude !== undefined)
+                            ? { lat: note.latitude, lng: note.longitude }
+                            : null,
+                        audioUrl: toBackendUrl(note.file_url),
+                        durationMs: note.duration_ms ? Number(note.duration_ms) : null,
+                    };
+                }).sort((a, b) => (a.relativeMs || 0) - (b.relativeMs || 0));
+
+                const routeName = summary.recorded_at
+                    ? `Drive ${new Date(summary.recorded_at).toLocaleString()}`
+                    : (summary.route_id || 'Practice Route');
+
+                routeData = {
+                    id: summary.route_id || ROUTE_ID,
+                    name: routeName,
+                    duration: formatDurationFromMinutes(summary.duration_min),
+                    distance: (summary.distance_km ?? 0).toFixed(2),
+                    points: normalizedPoints,
+                    voiceNotes: audioNotes,
+                    previewUrl: toBackendUrl(summary.preview_url),
+                    summary,
+                    session,
+                };
+
                 console.log('Route data loaded:', routeData);
-                
+
                 initializeRoute();
                 hideLoading();
             } catch (error) {
                 console.error('Error loading route:', error);
-                alert('Failed to load route data');
+                alert('Failed to load route data: ' + error.message);
                 window.close();
             }
         }
@@ -772,7 +834,7 @@
             document.getElementById('statDistance').textContent = routeData.distance + ' km';
             document.getElementById('statPoints').textContent = routeData.points.length;
             document.getElementById('statNotes').textContent = (routeData.voiceNotes || []).length;
-            document.getElementById('totalTime').textContent = routeData.duration;
+            document.getElementById('totalTime').textContent = formatTimestamp(totalDurationSeconds * 1000);
 
             // Draw route on map
             drawRoute();
@@ -854,7 +916,7 @@
             for (let i = 1; i < points.length; i++) {
                 const prevSpeed = points[i - 1].speed || 0;
                 const currSpeed = points[i].speed || 0;
-                const timeDiff = (points[i].timestamp - points[i - 1].timestamp) / 1000; // seconds
+                const timeDiff = ((points[i].timeMs || 0) - (points[i - 1].timeMs || 0)) / 1000;
 
                 if (timeDiff === 0) continue;
 
@@ -987,6 +1049,11 @@
         // Draw route on map with speed heatmap
         function drawRoute() {
             const points = routeData.points;
+
+            if (!points.length) {
+                console.warn('No GPS points to render');
+                return;
+            }
             
             // Draw route segments with speed-based colors
             for (let i = 0; i < points.length - 1; i++) {
@@ -1049,6 +1116,9 @@
             const container = document.getElementById('voiceNoteList');
             document.getElementById('noteCount').textContent = `(${voiceNotes.length})`;
 
+            voiceMarkers.forEach(marker => map.removeLayer(marker));
+            voiceMarkers = [];
+
             if (voiceNotes.length === 0) {
                 container.innerHTML = `
                     <div class="empty-notes">
@@ -1086,20 +1156,22 @@
                 noteCard.dataset.noteId = note.id;
                 noteCard.dataset.noteIndex = index;
 
-                const timeStr = formatTimestamp(note.timestamp || 0);
+                const timeStr = formatTimestamp(note.relativeMs || 0);
                 const locationStr = (note.location && note.location.lat && note.location.lng)
                     ? `📍 ${note.location.lat.toFixed(6)}, ${note.location.lng.toFixed(6)}`
                     : '📍 No GPS location';
+                const durationStr = note.durationMs ? `⏱️ ${formatTimestamp(note.durationMs)}` : '';
 
                 noteCard.innerHTML = `
                     <div class="note-header">
                         <div class="note-time">🎤 Note #${index + 1} - ${timeStr}</div>
                         <div class="note-actions">
                             <button class="note-action-btn" onclick="jumpToNote(${index})">Jump</button>
-                            <button class="note-action-btn" onclick="playNote('${note.id}')">▶️</button>
+                            <button class="note-action-btn" onclick="playNote('${note.id}')" ${note.audioUrl ? '' : 'disabled'}>▶️</button>
                         </div>
                     </div>
                     <div class="note-location">${locationStr}</div>
+                    ${durationStr ? `<div class="note-duration">${durationStr}</div>` : ''}
                 `;
 
                 noteCard.addEventListener('click', (e) => {
@@ -1128,9 +1200,9 @@
         // Play voice note
         window.playNote = function(noteId) {
             const note = (routeData.voiceNotes || []).find(n => n.id === noteId);
-            if (!note || !note.audioData) return;
+            if (!note || !note.audioUrl) return;
 
-            const audio = new Audio(note.audioData);
+            const audio = new Audio(note.audioUrl);
             audio.play().catch(error => {
                 console.error('Error playing audio:', error);
                 alert('Failed to play voice note');
@@ -1143,7 +1215,7 @@
             if (noteIndex >= voiceNotes.length) return;
 
             const note = voiceNotes[noteIndex];
-            currentTime = note.timestamp;
+            currentTime = note.relativeMs || 0;
             updatePlayback();
 
             // Highlight note card
@@ -1184,7 +1256,7 @@
             document.getElementById('progressContainer').addEventListener('click', (e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
                 const percent = (e.clientX - rect.left) / rect.width;
-                const totalDuration = parseDuration(routeData.duration);
+                const totalDuration = Math.max(1, totalDurationSeconds * 1000);
                 currentTime = totalDuration * percent;
                 updatePlayback();
             });
@@ -1205,6 +1277,9 @@
 
         // Start playback
         function startPlayback() {
+            if (!routeData.points.length || !carMarker) {
+                return;
+            }
             carMarker.setOpacity(1);
             startTimestamp = Date.now() - currentTime;
             animatePlayback();
@@ -1223,13 +1298,15 @@
             if (!isPlaying) return;
 
             currentTime = (Date.now() - startTimestamp) * playbackSpeed;
-            const totalDuration = parseDuration(routeData.duration);
+            const totalDuration = Math.max(1, totalDurationSeconds * 1000);
 
             if (currentTime >= totalDuration) {
                 currentTime = totalDuration;
                 isPlaying = false;
                 document.getElementById('playPauseBtn').textContent = '▶️';
-                carMarker.setOpacity(0);
+                if (carMarker) {
+                    carMarker.setOpacity(0);
+                }
                 return;
             }
 
@@ -1239,7 +1316,8 @@
 
         // Update playback position
         function updatePlayback() {
-            const totalDuration = parseDuration(routeData.duration);
+            const totalDuration = Math.max(1, totalDurationSeconds * 1000);
+            currentTime = Math.max(0, Math.min(currentTime, totalDuration));
             const progress = (currentTime / totalDuration) * 100;
 
             // Update progress bar
@@ -1247,9 +1325,17 @@
             document.getElementById('currentTime').textContent = formatTimestamp(currentTime);
 
             // Update car position
-            const pointIndex = Math.floor((currentTime / totalDuration) * routeData.points.length);
-            if (pointIndex < routeData.points.length) {
-                const point = routeData.points[pointIndex];
+            let point = null;
+            for (let i = 0; i < routeData.points.length; i++) {
+                if (routeData.points[i].timeMs >= currentTime) {
+                    point = routeData.points[i];
+                    break;
+                }
+            }
+            if (!point && routeData.points.length) {
+                point = routeData.points[routeData.points.length - 1];
+            }
+            if (point) {
                 carMarker.setLatLng([point.lat, point.lng]);
             }
 
@@ -1262,48 +1348,55 @@
             const voiceNotes = routeData.voiceNotes || [];
             voiceNotes.forEach((note, index) => {
                 const noteCard = document.querySelector(`[data-note-index="${index}"]`);
-                if (Math.abs(note.timestamp - time) < 2000) { // 2 second window
-                    noteCard?.classList.add('active');
+                if (!noteCard) return;
+                if (Math.abs((note.relativeMs || 0) - time) < 2000) {
+                    noteCard.classList.add('active');
                 } else {
-                    noteCard?.classList.remove('active');
+                    noteCard.classList.remove('active');
                 }
             });
         }
 
         // Skip forward/backward
         function skip(ms) {
-            currentTime = Math.max(0, Math.min(currentTime + ms, parseDuration(routeData.duration)));
+            const totalDuration = Math.max(1, totalDurationSeconds * 1000);
+            currentTime = Math.max(0, Math.min(currentTime + ms, totalDuration));
             updatePlayback();
         }
 
         // Jump to previous/next note
         function jumpToPreviousNote() {
             const voiceNotes = routeData.voiceNotes || [];
-            const prevNote = [...voiceNotes].reverse().find(n => n.timestamp < currentTime - 1000);
+            const prevNote = [...voiceNotes].reverse().find(n => (n.relativeMs || 0) < currentTime - 1000);
             if (prevNote) {
-                currentTime = prevNote.timestamp;
+                currentTime = prevNote.relativeMs || 0;
                 updatePlayback();
             }
         }
 
         function jumpToNextNote() {
             const voiceNotes = routeData.voiceNotes || [];
-            const nextNote = voiceNotes.find(n => n.timestamp > currentTime + 1000);
+            const nextNote = voiceNotes.find(n => (n.relativeMs || 0) > currentTime + 1000);
             if (nextNote) {
-                currentTime = nextNote.timestamp;
+                currentTime = nextNote.relativeMs || 0;
                 updatePlayback();
             }
         }
 
         // Parse duration string to milliseconds
-        function parseDuration(durationStr) {
-            const parts = durationStr.split(':').map(Number);
-            if (parts.length === 3) {
-                return (parts[0] * 3600 + parts[1] * 60 + parts[2]) * 1000;
-            } else if (parts.length === 2) {
-                return (parts[0] * 60 + parts[1]) * 1000;
+        function formatDurationFromMinutes(minutes) {
+            const value = Number(minutes);
+            if (!value || Number.isNaN(value)) {
+                return '00:00';
             }
-            return 0;
+            const totalSeconds = Math.max(0, Math.round(value * 60));
+            const hours = Math.floor(totalSeconds / 3600);
+            const mins = Math.floor((totalSeconds % 3600) / 60);
+            const secs = totalSeconds % 60;
+            if (hours > 0) {
+                return `${hours}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            }
+            return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
         }
 
         // Hide loading overlay
@@ -1313,4 +1406,3 @@
     </script>
 </body>
 </html>
-

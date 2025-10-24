@@ -1,0 +1,51 @@
+{
+  "expo": {
+    "name": "LicensePrep Mobile",
+    "slug": "licenseprep-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#667eea"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.licenseprep.mobile",
+      "infoPlist": {
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "LicensePrep needs your location to record driving routes for practice analysis.",
+        "NSLocationWhenInUseUsageDescription": "LicensePrep needs your location to record driving routes.",
+        "NSMicrophoneUsageDescription": "LicensePrep needs microphone access to record voice notes during your drive."
+      }
+    },
+    "android": {
+      "package": "com.licenseprep.mobile",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#667eea"
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "RECORD_AUDIO"
+      ],
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow LicensePrep to access your location to record driving routes."
+        }
+      ]
+    ]
+  }
+}

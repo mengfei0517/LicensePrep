@@ -158,7 +158,7 @@ export default function QAPage() {
             <p className="text-red-900 font-semibold">Error</p>
             <p className="text-red-700 text-sm mt-1">{error}</p>
             <p className="text-red-600 text-xs mt-2">
-              Make sure Flask backend is running on http://localhost:5000
+              Ensure the Flask backend is running and reachable (default http://localhost:5000)
             </p>
           </div>
         )}
@@ -242,4 +242,3 @@ export default function QAPage() {
     </div>
   );
 }
-

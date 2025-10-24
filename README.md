@@ -306,7 +306,7 @@ echo $GOOGLE_API_KEY
 curl http://localhost:5000/api/content/categories
 
 # Verify CORS in app.py
-# Should have: CORS(app, origins=["http://localhost:3000", ...])
+# Should read allowed origins from config/settings.py (env: CORS_ALLOWED_ORIGINS)
 ```
 
 **Images not displaying**

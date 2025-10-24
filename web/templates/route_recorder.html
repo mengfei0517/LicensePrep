@@ -390,7 +390,8 @@
         </div>
 
         <div class="info-banner">
-            <strong>🗺️ Using OpenStreetMap</strong> - Open source maps, no API key required!
+            <strong>🗺️ Using OpenStreetMap</strong> - Open source maps, no API key required!<br>
+            <strong>☁️ Auto Sync:</strong> Finished sessions (including voice notes & map snapshot) appear automatically on your dashboard.
         </div>
 
         <div class="map-container" id="map-capture">
@@ -474,6 +475,23 @@
         let startTime = null;
         let durationInterval = null;
         let totalDistance = 0;
+        let sessionId = null;
+        let gpsBatch = [];
+        let sessionStartIso = null;
+        const GPS_BATCH_SIZE = 5;
+
+        const deviceIdentifier = (() => {
+            try {
+                const stored = localStorage.getItem('webRecorderDeviceId');
+                if (stored) return stored;
+                const generated = `web-recorder-${crypto.randomUUID()}`;
+                localStorage.setItem('webRecorderDeviceId', generated);
+                return generated;
+            } catch (error) {
+                console.warn('Unable to access localStorage for device id:', error);
+                return `web-recorder-${Date.now()}`;
+            }
+        })();
 
         // Voice notes variables
         let mediaRecorder = null;
@@ -483,6 +501,137 @@
         let voiceRecordingStartTime = null;
         let voiceTimerInterval = null;
         let microphoneStream = null;
+
+        async function createSession() {
+            const payload = {
+                device_id: deviceIdentifier,
+                start_time: new Date().toISOString(),
+                source: 'web',
+            };
+
+            const response = await fetch('/api/mobile/routes/start', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({}));
+                throw new Error(error.error || `Failed to start session (${response.status})`);
+            }
+
+            const data = await response.json();
+            sessionId = data.session_id;
+            sessionStartIso = payload.start_time;
+            console.log('[Recorder] Session started:', sessionId);
+            return sessionId;
+        }
+
+        async function uploadGpsBatch(force = false) {
+            if (!sessionId || gpsBatch.length === 0) {
+                return;
+            }
+            if (!force && gpsBatch.length < GPS_BATCH_SIZE) {
+                return;
+            }
+
+            const batch = [...gpsBatch];
+            gpsBatch = [];
+
+            try {
+                const response = await fetch(`/api/mobile/routes/${sessionId}/gps`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ points: batch }),
+                });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({}));
+                    throw new Error(error.error || `GPS upload failed (${response.status})`);
+                }
+
+                console.log(`[Recorder] Uploaded ${batch.length} GPS points`);
+            } catch (error) {
+                console.error('[Recorder] Failed to upload GPS points:', error);
+                gpsBatch = batch.concat(gpsBatch); // requeue
+            }
+        }
+
+        function calculateBounds(points) {
+            if (!points.length) return null;
+            const lats = points.map(p => p.latitude).filter(v => v !== null && v !== undefined);
+            const lngs = points.map(p => p.longitude).filter(v => v !== null && v !== undefined);
+            if (!lats.length || !lngs.length) return null;
+            return {
+                min_lat: Math.min(...lats),
+                max_lat: Math.max(...lats),
+                min_lng: Math.min(...lngs),
+                max_lng: Math.max(...lngs),
+            };
+        }
+
+        async function finishSession(mapSnapshot) {
+            if (!sessionId) throw new Error('Session not started');
+
+            const durationMinutes = startTime ? ((Date.now() - startTime) / 60000) : 0;
+            const bounds = calculateBounds(recordedPoints);
+
+            const payload = {
+                end_time: new Date().toISOString(),
+                total_distance: Number(totalDistance.toFixed(3)),
+                total_duration: Number(durationMinutes.toFixed(2)),
+                map_snapshot: mapSnapshot || null,
+                map_bounds: bounds,
+            };
+
+            const response = await fetch(`/api/mobile/routes/${sessionId}/finish`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({}));
+                throw new Error(error.error || `Failed to finish session (${response.status})`);
+            }
+
+            console.log('[Recorder] Session finished:', sessionId);
+            sessionId = null;
+            return response.json();
+        }
+
+        async function uploadVoiceNoteBlob(blob, location, timestampIso, durationMs) {
+            if (!sessionId) {
+                throw new Error('Session not started');
+            }
+
+            const formData = new FormData();
+            formData.append('audio_file', blob, `voice_${Date.now()}.webm`);
+            formData.append('timestamp', timestampIso);
+            formData.append('latitude', location?.lat?.toString() || '');
+            formData.append('longitude', location?.lng?.toString() || '');
+            if (typeof durationMs === 'number') {
+                formData.append('duration_ms', durationMs.toString());
+            }
+
+            const response = await fetch(`/api/mobile/routes/${sessionId}/audio`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({}));
+                throw new Error(error.error || `Voice note upload failed (${response.status})`);
+            }
+
+            console.log('[Recorder] Voice note uploaded.');
+        }
 
         // Initialize map with Leaflet
         function initMap() {
@@ -494,7 +643,8 @@
             // Add OpenStreetMap tiles
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap contributors',
-                maxZoom: 19
+                maxZoom: 19,
+                crossOrigin: true
             }).addTo(map);
 
             // Initialize polyline for route
@@ -535,14 +685,27 @@
         }
 
         // Start recording
-        function startRecording() {
+        async function startRecording() {
             if (!navigator.geolocation) {
                 alert('Geolocation is not supported by your browser');
                 return;
             }
 
+            if (isRecording) {
+                return;
+            }
+
+            try {
+                await createSession();
+            } catch (error) {
+                console.error('Failed to initialize session:', error);
+                alert('Failed to start recording:\n' + error.message);
+                return;
+            }
+
             isRecording = true;
             startTime = Date.now();
+            gpsBatch = [];
             routeCoordinates = [];
             recordedPoints = [];
             totalDistance = 0;
@@ -568,34 +731,39 @@
             // Start watching position
             watchId = navigator.geolocation.watchPosition(
                 (position) => {
-                    const pos = [position.coords.latitude, position.coords.longitude];
-
+                    const timestampIso = new Date(position.timestamp || Date.now()).toISOString();
+                    const speedKmh = position.coords.speed ? Number((position.coords.speed * 3.6).toFixed(2)) : null;
                     const point = {
-                        lat: pos[0],
-                        lng: pos[1],
-                        timestamp: new Date().toISOString(),
-                        accuracy: position.coords.accuracy,
-                        speed: position.coords.speed ? (position.coords.speed * 3.6).toFixed(2) : 0 // Convert m/s to km/h
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude,
+                        altitude: position.coords.altitude ?? null,
+                        accuracy: position.coords.accuracy ?? null,
+                        speed: speedKmh,
+                        heading: position.coords.heading ?? null,
+                        timestamp: timestampIso,
+                        source: 'web',
                     };
 
                     recordedPoints.push(point);
-                    routeCoordinates.push(pos);
+                    routeCoordinates.push([point.latitude, point.longitude]);
+                    gpsBatch.push(point);
+                    uploadGpsBatch(false);
 
                     // Update polyline
                     routePath.setLatLngs(routeCoordinates);
 
                     // Update current marker
-                    addCurrentLocationMarker(pos);
+                    addCurrentLocationMarker([point.latitude, point.longitude]);
 
                     // Center map on current position
-                    map.panTo(pos);
+                    map.panTo([point.latitude, point.longitude]);
 
                     // Calculate distance
                     if (routeCoordinates.length > 1) {
                         const lastPos = routeCoordinates[routeCoordinates.length - 2];
                         totalDistance += calculateDistance(
                             { lat: lastPos[0], lng: lastPos[1] },
-                            { lat: pos[0], lng: pos[1] }
+                            { lat: point.latitude, lng: point.longitude }
                         );
                     }
 
@@ -616,7 +784,7 @@
         }
 
         // Stop recording
-        function stopRecording() {
+        async function stopRecording() {
             isRecording = false;
 
             if (watchId !== null) {
@@ -634,11 +802,14 @@
                 stopVoiceRecording();
             }
 
+            await uploadGpsBatch(true);
+
             // Update UI
             document.getElementById('startBtn').disabled = false;
             document.getElementById('stopBtn').disabled = true;
             document.getElementById('saveBtn').disabled = false;
             document.getElementById('statusText').textContent = 'Stopped';
+            document.getElementById('voiceRecordBtn').disabled = true;
         }
 
         // Save route
@@ -648,89 +819,44 @@
                 return;
             }
 
+            if (!sessionStartIso && !sessionId) {
+                alert('Recording session not found. Please start a new recording.');
+                return;
+            }
+
             document.getElementById('statusText').textContent = 'Saving...';
 
             try {
-                // Capture map as image with optimized settings
-                const mapElement = document.getElementById('map-capture');
-                const canvas = await html2canvas(mapElement, {
-                    useCORS: true,
-                    allowTaint: true,
-                    scale: 1,  // Reduced from 2 to save space
-                    width: 800,  // Limit width
-                    height: 600  // Limit height
-                });
+                await uploadGpsBatch(true);
 
-                // Compress image to JPEG with lower quality to reduce size
-                const imageData = canvas.toDataURL('image/jpeg', 0.6);  // 60% quality JPEG
-
-                // Prepare route data
-                const routeData = {
-                    id: Date.now(),
-                    name: `Route ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`,
-                    date: new Date().toISOString(),
-                    points: recordedPoints,
-                    duration: document.getElementById('duration').textContent,
-                    distance: totalDistance.toFixed(2),
-                    image: imageData,
-                    startLocation: recordedPoints[0] ? `${recordedPoints[0].lat.toFixed(6)}, ${recordedPoints[0].lng.toFixed(6)}` : 'Unknown',
-                    endLocation: recordedPoints[recordedPoints.length - 1] ? `${recordedPoints[recordedPoints.length - 1].lat.toFixed(6)}, ${recordedPoints[recordedPoints.length - 1].lng.toFixed(6)}` : 'Unknown',
-                    voiceNotes: voiceNotes // Include voice notes with GPS coordinates and timestamps
-                };
-
-                // Check image size
-                const estimatedSize = new Blob([imageData]).size;
-                console.log('Image size:', (estimatedSize / 1024 / 1024).toFixed(2) + 'MB');
-                
-                // Save to localStorage with error handling
-                let routes = JSON.parse(localStorage.getItem('recordedRoutes') || '[]');
-                routes.unshift(routeData);
-                
-                // Try to save, if quota exceeded, reduce the number of stored routes
-                let maxRoutes = 10;
-                let saved = false;
-                
-                while (!saved && maxRoutes > 0) {
-                    try {
-                        // Keep only the most recent routes
-                        const routesToSave = routes.slice(0, maxRoutes);
-                        localStorage.setItem('recordedRoutes', JSON.stringify(routesToSave));
-                        saved = true;
-                        
-                        if (maxRoutes < 10) {
-                            console.log(`Saved with ${maxRoutes} routes (removed older routes to save space)`);
-                        }
-                    } catch (e) {
-                        if (e.name === 'QuotaExceededError' || e.code === 22) {
-                            // Quota exceeded, try with fewer routes
-                            maxRoutes--;
-                            if (maxRoutes === 0) {
-                                throw new Error('Storage full. Please delete some old routes from the main page.');
-                            }
-                        } else {
-                            throw e;
-                        }
-                    }
+                let imageData = null;
+                try {
+                    const mapElement = document.getElementById('map-capture');
+                    const canvas = await html2canvas(mapElement, {
+                        useCORS: true,
+                        allowTaint: true,
+                        scale: 1.2,
+                    });
+                    imageData = canvas.toDataURL('image/jpeg', 0.7);
+                } catch (error) {
+                    console.warn('Map snapshot failed, continuing without preview:', error);
                 }
+
+                const result = await finishSession(imageData);
 
                 document.getElementById('statusText').textContent = 'Saved Successfully!';
-                
-                alert(`Route saved successfully!${maxRoutes < 10 ? '\n\nNote: Storage is getting full. Some older routes were removed.' : ''}`);
-                
-                // Reset for new recording
-                setTimeout(() => {
-                    resetRecorder();
-                }, 1000);
+                alert('Route saved successfully!');
+                resetRecorder();
 
+                if (result?.summary?.route_id) {
+                    if (confirm('Open route review?')) {
+                        const reviewUrl = `${window.location.origin}/route-review/${result.summary.route_id}`;
+                        window.open(reviewUrl, '_blank');
+                    }
+                }
             } catch (error) {
                 console.error('Error saving route:', error);
-                
-                let errorMsg = error.message;
-                if (error.message.includes('Storage full')) {
-                    errorMsg = 'Storage is full!\n\nPlease go back to the main page and delete some old routes, then try again.';
-                }
-                
-                alert('Error saving route:\n' + errorMsg);
+                alert('Error saving route:\n' + (error.message || error));
                 document.getElementById('statusText').textContent = 'Error Saving';
             }
         }
@@ -741,8 +867,18 @@
             recordedPoints = [];
             totalDistance = 0;
             routePath.setLatLngs([]);
-            
+            sessionId = null;
+            sessionStartIso = null;
+            startTime = null;
+            gpsBatch = [];
+            isRecording = false;
+
             // Reset voice notes
+            voiceNotes.forEach(note => {
+                if (note.audioUrl) {
+                    URL.revokeObjectURL(note.audioUrl);
+                }
+            });
             voiceNotes = [];
             displayVoiceNotes();
             
@@ -888,6 +1024,9 @@
                     voiceTimerInterval = null;
                 }
 
+                voiceRecordingStartTime = null;
+                document.getElementById('voiceTimer').textContent = '0:00';
+
                 console.log('⏹️ Voice recording stopped');
             }
         }
@@ -901,61 +1040,47 @@
                 }
 
                 const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                console.log('Audio blob created:', audioBlob.size, 'bytes');
-                
-                // Convert to base64 for localStorage
-                const reader = new FileReader();
-                reader.onerror = function(error) {
-                    console.error('Error reading audio blob:', error);
-                    alert('Failed to save voice note: Could not read audio data');
+                audioChunks = [];
+
+                let currentLocation = null;
+                if (recordedPoints.length > 0) {
+                    const latest = recordedPoints[recordedPoints.length - 1];
+                    currentLocation = {
+                        lat: latest.latitude,
+                        lng: latest.longitude,
+                    };
+                }
+
+                const timestampIso = new Date().toISOString();
+                const durationMs = voiceRecordingStartTime ? (Date.now() - voiceRecordingStartTime) : null;
+
+                try {
+                    await uploadVoiceNoteBlob(audioBlob, currentLocation, timestampIso, durationMs ?? undefined);
+                } catch (error) {
+                    console.error('Voice note upload failed:', error);
+                    alert('Failed to upload voice note: ' + error.message);
+                    return;
+                }
+
+                const voiceNote = {
+                    id: 'voice_' + Date.now(),
+                    relativeMs: startTime ? Date.now() - startTime : 0,
+                    timestampIso,
+                    location: currentLocation,
+                    duration: durationMs,
+                    audioUrl: URL.createObjectURL(audioBlob),
                 };
-                
-                reader.onloadend = function() {
-                    try {
-                        const base64Audio = reader.result;
-                        
-                        // Get current GPS location (convert from array to object)
-                        let currentLocation = null;
-                        if (routeCoordinates.length > 0) {
-                            const coords = routeCoordinates[routeCoordinates.length - 1];
-                            currentLocation = {
-                                lat: coords[0],
-                                lng: coords[1]
-                            };
-                        }
-                        
-                        console.log('Current location:', currentLocation);
 
-                        // Calculate timestamp relative to route start
-                        const timestamp = startTime ? Date.now() - startTime : 0;
+                voiceNotes.push(voiceNote);
+                displayVoiceNotes();
 
-                        const voiceNote = {
-                            id: 'voice_' + Date.now(),
-                            timestamp: timestamp,
-                            dateTime: new Date().toISOString(),
-                            location: currentLocation,
-                            audioData: base64Audio,
-                            duration: Date.now() - voiceRecordingStartTime,
-                            transcription: null // For future API integration
-                        };
+                console.log('💾 Voice note saved successfully. Total notes:', voiceNotes.length);
 
-                        voiceNotes.push(voiceNote);
-                        displayVoiceNotes();
-
-                        console.log('💾 Voice note saved successfully. Total notes:', voiceNotes.length);
-                        
-                        // Show brief success message
-                        const oldStatus = document.getElementById('statusText').innerHTML;
-                        document.getElementById('statusText').innerHTML = '🎤 Voice note saved!';
-                        setTimeout(() => {
-                            document.getElementById('statusText').innerHTML = oldStatus;
-                        }, 2000);
-                    } catch (error) {
-                        console.error('Error saving voice note:', error);
-                        alert('Failed to save voice note: ' + error.message);
-                    }
-                };
-                reader.readAsDataURL(audioBlob);
+                const oldStatus = document.getElementById('statusText').innerHTML;
+                document.getElementById('statusText').innerHTML = '🎤 Voice note saved!';
+                setTimeout(() => {
+                    document.getElementById('statusText').innerHTML = oldStatus;
+                }, 2000);
             } catch (error) {
                 console.error('Error in saveVoiceNote:', error);
                 alert('Failed to save voice note: ' + error.message);
@@ -996,7 +1121,7 @@
                 const noteDiv = document.createElement('div');
                 noteDiv.className = 'voice-note-item';
                 
-                const timeStr = formatTimestamp(note.timestamp);
+                const timeStr = formatTimestamp(note.relativeMs || 0);
                 const locationStr = (note.location && note.location.lat && note.location.lng) 
                     ? `📍 ${note.location.lat.toFixed(6)}, ${note.location.lng.toFixed(6)}`
                     : '📍 No GPS location';
@@ -1031,7 +1156,12 @@
             const note = voiceNotes.find(n => n.id === noteId);
             if (!note) return;
 
-            const audio = new Audio(note.audioData);
+            if (!note.audioUrl) {
+                alert('Audio file not available');
+                return;
+            }
+
+            const audio = new Audio(note.audioUrl);
             audio.play().catch(error => {
                 console.error('Error playing audio:', error);
                 alert('Failed to play voice note');
@@ -1042,13 +1172,22 @@
         window.deleteVoiceNote = function(noteId) {
             if (!confirm('Are you sure you want to delete this voice note?')) return;
 
-            voiceNotes = voiceNotes.filter(n => n.id !== noteId);
+            voiceNotes = voiceNotes.filter(n => {
+                if (n.id === noteId && n.audioUrl) {
+                    URL.revokeObjectURL(n.audioUrl);
+                }
+                return n.id !== noteId;
+            });
             displayVoiceNotes();
             console.log('🗑️ Voice note deleted:', noteId);
         };
 
         // Toggle voice recording
         function toggleVoiceRecording() {
+            if (!sessionId) {
+                alert('Start recording the route before adding a voice note.');
+                return;
+            }
             if (isRecordingVoice) {
                 stopVoiceRecording();
             } else {
@@ -1069,4 +1208,3 @@
     </script>
 </body>
 </html>
-

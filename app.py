@@ -53,15 +53,17 @@ from api.routes_rule_qa import bp as bp_rule_qa
 from api.routes_replay import bp as bp_replay
 from api.routes_planner import bp as bp_planner
 from api.routes_content import bp as bp_content
+from api.routes_mobile import bp as bp_mobile
 
 app.register_blueprint(bp_rule_qa)
 app.register_blueprint(bp_replay)
 app.register_blueprint(bp_planner)
 app.register_blueprint(bp_content)
+app.register_blueprint(bp_mobile)
 
 # Enable CORS for Next.js frontend
 from flask_cors import CORS
-CORS(app, origins=["http://localhost:3000", "http://localhost:5000", "http://localhost:19000"])
+CORS(app, origins=settings.CORS_ALLOWED_ORIGINS, supports_credentials=True)
 
 if __name__ == "__main__":
     # Bind to 0.0.0.0 to allow both localhost and 127.0.0.1 access
@@ -69,8 +71,11 @@ if __name__ == "__main__":
     print("\n" + "="*60)
     print("🚀 LicensePrep Server Starting...")
     print("="*60)
-    print("📍 Backend API: http://localhost:5000/")
+    backend_host = settings.FLASK_HOST
+    backend_port = settings.FLASK_PORT
+    print(f"📍 Backend API: http://{backend_host}:{backend_port}/")
     print("📍 Next.js App: http://localhost:3000/")
     print("⚠️  For Chrome Extension, MUST use 'localhost' not '127.0.0.1'")
+    print(f"🌐 Allowed Origins: {', '.join(settings.CORS_ALLOWED_ORIGINS)}")
     print("="*60 + "\n")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host=backend_host, port=backend_port, debug=True)

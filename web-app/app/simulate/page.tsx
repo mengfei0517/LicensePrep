@@ -1,64 +1,129 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useMemo, useState } from 'react';
+import Image from 'next/image';
 import { 
   MapPinIcon, 
   PlayIcon, 
-  StopIcon,
   ChartBarIcon,
   MicrophoneIcon,
   ClockIcon,
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
+import { useRoutes } from '@/lib/hooks/use-routes';
+import { apiClient } from '@/lib/api-client';
+import type { RouteInfo, RouteLocation } from '@/lib/api-client';
 
-interface SavedRoute {
-  id: number;
-  name: string;
-  date: string;
-  duration: string;
-  distance: string;
-  points: any[];
+const BACKEND_BASE_PATH = '/backend';
+
+const formatDurationLabel = (minutes: number | undefined): string => {
+  if (!minutes || Number.isNaN(minutes)) {
+    return '0 min';
+  }
+
+  if (minutes < 1) {
+    const seconds = Math.max(Math.round(minutes * 60), 1);
+    return `${seconds}s`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = Math.round(minutes % 60);
+
+  if (hours > 0) {
+    return `${hours}h ${remainingMinutes.toString().padStart(2, '0')}m`;
+  }
+
+  return `${Math.round(minutes)} min`;
+};
+
+const formatDistanceLabel = (distanceKm: number | undefined): string => {
+  if (!distanceKm || Number.isNaN(distanceKm)) {
+    return '0.00';
+  }
+  return distanceKm.toFixed(2);
+};
+
+const formatDateLabel = (isoDate: string | undefined): string => {
+  if (!isoDate) return 'Unknown date';
+  try {
+    return new Date(isoDate).toLocaleString('de-DE');
+  } catch {
+    return isoDate;
+  }
+};
+
+const formatLocationLabel = (location?: RouteLocation | null): string => {
+  if (!location) return 'Not captured';
+  if (location.description) return location.description;
+  const { latitude, longitude } = location;
+  if (latitude === undefined || longitude === undefined) return 'Not captured';
+  return `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+};
+
+interface SavedRouteCard {
+  id: string;
+  title: string;
+  recordedAt: string | undefined;
+  durationLabel: string;
+  distanceLabel: string;
   startLocation: string;
   endLocation: string;
-  image?: string;
+  status?: string;
+  gpsPoints: number;
+  audioNotes: number;
+  previewUrl?: string | null;
 }
 
 export default function SimulatePage() {
-  const [savedRoutes, setSavedRoutes] = useState<SavedRoute[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { routes, isLoading, error, refresh } = useRoutes();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadSavedRoutes();
-  }, []);
+  const savedRoutes = useMemo<SavedRouteCard[]>(() => {
+    if (!routes) return [];
 
-  const loadSavedRoutes = () => {
-    try {
-      const routes = JSON.parse(localStorage.getItem('recordedRoutes') || '[]');
-      setSavedRoutes(routes);
-    } catch (error) {
-      console.error('Error loading routes:', error);
-    } finally {
-      setLoading(false);
+    return routes.map((route: RouteInfo) => ({
+      id: route.route_id,
+      title: route.device_id ? `Drive (${route.device_id})` : route.route_id,
+      recordedAt: route.recorded_at,
+      durationLabel: formatDurationLabel(route.duration_min),
+      distanceLabel: formatDistanceLabel(route.distance_km),
+      startLocation: formatLocationLabel(route.start_location),
+      endLocation: formatLocationLabel(route.end_location),
+      status: route.status,
+      gpsPoints: route.gps_points_count ?? 0,
+      audioNotes: route.audio_notes_count ?? 0,
+      previewUrl: route.preview_url ? `/backend${route.preview_url}` : null,
+    }));
+  }, [routes]);
+
+  const handleDelete = async (routeId: string) => {
+    if (!confirm('Are you sure you want to delete this route?')) {
+      return;
     }
-  };
 
-  const deleteRoute = (routeId: number) => {
-    if (!confirm('Are you sure you want to delete this route?')) return;
-    
-    const routes = savedRoutes.filter(r => r.id !== routeId);
-    localStorage.setItem('recordedRoutes', JSON.stringify(routes));
-    setSavedRoutes(routes);
+    setDeleteError(null);
+    setDeletingId(routeId);
+    try {
+      await apiClient.deleteRoute(routeId);
+      await refresh();
+    } catch (err) {
+      console.error('Failed to delete route', err);
+      const message = err instanceof Error ? err.message : 'Failed to delete route. Please try again.';
+      setDeleteError(message);
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const openRecorder = () => {
     // Open Flask route recorder in new window
-    window.open('http://localhost:5000/route-recorder', '_blank');
+    window.open(`${BACKEND_BASE_PATH}/route-recorder`, '_blank');
   };
 
-  const openReview = (routeId: number) => {
+  const openReview = (routeId: string) => {
     // Open Flask route review in new window
-    window.open(`http://localhost:5000/route-review/${routeId}`, '_blank');
+    window.open(`${BACKEND_BASE_PATH}/route-review/${routeId}`, '_blank');
   };
 
   return (
@@ -166,7 +231,7 @@ export default function SimulatePage() {
           </h2>
           {savedRoutes.length > 0 && (
             <button
-              onClick={loadSavedRoutes}
+              onClick={() => refresh()}
               className="flex items-center space-x-2 text-sm text-blue-600 hover:text-blue-700"
             >
               <ArrowPathIcon className="w-4 h-4" />
@@ -175,7 +240,19 @@ export default function SimulatePage() {
           )}
         </div>
 
-        {loading ? (
+        {error && (
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            Failed to load routes: {error?.message || 'Unknown error'}
+          </div>
+        )}
+
+        {deleteError && (
+          <div className="mb-4 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-700">
+            {deleteError}
+          </div>
+        )}
+
+        {isLoading ? (
           <div className="text-center py-12">
             <div className="inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
             <p className="mt-4 text-gray-600">Loading routes...</p>
@@ -204,45 +281,55 @@ export default function SimulatePage() {
                 key={route.id}
                 className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
               >
-                {/* Route Image */}
-                <div className="aspect-video bg-gray-100 relative">
-                  {route.image ? (
-                    <img
-                      src={route.image}
-                      alt={route.name}
-                      className="w-full h-full object-cover"
+                <div className="aspect-video relative overflow-hidden bg-gradient-to-r from-indigo-100 to-blue-50 flex items-center justify-center">
+                  <MapPinIcon className="w-12 h-12 text-indigo-400" />
+                  {route.previewUrl && (
+                    <Image
+                      src={route.previewUrl}
+                      alt={route.title}
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      className="object-cover"
+                      unoptimized
                     />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <MapPinIcon className="w-12 h-12 text-gray-400" />
-                    </div>
                   )}
                 </div>
 
-                {/* Route Info */}
-                <div className="p-4">
+                <div className="p-4 space-y-3">
                   <h3 className="font-semibold text-gray-900 mb-2 truncate">
-                    {route.name}
+                    {route.title}
                   </h3>
                   
-                  <div className="space-y-2 text-sm text-gray-600 mb-4">
+                  <div className="space-y-2 text-sm text-gray-600">
                     <div className="flex items-center">
                       <ClockIcon className="w-4 h-4 mr-2" />
-                      <span>{route.duration}</span>
+                      <span>{route.durationLabel}</span>
                       <span className="mx-2">•</span>
-                      <span>{route.distance} km</span>
+                      <span>{route.distanceLabel} km</span>
                     </div>
                     <div className="flex items-center">
                       <MapPinIcon className="w-4 h-4 mr-2 flex-shrink-0" />
                       <span className="truncate">{route.startLocation}</span>
                     </div>
+                    <div className="flex items-center text-xs text-gray-500">
+                      <span className="mr-3">{route.gpsPoints} GPS pts</span>
+                      <span>{route.audioNotes} audio notes</span>
+                    </div>
+                    <div className="flex items-center text-xs text-gray-500">
+                      <ArrowPathIcon className="w-4 h-4 mr-2" />
+                      <span className="truncate">{route.endLocation}</span>
+                    </div>
+                    {route.status && (
+                      <span className="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-600">
+                        {route.status}
+                      </span>
+                    )}
                     <div className="text-xs text-gray-500">
-                      {new Date(route.date).toLocaleString('de-DE')}
+                      {formatDateLabel(route.recordedAt)}
                     </div>
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex space-x-2">
+                  <div className="flex space-x-2 pt-2">
                     <button
                       onClick={() => openReview(route.id)}
                       className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
@@ -251,10 +338,11 @@ export default function SimulatePage() {
                       Review
                     </button>
                     <button
-                      onClick={() => deleteRoute(route.id)}
-                      className="px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium"
+                      onClick={() => handleDelete(route.id)}
+                      disabled={deletingId === route.id}
+                      className="px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                      Delete
+                      {deletingId === route.id ? 'Deleting...' : 'Delete'}
                     </button>
                   </div>
                 </div>
@@ -280,12 +368,10 @@ export default function SimulatePage() {
             <strong>3. Analyze:</strong> Get AI-powered feedback on your driving performance and areas to improve.
           </p>
           <p className="pt-2 border-t border-blue-200">
-            <strong>Note:</strong> Routes are currently stored in your browser's local storage. 
-            Firebase sync coming soon for cross-device access!
+            <strong>Note:</strong> Sessions recorded in the mobile app upload automatically to this dashboard after you finish recording. Hit refresh if you do not see the latest drive.
           </p>
         </div>
       </div>
     </div>
   );
 }
-

@@ -55,8 +55,10 @@ export default function QAPage() {
       ]);
 
       setQuestion('');
-    } catch (err: any) {
-      setError(err.message || 'Failed to get answer');
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to get answer';
+      setError(message);
       console.error('Q&A Error:', err);
     } finally {
       setLoading(false);

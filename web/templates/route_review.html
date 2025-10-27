@@ -187,6 +187,256 @@
             color: #ee0979;
         }
 
+        .marker-section {
+            padding: 20px;
+            border-bottom: 2px solid #f0f0f0;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+
+        .marker-section h3 {
+            margin: 0 0 15px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #495057;
+            font-size: 1.1em;
+        }
+
+        .marker-action-btn {
+            background: #f59e0b;
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.3s ease;
+        }
+
+        .marker-action-btn.active {
+            background: #d97706;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.3);
+        }
+
+        .marker-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .marker-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 12px;
+            border-left: 3px solid #f59e0b;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .marker-description {
+            font-size: 0.85em;
+            color: #4b5563;
+        }
+
+        .marker-card h4 {
+            margin: 0;
+            font-size: 0.95em;
+            color: #b45309;
+        }
+
+        .marker-meta {
+            font-size: 0.8em;
+            color: #6c757d;
+        }
+
+        .marker-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .marker-tag {
+            background: rgba(245, 158, 11, 0.12);
+            color: #b45309;
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 0.7em;
+            font-weight: 600;
+        }
+
+        .heat-list {
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .heat-card {
+            background: #fff5f5;
+            border-left: 3px solid #ef4444;
+            border-radius: 10px;
+            padding: 10px 12px;
+            color: #7f1d1d;
+            font-size: 0.85em;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .heat-card strong {
+            font-size: 0.9em;
+        }
+
+        .heat-card .heat-meta {
+            color: #9f1239;
+            font-size: 0.75em;
+        }
+
+        .marker-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .marker-actions button {
+            flex: 1;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 0.8em;
+            cursor: pointer;
+        }
+
+        .marker-actions .focus-btn {
+            background: rgba(102, 126, 234, 0.15);
+            color: #3f51b5;
+        }
+
+        .marker-actions .delete-btn {
+            background: rgba(239, 68, 68, 0.15);
+            color: #b91c1c;
+        }
+
+        .marker-empty {
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.9em;
+            padding: 20px 10px;
+        }
+
+        .voice-notes-filters {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .voice-notes-filters input,
+        .voice-notes-filters select {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid #ced4da;
+            font-size: 0.85em;
+        }
+
+        .marker-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.4);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 20px;
+        }
+
+        .marker-modal {
+            background: white;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .marker-modal header {
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .marker-modal header h4 {
+            margin: 0;
+            font-size: 1.1em;
+        }
+
+        .marker-modal .close-modal {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.2em;
+            cursor: pointer;
+        }
+
+        .marker-modal form {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .marker-modal label {
+            font-size: 0.85em;
+            color: #495057;
+        }
+
+        .marker-modal input,
+        .marker-modal select,
+        .marker-modal textarea {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid #ced4da;
+            font-size: 0.9em;
+        }
+
+        .marker-modal textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .marker-modal .modal-actions {
+            display: flex;
+            gap: 10px;
+            padding: 0 20px 20px 20px;
+        }
+
+        .marker-modal .modal-actions button {
+            flex: 1;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.9em;
+            cursor: pointer;
+        }
+
+        .marker-modal .modal-actions .save-btn {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .marker-modal .modal-actions .cancel-btn {
+            background: #e9ecef;
+            color: #495057;
+        }
+
         .speed-chart-container {
             height: 150px;
             margin-top: 10px;
@@ -315,6 +565,99 @@
             color: #6c757d;
         }
 
+        .note-tags {
+            margin-top: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .note-tag {
+            background: rgba(102, 126, 234, 0.12);
+            color: #4c50bf;
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 0.75em;
+            font-weight: 600;
+        }
+
+        .voice-note-card.active .note-tag {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .note-tag-empty {
+            font-size: 0.8em;
+            color: #adb5bd;
+        }
+
+        .note-tag-edit-btn {
+            background: transparent;
+            border: none;
+            color: #667eea;
+            cursor: pointer;
+            font-size: 0.85em;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .note-tag-edit-btn:hover {
+            text-decoration: underline;
+        }
+
+        .note-tag-editor {
+            margin-top: 10px;
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .note-tag-editor input {
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid #ced4da;
+            font-size: 0.9em;
+        }
+
+        .note-tag-editor .editor-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .note-tag-editor button {
+            flex: 1;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 10px;
+            font-size: 0.85em;
+            cursor: pointer;
+        }
+
+        .note-tag-editor .save-btn {
+            background: #667eea;
+            color: white;
+        }
+
+        .note-tag-editor .cancel-btn {
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        .note-transcript {
+            margin-top: 8px;
+            font-size: 0.8em;
+            color: #4b5563;
+            background: rgba(102, 126, 234, 0.08);
+            padding: 8px 10px;
+            border-radius: 8px;
+        }
+
+        .voice-note-card.active .note-transcript {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
         .empty-notes {
             text-align: center;
             padding: 40px 20px;
@@ -401,6 +744,7 @@
             position: relative;
             cursor: pointer;
             margin-bottom: 10px;
+            overflow: hidden;
         }
 
         .progress-bar {
@@ -409,6 +753,56 @@
             border-radius: 4px;
             width: 0%;
             transition: width 0.1s linear;
+        }
+
+        .timeline-events-layer {
+            position: absolute;
+            left: 0;
+            top: -6px;
+            right: 0;
+            height: 20px;
+            pointer-events: none;
+        }
+
+        .timeline-event {
+            position: absolute;
+            top: 4px;
+            transform: translateX(-50%);
+            pointer-events: auto;
+            cursor: pointer;
+        }
+
+        .timeline-event.voice {
+            width: 12px;
+            height: 12px;
+            background: #3b82f6;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .timeline-event.voice.active {
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.4);
+        }
+
+        .timeline-event.marker {
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-bottom: 12px solid #f59e0b;
+        }
+
+        .timeline-range {
+            position: absolute;
+            top: 2px;
+            height: 16px;
+            border-radius: 8px;
+            pointer-events: auto;
+        }
+
+        .timeline-range.heat {
+            background: linear-gradient(90deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.6));
         }
 
         .progress-marker {
@@ -656,6 +1050,19 @@
                             <canvas id="speedChart"></canvas>
                         </div>
                     </div>
+
+                    <div class="heat-list" id="heatHotspots"></div>
+                </div>
+
+                <!-- Key Locations Section -->
+                <div class="marker-section">
+                    <h3>
+                        📌 Key Review Locations
+                        <button class="marker-action-btn" id="addMarkerBtn">Add location</button>
+                    </h3>
+                    <div id="markerList" class="marker-list">
+                        <div class="marker-empty">Click “Add location” and then tap on the map to drop a flag.</div>
+                    </div>
                 </div>
 
                 <!-- Voice Notes List -->
@@ -664,6 +1071,12 @@
                         🎙️ Voice Notes
                         <span class="note-count" id="noteCount">(0)</span>
                     </h3>
+                    <div class="voice-notes-filters">
+                        <input type="text" id="voiceSearchInput" placeholder="Search notes or tags…" />
+                        <select id="voiceTagFilter">
+                            <option value="">All tags</option>
+                        </select>
+                    </div>
                     <div class="voice-note-list" id="voiceNoteList">
                         <div class="empty-notes">
                             <div class="empty-notes-icon">🎵</div>
@@ -692,14 +1105,57 @@
             </div>
 
             <div class="progress-bar-container" id="progressContainer">
+                <div class="timeline-events-layer" id="timelineEvents"></div>
                 <div class="progress-bar" id="progressBar"></div>
             </div>
 
-            <div class="time-display">
-                <span id="currentTime">00:00:00</span>
-                <span id="totalTime">00:00:00</span>
-            </div>
+        <div class="time-display">
+            <span id="currentTime">00:00:00</span>
+            <span id="totalTime">00:00:00</span>
         </div>
+    </div>
+
+    <!-- Marker Modal -->
+    <div class="marker-modal-backdrop" id="markerModal">
+        <div class="marker-modal">
+            <header>
+                <h4 id="markerModalTitle">Add key location</h4>
+                <button class="close-modal" type="button" onclick="closeMarkerModal()">✕</button>
+            </header>
+            <form id="markerForm">
+                <input type="hidden" id="markerIdField" />
+                <input type="hidden" id="markerLatField" />
+                <input type="hidden" id="markerLngField" />
+                <input type="hidden" id="markerTimestampField" />
+                <label>
+                    Title / label
+                    <input type="text" id="markerLabelField" placeholder="e.g. Prüfung Startpunkt" required />
+                </label>
+                <label>
+                    Marker type
+                    <select id="markerTypeField">
+                        <option value="exam">🚩 Driving exam focus</option>
+                        <option value="hazard">⚠️ Complex intersection</option>
+                        <option value="tip">💡 Coaching tip</option>
+                        <option value="general">📍 Custom</option>
+                    </select>
+                </label>
+                <label>
+                    Tags (comma separated)
+                    <input type="text" id="markerTagsField" placeholder="exam, hazard" />
+                </label>
+                <label>
+                    Notes / description
+                    <textarea id="markerDescriptionField" placeholder="What should learners remember at this location?"></textarea>
+                </label>
+                <div class="marker-modal-meta" id="markerMetaInfo" style="font-size:0.8em; color:#6c757d;"></div>
+                <div class="modal-actions">
+                    <button type="button" class="cancel-btn" onclick="closeMarkerModal()">Cancel</button>
+                    <button type="submit" class="save-btn">Save marker</button>
+                </div>
+            </form>
+        </div>
+    </div>
     </div>
 
     <!-- Leaflet JS -->
@@ -717,6 +1173,28 @@
         let routePath = null;
         let carMarker = null;
         let voiceMarkers = [];
+        let reviewMarkersLayer = null;
+        let reviewMarkerIcons = {};
+        let reviewMarkers = [];
+        let heatWindows = [];
+        let markerControlsInitialized = false;
+        let playbackControlsInitialized = false;
+        let voiceFiltersInitialized = false;
+        let routeLayerGroup = null;
+        let analysisToggleInitialized = false;
+
+        const escapeHtml = (input) => {
+            if (input === undefined || input === null) return '';
+            return String(input)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        };
+        let isAddingMarker = false;
+        let pendingMarkerLatLng = null;
+        let voiceNoteFilters = { search: '', tag: '' };
         let isPlaying = false;
         let currentTime = 0;
         let playbackSpeed = 1;
@@ -739,6 +1217,9 @@
                 attribution: '© OpenStreetMap contributors',
                 maxZoom: 19
             }).addTo(map);
+
+            reviewMarkersLayer = L.layerGroup().addTo(map);
+            map.on('click', handleMapClick);
         }
 
         // Load route data from backend API
@@ -785,17 +1266,151 @@
 
                 const audioNotes = (session.audio_notes || []).map((note, idx) => {
                     const tsMs = note.timestamp ? Date.parse(note.timestamp) : startTimestampMs;
+                    const relativeMs = Math.max(0, tsMs - startTimestampMs);
+                    const durationMs = note.duration_ms ? Number(note.duration_ms) : null;
+                    const tags = Array.isArray(note.tags)
+                        ? note.tags.filter(Boolean).map(String)
+                        : (typeof note.tags === 'string' && note.tags.length
+                            ? note.tags.split(',').map(tag => tag.trim()).filter(Boolean)
+                            : []);
+
                     return {
                         id: note.filename || `note_${idx}`,
                         timestamp: note.timestamp,
-                        relativeMs: Math.max(0, tsMs - startTimestampMs),
+                        relativeMs,
                         location: (note.latitude !== null && note.latitude !== undefined && note.longitude !== null && note.longitude !== undefined)
                             ? { lat: note.latitude, lng: note.longitude }
                             : null,
                         audioUrl: toBackendUrl(note.file_url),
-                        durationMs: note.duration_ms ? Number(note.duration_ms) : null,
+                        durationMs,
+                        tags,
+                        label: note.label || null,
+                        transcript: note.transcript || null,
                     };
                 }).sort((a, b) => (a.relativeMs || 0) - (b.relativeMs || 0));
+
+                const toRelativeMs = (isoTs) => {
+                    if (!isoTs) return null;
+                    const parsed = Date.parse(isoTs);
+                    if (Number.isNaN(parsed) || startTimestampMs === null) return null;
+                    return Math.max(0, parsed - startTimestampMs);
+                };
+
+                const haversine = (a, b) => {
+                    if (!a || !b) return 0;
+                    const toRad = (deg) => (deg * Math.PI) / 180;
+                    const R = 6371000; // metres
+                    const dLat = toRad(b.lat - a.lat);
+                    const dLon = toRad(b.lng - a.lng);
+                    const lat1 = toRad(a.lat);
+                    const lat2 = toRad(b.lat);
+                    const sinLat = Math.sin(dLat / 2);
+                    const sinLon = Math.sin(dLon / 2);
+                    const c = 2 * Math.atan2(
+                        Math.sqrt(sinLat * sinLat + Math.cos(lat1) * Math.cos(lat2) * sinLon * sinLon),
+                        Math.sqrt(1 - (sinLat * sinLat + Math.cos(lat1) * Math.cos(lat2) * sinLon * sinLon))
+                    );
+                    return R * c;
+                };
+
+                normalizedPoints.forEach((point, idx) => {
+                    if (idx === 0) {
+                        point.speedMs = point.speed ? Number(point.speed) : 0;
+                        point.deltaSpeed = 0;
+                        point.deltaTime = 0;
+                        return;
+                    }
+                    const prev = normalizedPoints[idx - 1];
+                    const deltaTime = Math.max(0, (point.timeMs - prev.timeMs) / 1000);
+                    const travelled = haversine(prev, point);
+                    const computedSpeed = deltaTime > 0 ? travelled / deltaTime : 0;
+                    const sensorSpeed = point.speed ? Number(point.speed) : null;
+                    point.speedMs = sensorSpeed && sensorSpeed > 0 ? sensorSpeed : computedSpeed;
+                    const prevSpeed = prev.speedMs ?? computedSpeed;
+                    point.deltaSpeed = point.speedMs - prevSpeed;
+                    point.deltaTime = deltaTime;
+                });
+
+                const findNearestPointByLocation = (lat, lng) => {
+                    if (!normalizedPoints.length) return null;
+                    let closest = normalizedPoints[0];
+                    let minDistance = Number.POSITIVE_INFINITY;
+                    normalizedPoints.forEach((point) => {
+                        const dist = haversine(point, { lat, lng });
+                        if (dist < minDistance) {
+                            minDistance = dist;
+                            closest = point;
+                        }
+                    });
+                    return { point: closest, distance: minDistance };
+                };
+
+                const rawMarkers = Array.isArray(session.review_markers) ? session.review_markers : [];
+                const markers = rawMarkers.map((marker, idx) => {
+                    const relativeFromTimestamp = toRelativeMs(marker.timestamp);
+                    let relativeMs = relativeFromTimestamp;
+                    let nearestPoint;
+
+                    if ((relativeMs === null || Number.isNaN(relativeMs)) && marker.latitude !== null && marker.latitude !== undefined && marker.longitude !== null && marker.longitude !== undefined) {
+                        const nearest = findNearestPointByLocation(marker.latitude, marker.longitude);
+                        if (nearest) {
+                            nearestPoint = nearest.point;
+                            relativeMs = nearest.point.timeMs;
+                        }
+                    } else if (relativeMs !== null) {
+                        nearestPoint = normalizedPoints.find(p => Math.abs(p.timeMs - relativeMs) < 2000) || null;
+                    }
+
+                    const timestampIso = marker.timestamp || (nearestPoint ? new Date(startTimestampMs + nearestPoint.timeMs).toISOString() : null);
+                    const tags = Array.isArray(marker.tags)
+                        ? marker.tags.filter(Boolean).map(String)
+                        : (typeof marker.tags === 'string' && marker.tags.length
+                            ? marker.tags.split(',').map(t => t.trim()).filter(Boolean)
+                            : []);
+
+                    return {
+                        id: marker.marker_id || `marker_${idx}`,
+                        label: marker.label || 'Key location',
+                        type: marker.type || 'general',
+                        description: marker.description || '',
+                        latitude: marker.latitude,
+                        longitude: marker.longitude,
+                        timestamp: timestampIso,
+                        relativeMs: typeof relativeMs === 'number' && !Number.isNaN(relativeMs) ? relativeMs : 0,
+                        tags,
+                        createdAt: marker.created_at || null,
+                        updatedAt: marker.updated_at || null,
+                        source: marker.source || 'coach',
+                        nearestPoint,
+                    };
+                }).sort((a, b) => (a.relativeMs || 0) - (b.relativeMs || 0));
+
+                const brakingEvents = [];
+                for (let i = 1; i < normalizedPoints.length; i++) {
+                    const prev = normalizedPoints[i - 1];
+                    const curr = normalizedPoints[i];
+                    const dt = curr.deltaTime || Math.max(0, (curr.timeMs - prev.timeMs) / 1000);
+                    if (!dt || dt <= 0) continue;
+                    const prevSpeed = prev.speedMs ?? 0;
+                    const currSpeed = curr.speedMs ?? prevSpeed;
+                    const acceleration = (currSpeed - prevSpeed) / dt;
+                    if (acceleration < -1.5) {
+                        brakingEvents.push({
+                            startMs: Math.max(0, prev.timeMs - 1500),
+                            endMs: curr.timeMs + 1500,
+                            acceleration,
+                            location: { lat: curr.lat, lng: curr.lng },
+                        });
+                    }
+                }
+                brakingEvents.sort((a, b) => a.acceleration - b.acceleration);
+                const topBrakingWindows = brakingEvents.slice(0, 3).map((event, idx) => ({
+                    id: `brake_${idx}`,
+                    startMs: Math.max(0, event.startMs),
+                    endMs: Math.min(totalDurationSeconds * 1000, event.endMs),
+                    acceleration: event.acceleration,
+                    location: event.location,
+                }));
 
                 const routeName = summary.recorded_at
                     ? `Drive ${new Date(summary.recorded_at).toLocaleString()}`
@@ -808,10 +1423,18 @@
                     distance: (summary.distance_km ?? 0).toFixed(2),
                     points: normalizedPoints,
                     voiceNotes: audioNotes,
+                    markers,
+                    heatWindows: topBrakingWindows,
+                    totalDurationMs: totalDurationSeconds * 1000,
                     previewUrl: toBackendUrl(summary.preview_url),
                     summary,
                     session,
                 };
+
+                reviewMarkers = markers;
+                heatWindows = topBrakingWindows;
+                routeData.findNearestPointByLocation = (lat, lng) => findNearestPointByLocation(lat, lng);
+                routeData.toRelativeMs = toRelativeMs;
 
                 console.log('Route data loaded:', routeData);
 
@@ -822,6 +1445,18 @@
                 alert('Failed to load route data: ' + error.message);
                 window.close();
             }
+        }
+
+        async function refreshRouteData(statusMessage = 'Syncing changes...') {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                overlay.style.display = 'flex';
+                const label = overlay.querySelector('p');
+                if (label) {
+                    label.textContent = statusMessage;
+                }
+            }
+            await loadRouteData();
         }
 
         // Initialize route visualization
@@ -839,11 +1474,20 @@
             // Draw route on map
             drawRoute();
 
+            // Render markers on map + list
+            renderReviewMarkersOnMap();
+            renderMarkerList();
+
             // Add voice notes
+            initializeVoiceNoteFilters();
             displayVoiceNotes();
 
             // Analyze speed data
             analyzeSpeedData();
+            renderHeatHotspots();
+
+            // Timeline markers
+            renderTimelineEvents();
 
             // Initialize playback
             initializePlayback();
@@ -861,13 +1505,22 @@
                 return;
             }
 
-            // Calculate speed statistics
-            const speeds = points.map(p => p.speed || 0).filter(s => s > 0);
-            
+            if (speedChart) {
+                speedChart.destroy();
+                speedChart = null;
+            }
+
+            // Calculate speed statistics (convert to km/h)
+            const speeds = points
+                .map(p => (p.speedMs !== undefined ? p.speedMs : p.speed || 0))
+                .map(speed => speed * 3.6)
+                .filter(speed => speed > 0);
+
             if (speeds.length === 0) {
-                console.warn('No speed data available');
                 document.getElementById('avgSpeed').textContent = 'N/A';
                 document.getElementById('maxSpeed').textContent = 'N/A';
+                document.getElementById('accelCount').textContent = '0';
+                document.getElementById('brakeCount').textContent = '0';
                 return;
             }
 
@@ -892,33 +1545,62 @@
 
             // Update UI
             document.getElementById('avgSpeed').textContent = avgSpeed + ' km/h';
-            document.getElementById('maxSpeed').textContent = maxSpeed + ' km/h';
+            const maxSpeedEl = document.getElementById('maxSpeed');
+            maxSpeedEl.textContent = maxSpeed + ' km/h';
+            maxSpeedEl.classList.remove('danger', 'warning');
             document.getElementById('accelCount').textContent = accelCount;
             document.getElementById('brakeCount').textContent = brakeCount;
 
             // Add color if speed is high
             if (maxSpeed > 100) {
-                document.getElementById('maxSpeed').classList.add('danger');
+                maxSpeedEl.classList.add('danger');
             } else if (maxSpeed > 80) {
-                document.getElementById('maxSpeed').classList.add('warning');
+                maxSpeedEl.classList.add('warning');
             }
 
             // Setup toggle buttons
             setupAnalysisToggle();
         }
 
+        function renderHeatHotspots() {
+            const container = document.getElementById('heatHotspots');
+            if (!container) return;
+
+            if (!heatWindows.length) {
+                container.innerHTML = '<div class="heat-card">No heavy braking detected on this drive.</div>';
+                return;
+            }
+
+            container.innerHTML = '';
+            heatWindows.forEach((window) => {
+                const card = document.createElement('div');
+                card.className = 'heat-card';
+                card.innerHTML = `
+                    <strong>Hard brake at ${formatTimestamp(window.startMs)}</strong>
+                    <div class="heat-meta">Deceleration: ${Math.abs(window.acceleration).toFixed(2)} m/s²</div>
+                `;
+                card.addEventListener('click', () => {
+                    jumpToTime(window.startMs);
+                    if (window.location) {
+                        map.setView([window.location.lat, window.location.lng], 15, { animate: true });
+                    }
+                });
+                container.appendChild(card);
+            });
+        }
+
         // Identify speed segments (acceleration, braking, steady)
         function identifySpeedSegments(points) {
             const segments = [];
-            const ACCEL_THRESHOLD = 2; // km/h per second
-            const BRAKE_THRESHOLD = -2;
+            const ACCEL_THRESHOLD = 1.5; // m/s^2
+            const BRAKE_THRESHOLD = -1.5;
 
             for (let i = 1; i < points.length; i++) {
-                const prevSpeed = points[i - 1].speed || 0;
-                const currSpeed = points[i].speed || 0;
+                const prevSpeed = points[i - 1].speedMs ?? points[i - 1].speed ?? 0;
+                const currSpeed = points[i].speedMs ?? points[i].speed ?? 0;
                 const timeDiff = ((points[i].timeMs || 0) - (points[i - 1].timeMs || 0)) / 1000;
 
-                if (timeDiff === 0) continue;
+                if (!timeDiff) continue;
 
                 const acceleration = (currSpeed - prevSpeed) / timeDiff;
 
@@ -929,7 +1611,6 @@
                     type = 'braking';
                 }
 
-                // Merge consecutive segments of same type
                 if (segments.length > 0 && segments[segments.length - 1].type === type) {
                     segments[segments.length - 1].endIndex = i;
                 } else {
@@ -946,23 +1627,24 @@
 
         // Setup analysis toggle
         function setupAnalysisToggle() {
+            if (analysisToggleInitialized) {
+                return;
+            }
+            analysisToggleInitialized = true;
+
             document.querySelectorAll('.toggle-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const view = btn.dataset.view;
                     
-                    // Update active state
                     document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
 
-                    // Toggle views
                     if (view === 'stats') {
                         document.getElementById('speedStatsView').style.display = 'block';
                         document.getElementById('speedChartView').style.display = 'none';
                     } else if (view === 'chart') {
                         document.getElementById('speedStatsView').style.display = 'none';
                         document.getElementById('speedChartView').style.display = 'block';
-                        
-                        // Initialize chart if not already done
                         if (!speedChart && speedAnalysis) {
                             initSpeedChart();
                         }
@@ -980,7 +1662,7 @@
                 data: {
                     labels: speedAnalysis.timestamps.map((_, i) => {
                         if (i % Math.floor(speedAnalysis.timestamps.length / 10) === 0) {
-                            return formatTimestamp(routeData.points[i].timestamp);
+                            return formatTimestamp(routeData.points[i].timeMs || 0);
                         }
                         return '';
                     }),
@@ -1055,11 +1737,22 @@
                 return;
             }
             
+            if (!routeLayerGroup) {
+                routeLayerGroup = L.layerGroup().addTo(map);
+            } else {
+                routeLayerGroup.clearLayers();
+            }
+
+            if (carMarker) {
+                map.removeLayer(carMarker);
+                carMarker = null;
+            }
+
             // Draw route segments with speed-based colors
             for (let i = 0; i < points.length - 1; i++) {
                 const p1 = points[i];
                 const p2 = points[i + 1];
-                const speed = p1.speed || 0;
+                const speed = (p1.speedMs !== undefined ? p1.speedMs : p1.speed || 0) * 3.6;
                 
                 // Get color based on speed
                 const color = getSpeedColor(speed);
@@ -1071,12 +1764,12 @@
                         weight: 4,
                         opacity: 0.8
                     }
-                ).addTo(map);
+                ).addTo(routeLayerGroup);
             }
 
             // Create a reference polyline for bounds (invisible)
             const coordinates = points.map(p => [p.lat, p.lng]);
-            const boundsLine = L.polyline(coordinates, { opacity: 0 }).addTo(map);
+            const boundsLine = L.polyline(coordinates, { opacity: 0 }).addTo(routeLayerGroup);
             
             // Fit map to route bounds
             map.fitBounds(boundsLine.getBounds(), { padding: [50, 50] });
@@ -1088,7 +1781,7 @@
                     html: '🏁',
                     iconSize: [30, 30]
                 })
-            }).addTo(map).bindPopup('Start');
+            }).addTo(routeLayerGroup).bindPopup('Start');
 
             // Add end marker
             L.marker(coordinates[coordinates.length - 1], {
@@ -1097,7 +1790,7 @@
                     html: '🎯',
                     iconSize: [30, 30]
                 })
-            }).addTo(map).bindPopup('End');
+            }).addTo(routeLayerGroup).bindPopup('End');
 
             // Initialize car marker (hidden initially)
             carMarker = L.marker(coordinates[0], {
@@ -1110,20 +1803,484 @@
             carMarker.setOpacity(0);
         }
 
+        function getReviewMarkerIcon(type = 'general') {
+            const palette = {
+                exam: '#2563eb',
+                hazard: '#ef4444',
+                tip: '#10b981',
+                general: '#f59e0b',
+            };
+            const color = palette[type] || palette.general;
+            if (!reviewMarkerIcons[type]) {
+                reviewMarkerIcons[type] = L.divIcon({
+                    className: 'review-marker-icon',
+                    html: `<div style="background:${color};width:16px;height:16px;border-radius:50%;border:2px solid white;box-shadow:0 0 0 3px rgba(0,0,0,0.2);"></div>`,
+                    iconSize: [16, 16],
+                    iconAnchor: [8, 8],
+                });
+            }
+            return reviewMarkerIcons[type];
+        }
+
+        function initializeMarkerControls() {
+            if (markerControlsInitialized) return;
+            markerControlsInitialized = true;
+
+            const addBtn = document.getElementById('addMarkerBtn');
+            if (addBtn) {
+                addBtn.addEventListener('click', () => {
+                    setMarkerPlacementMode(!isAddingMarker);
+                });
+            }
+
+            const markerForm = document.getElementById('markerForm');
+            if (markerForm) {
+                markerForm.addEventListener('submit', submitMarkerForm);
+            }
+        }
+
+        function setMarkerPlacementMode(active) {
+            isAddingMarker = active;
+            const addBtn = document.getElementById('addMarkerBtn');
+            if (addBtn) {
+                addBtn.classList.toggle('active', active);
+                addBtn.textContent = active ? 'Click on map…' : 'Add location';
+            }
+            if (active) {
+                pendingMarkerLatLng = null;
+            }
+        }
+
+        function handleMapClick(event) {
+            if (!isAddingMarker) {
+                return;
+            }
+            pendingMarkerLatLng = event.latlng;
+            setMarkerPlacementMode(false);
+            openMarkerModal({ lat: event.latlng.lat, lng: event.latlng.lng });
+        }
+
+        function openMarkerModal(position, marker = null) {
+            const backdrop = document.getElementById('markerModal');
+            if (!backdrop) return;
+
+            initializeMarkerControls();
+
+            const title = document.getElementById('markerModalTitle');
+            const markerIdField = document.getElementById('markerIdField');
+            const latField = document.getElementById('markerLatField');
+            const lngField = document.getElementById('markerLngField');
+            const timestampField = document.getElementById('markerTimestampField');
+            const labelField = document.getElementById('markerLabelField');
+            const typeField = document.getElementById('markerTypeField');
+            const tagsField = document.getElementById('markerTagsField');
+            const descriptionField = document.getElementById('markerDescriptionField');
+            const metaInfo = document.getElementById('markerMetaInfo');
+
+            let relativeMs = marker ? marker.relativeMs : null;
+            let timestampIso = marker ? marker.timestamp : null;
+            const targetLat = marker ? marker.latitude : position?.lat;
+            const targetLng = marker ? marker.longitude : position?.lng;
+
+            if ((!timestampIso || relativeMs === null) && targetLat !== undefined && targetLng !== undefined && routeData?.findNearestPointByLocation) {
+                const nearest = routeData.findNearestPointByLocation(targetLat, targetLng);
+                if (nearest) {
+                    relativeMs = nearest.point.timeMs;
+                    timestampIso = new Date(startTimestampMs + nearest.point.timeMs).toISOString();
+                }
+            }
+
+            markerIdField.value = marker ? marker.id : '';
+            latField.value = targetLat ?? '';
+            lngField.value = targetLng ?? '';
+            timestampField.value = timestampIso ?? '';
+            labelField.value = marker?.label || '';
+            typeField.value = marker?.type || 'general';
+            tagsField.value = marker?.tags?.join(', ') || '';
+            descriptionField.value = marker?.description || '';
+
+            const coordText = targetLat !== undefined && targetLng !== undefined
+                ? `Lat ${targetLat.toFixed(6)}, Lng ${targetLng.toFixed(6)}`
+                : 'No GPS coordinates';
+            const timeText = typeof relativeMs === 'number'
+                ? `Playback time ${formatTimestamp(relativeMs)}`
+                : 'No time reference';
+            metaInfo.textContent = `${coordText} • ${timeText}`;
+
+            title.textContent = marker ? 'Edit key location' : 'Add key location';
+
+            backdrop.style.display = 'flex';
+        }
+
+        function closeMarkerModal() {
+            const backdrop = document.getElementById('markerModal');
+            if (backdrop) {
+                backdrop.style.display = 'none';
+            }
+            setMarkerPlacementMode(false);
+        }
+
+        function buildMarkerPayloadFromForm() {
+            const lat = parseFloat(document.getElementById('markerLatField').value);
+            const lng = parseFloat(document.getElementById('markerLngField').value);
+            const timestamp = document.getElementById('markerTimestampField').value || null;
+            const label = document.getElementById('markerLabelField').value.trim();
+            const type = document.getElementById('markerTypeField').value;
+            const description = document.getElementById('markerDescriptionField').value.trim();
+            const tagsInput = document.getElementById('markerTagsField').value;
+            const tags = tagsInput
+                ? tagsInput.split(',').map(tag => tag.trim()).filter(Boolean)
+                : [];
+
+            return { latitude: lat, longitude: lng, timestamp, label, type, description, tags };
+        }
+
+        async function submitMarkerForm(event) {
+            event.preventDefault();
+            const markerIdField = document.getElementById('markerIdField');
+            const payload = buildMarkerPayloadFromForm();
+
+            if (Number.isNaN(payload.latitude) || Number.isNaN(payload.longitude)) {
+                alert('Latitude and longitude are required. Click on the map to choose a location.');
+                return;
+            }
+
+            const markerId = markerIdField.value;
+            const endpoint = markerId
+                ? `/backend/api/mobile/routes/${ROUTE_ID}/markers/${markerId}`
+                : `/backend/api/mobile/routes/${ROUTE_ID}/markers`;
+            const method = markerId ? 'PATCH' : 'POST';
+
+            try {
+                const response = await fetch(endpoint, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({}));
+                    throw new Error(error.error || `Failed to save marker (${response.status})`);
+                }
+
+                closeMarkerModal();
+                await refreshRouteData(markerId ? 'Updating marker…' : 'Saving marker…');
+            } catch (err) {
+                console.error('Failed to save marker', err);
+                alert(err.message || 'Failed to save marker');
+            }
+        }
+
+        async function deleteMarker(markerId) {
+            if (!markerId) return;
+            if (!confirm('Remove this marker from the session?')) {
+                return;
+            }
+            try {
+                const response = await fetch(`/backend/api/mobile/routes/${ROUTE_ID}/markers/${markerId}`, {
+                    method: 'DELETE',
+                });
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({}));
+                    throw new Error(error.error || `Failed to delete marker (${response.status})`);
+                }
+                await refreshRouteData('Removing marker…');
+            } catch (err) {
+                console.error('Failed to delete marker', err);
+                alert(err.message || 'Failed to delete marker');
+            }
+        }
+
+        function renderReviewMarkersOnMap() {
+            if (!reviewMarkersLayer) return;
+            reviewMarkersLayer.clearLayers();
+
+            reviewMarkers.forEach((marker) => {
+                if (marker.latitude === undefined || marker.longitude === undefined) return;
+                const leafletMarker = L.marker([marker.latitude, marker.longitude], {
+                    icon: getReviewMarkerIcon(marker.type),
+                }).addTo(reviewMarkersLayer);
+
+                const description = marker.description ? `<br/>${marker.description}` : '';
+                leafletMarker.bindPopup(`<strong>${marker.label}</strong>${description}`);
+                leafletMarker.on('click', () => {
+                    if (typeof marker.relativeMs === 'number') {
+                        jumpToTime(marker.relativeMs);
+                    }
+                });
+            });
+        }
+
+        function renderMarkerList() {
+            const container = document.getElementById('markerList');
+            initializeMarkerControls();
+            if (!container) return;
+
+            setMarkerPlacementMode(false);
+
+            if (!reviewMarkers.length) {
+                container.innerHTML = `<div class="marker-empty">No locations flagged yet. Add markers to highlight exam hotspots.</div>`;
+                return;
+            }
+
+            container.innerHTML = '';
+            reviewMarkers.forEach((marker) => {
+                const card = document.createElement('div');
+                card.className = 'marker-card';
+
+                const timeLabel = typeof marker.relativeMs === 'number'
+                    ? formatTimestamp(marker.relativeMs)
+                    : '—';
+                const timestampDisplay = marker.timestamp
+                    ? new Date(marker.timestamp).toLocaleString('de-DE')
+                    : 'No timestamp';
+
+                const tagsHtml = marker.tags?.length
+                    ? marker.tags.map(tag => `<span class="marker-tag">${escapeHtml(tag)}</span>`).join(' ')
+                    : '';
+
+                card.innerHTML = `
+                    <h4>${escapeHtml(marker.label)}</h4>
+                    <div class="marker-meta">${timestampDisplay} • ${timeLabel}</div>
+                    ${marker.description ? `<div class="marker-description">${escapeHtml(marker.description)}</div>` : ''}
+                    ${tagsHtml ? `<div class="marker-tags">${tagsHtml}</div>` : ''}
+                    <div class="marker-actions">
+                        <button class="focus-btn">Focus</button>
+                        <button class="focus-btn edit-btn">Edit</button>
+                        <button class="delete-btn">Delete</button>
+                    </div>
+                `;
+
+                const [focusBtn, editBtn, deleteBtn] = card.querySelectorAll('button');
+                focusBtn.addEventListener('click', () => {
+                    focusMarkerOnMap(marker);
+                });
+                editBtn.addEventListener('click', () => {
+                    openMarkerModal({ lat: marker.latitude, lng: marker.longitude }, marker);
+                });
+                deleteBtn.addEventListener('click', () => deleteMarker(marker.id));
+
+                container.appendChild(card);
+            });
+        }
+
+        function focusMarkerOnMap(marker) {
+            if (!marker) return;
+            if (marker.latitude !== undefined && marker.longitude !== undefined) {
+                map.setView([marker.latitude, marker.longitude], 16, { animate: true });
+            }
+            if (typeof marker.relativeMs === 'number') {
+                jumpToTime(marker.relativeMs);
+            }
+        }
+
+        function noteMatchesFilter(note) {
+            if (!note) return false;
+            const searchTerm = (voiceNoteFilters.search || '').toLowerCase();
+            const tagFilter = (voiceNoteFilters.tag || '').toLowerCase();
+            const tags = (note.tags || []).map(tag => tag.toLowerCase());
+
+            const matchesTag = !tagFilter || tags.includes(tagFilter);
+            if (!matchesTag) return false;
+
+            if (!searchTerm) return true;
+
+            const labelText = note.label ? String(note.label).toLowerCase() : '';
+            const transcriptText = note.transcript ? String(note.transcript).toLowerCase() : '';
+            const locationText = note.location
+                ? `${note.location.lat.toFixed(5)},${note.location.lng.toFixed(5)}`
+                : '';
+
+            return (
+                labelText.includes(searchTerm) ||
+                transcriptText.includes(searchTerm) ||
+                tags.some(tag => tag.includes(searchTerm)) ||
+                locationText.includes(searchTerm)
+            );
+        }
+
+        function initializeVoiceNoteFilters() {
+            const searchInput = document.getElementById('voiceSearchInput');
+            const tagSelect = document.getElementById('voiceTagFilter');
+
+            if (!searchInput || !tagSelect) return;
+
+            const uniqueTags = new Set();
+            (routeData.voiceNotes || []).forEach(note => {
+                (note.tags || []).forEach(tag => uniqueTags.add(tag));
+            });
+
+            const previousValue = tagSelect.value;
+            const options = ['<option value=\"\">All tags</option>']
+                .concat([...uniqueTags].sort().map(tag => `<option value=\"${tag}\">${tag}</option>`));
+            tagSelect.innerHTML = options.join('');
+            if (previousValue && uniqueTags.has(previousValue)) {
+                tagSelect.value = previousValue;
+            } else {
+                tagSelect.value = '';
+                voiceNoteFilters.tag = '';
+            }
+
+            if (!voiceFiltersInitialized) {
+                searchInput.addEventListener('input', (event) => {
+                    voiceNoteFilters.search = event.target.value.toLowerCase();
+                    displayVoiceNotes();
+                    renderTimelineEvents();
+                });
+
+                tagSelect.addEventListener('change', (event) => {
+                    voiceNoteFilters.tag = event.target.value;
+                    displayVoiceNotes();
+                    renderTimelineEvents();
+                });
+                voiceFiltersInitialized = true;
+            }
+        }
+
+        async function saveVoiceNoteTags(noteId, tagsInput) {
+            const tags = tagsInput
+                ? tagsInput.split(',').map(tag => tag.trim()).filter(Boolean)
+                : [];
+            try {
+                const response = await fetch(`/backend/api/mobile/routes/${ROUTE_ID}/audio/${encodeURIComponent(noteId)}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ tags }),
+                });
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({}));
+                    throw new Error(error.error || `Failed to update voice note (${response.status})`);
+                }
+                await refreshRouteData('Updating voice note…');
+            } catch (err) {
+                console.error('Failed to update tags', err);
+                alert(err.message || 'Failed to update tags');
+            }
+        }
+
+        function toggleTagEditor(noteCard, show) {
+            const editor = noteCard.querySelector('.note-tag-editor');
+            if (!editor) return;
+            editor.style.display = show ? 'flex' : 'none';
+            if (show) {
+                const input = editor.querySelector('input');
+                if (input) {
+                    input.focus();
+                    input.select();
+                }
+            }
+        }
+
+        const percentOfTime = (value, total) => {
+            if (!total) return 0;
+            return Math.max(0, Math.min(100, (value / total) * 100));
+        };
+
+        function renderTimelineEvents() {
+            const container = document.getElementById('timelineEvents');
+            if (!container) return;
+
+            const totalMs = routeData.totalDurationMs || totalDurationSeconds * 1000;
+            if (!totalMs || !Number.isFinite(totalMs) || totalMs <= 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            container.innerHTML = '';
+
+            heatWindows.forEach((window) => {
+                const range = document.createElement('div');
+                range.className = 'timeline-range heat';
+                const windowStart = Math.min(window.startMs, window.endMs);
+                const windowEnd = Math.max(window.startMs, window.endMs);
+                const startPercent = percentOfTime(windowStart, totalMs);
+                const endPercent = percentOfTime(windowEnd, totalMs);
+                const widthPercent = Math.max(2, endPercent - startPercent);
+                range.style.left = `${startPercent}%`;
+                range.style.width = `${widthPercent}%`;
+                range.title = `Hard braking at ${formatTimestamp(window.startMs)} (${Math.abs(window.acceleration).toFixed(2)} m/s²)`;
+                range.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    jumpToTime(window.startMs);
+                });
+                container.appendChild(range);
+            });
+
+            reviewMarkers.forEach((marker) => {
+                if (typeof marker.relativeMs !== 'number') return;
+                const markerEl = document.createElement('div');
+                markerEl.className = 'timeline-event marker';
+                markerEl.style.left = `${percentOfTime(marker.relativeMs, totalMs)}%`;
+                markerEl.title = marker.label || 'Flagged location';
+                markerEl.dataset.markerId = marker.id;
+                markerEl.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    focusMarkerOnMap(marker);
+                });
+                container.appendChild(markerEl);
+            });
+
+            (routeData.voiceNotes || []).forEach((note, index) => {
+                if (typeof note.relativeMs !== 'number') return;
+                const noteEl = document.createElement('div');
+                noteEl.className = 'timeline-event voice';
+                noteEl.style.left = `${percentOfTime(note.relativeMs, totalMs)}%`;
+                noteEl.title = `Voice note at ${formatTimestamp(note.relativeMs)}`;
+                noteEl.dataset.noteIndex = String(index);
+                noteEl.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    jumpToNote(index);
+                });
+                container.appendChild(noteEl);
+            });
+
+            updateTimelineActiveState();
+        }
+
+        function updateTimelineActiveState() {
+            const voiceNoteElements = document.querySelectorAll('.timeline-event.voice');
+            const notes = routeData.voiceNotes || [];
+            voiceNoteElements.forEach((el) => {
+                const index = Number(el.dataset.noteIndex);
+                const note = notes[index];
+                if (!note) return;
+                if (Math.abs((note.relativeMs || 0) - currentTime) < 1500) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
+            });
+        }
+
         // Display voice notes
         function displayVoiceNotes() {
-            const voiceNotes = routeData.voiceNotes || [];
+            const allNotes = routeData.voiceNotes || [];
             const container = document.getElementById('voiceNoteList');
-            document.getElementById('noteCount').textContent = `(${voiceNotes.length})`;
+            const totalNotes = allNotes.length;
+            const visibleEntries = allNotes
+                .map((note, index) => ({ note, index }))
+                .filter(({ note }) => noteMatchesFilter(note));
+
+            const visibleCount = visibleEntries.length;
+            const noteCountLabel = document.getElementById('noteCount');
+            if (noteCountLabel) {
+                noteCountLabel.textContent = visibleCount === totalNotes
+                    ? `(${totalNotes})`
+                    : `(${visibleCount}/${totalNotes})`;
+            }
 
             voiceMarkers.forEach(marker => map.removeLayer(marker));
             voiceMarkers = [];
 
-            if (voiceNotes.length === 0) {
+            if (visibleCount === 0) {
                 container.innerHTML = `
                     <div class="empty-notes">
                         <div class="empty-notes-icon">🎵</div>
-                        <p>No voice notes in this route</p>
+                        <p>No voice notes match the current filter</p>
                     </div>
                 `;
                 return;
@@ -1131,26 +2288,23 @@
 
             container.innerHTML = '';
 
-            voiceNotes.forEach((note, index) => {
-                // Add marker to map
+            visibleEntries.forEach(({ note, index }, visibleIndex) => {
                 if (note.location && note.location.lat && note.location.lng) {
                     const marker = L.marker([note.location.lat, note.location.lng], {
                         icon: L.divIcon({
                             className: 'voice-marker',
-                            html: `${index + 1}`,
+                            html: `${visibleIndex + 1}`,
                             iconSize: [30, 30]
                         })
                     }).addTo(map);
-                    
+
                     marker.noteId = note.id;
                     voiceMarkers.push(marker);
-
                     marker.on('click', () => {
                         jumpToNote(index);
                     });
                 }
 
-                // Add to list
                 const noteCard = document.createElement('div');
                 noteCard.className = 'voice-note-card';
                 noteCard.dataset.noteId = note.id;
@@ -1161,27 +2315,75 @@
                     ? `📍 ${note.location.lat.toFixed(6)}, ${note.location.lng.toFixed(6)}`
                     : '📍 No GPS location';
                 const durationStr = note.durationMs ? `⏱️ ${formatTimestamp(note.durationMs)}` : '';
+                const tagsHtml = note.tags && note.tags.length
+                    ? note.tags.map(tag => `<span class="note-tag">${escapeHtml(tag)}</span>`).join('')
+                    : '<span class="note-tag-empty">No tags yet</span>';
+                const labelPrefix = note.label ? `<strong>${escapeHtml(note.label)}</strong> • ` : '';
 
                 noteCard.innerHTML = `
                     <div class="note-header">
-                        <div class="note-time">🎤 Note #${index + 1} - ${timeStr}</div>
+                        <div class="note-time">${labelPrefix}🎤 Note #${visibleIndex + 1} – ${timeStr}</div>
                         <div class="note-actions">
-                            <button class="note-action-btn" onclick="jumpToNote(${index})">Jump</button>
-                            <button class="note-action-btn" onclick="playNote('${note.id}')" ${note.audioUrl ? '' : 'disabled'}>▶️</button>
+                            <button type="button" class="note-action-btn" data-action="jump">Jump</button>
+                            <button type="button" class="note-action-btn" data-action="play" ${note.audioUrl ? '' : 'disabled'}>▶️</button>
                         </div>
                     </div>
                     <div class="note-location">${locationStr}</div>
                     ${durationStr ? `<div class="note-duration">${durationStr}</div>` : ''}
+                    <div class="note-tags">
+                        ${tagsHtml}
+                        <button type="button" class="note-tag-edit-btn" data-action="edit-tags">✏️ Edit tags</button>
+                    </div>
+                    <div class="note-tag-editor" data-editor>
+                        <input type="text" value="${escapeHtml((note.tags || []).join(', '))}" placeholder="observation, hazard" />
+                        <div class="editor-actions">
+                            <button type="button" class="save-btn" data-action="save-tags">Save</button>
+                            <button type="button" class="cancel-btn" data-action="cancel-tags">Cancel</button>
+                        </div>
+                    </div>
+                    ${note.transcript ? `<div class="note-transcript">📝 ${escapeHtml(note.transcript)}</div>` : ''}
                 `;
 
-                noteCard.addEventListener('click', (e) => {
-                    if (!e.target.classList.contains('note-action-btn')) {
+                noteCard.addEventListener('click', (event) => {
+                    const action = event.target.getAttribute('data-action');
+                    if (action === 'jump') {
+                        event.stopPropagation();
                         jumpToNote(index);
+                        return;
                     }
+                    if (action === 'play') {
+                        event.stopPropagation();
+                        playNote(note.id);
+                        return;
+                    }
+                    if (action === 'edit-tags') {
+                        event.stopPropagation();
+                        toggleTagEditor(noteCard, true);
+                        return;
+                    }
+                    if (action === 'save-tags') {
+                        event.stopPropagation();
+                        const input = noteCard.querySelector('.note-tag-editor input');
+                        toggleTagEditor(noteCard, false);
+                        saveVoiceNoteTags(note.id, input.value);
+                        return;
+                    }
+                    if (action === 'cancel-tags') {
+                        event.stopPropagation();
+                        toggleTagEditor(noteCard, false);
+                        return;
+                    }
+                    const editor = noteCard.querySelector('.note-tag-editor');
+                    if (editor && editor.style.display === 'flex') {
+                        return;
+                    }
+                    jumpToNote(index);
                 });
 
                 container.appendChild(noteCard);
             });
+
+            updateTimelineActiveState();
         }
 
         // Format timestamp
@@ -1215,8 +2417,7 @@
             if (noteIndex >= voiceNotes.length) return;
 
             const note = voiceNotes[noteIndex];
-            currentTime = note.relativeMs || 0;
-            updatePlayback();
+            jumpToTime(note.relativeMs || 0);
 
             // Highlight note card
             document.querySelectorAll('.voice-note-card').forEach(card => {
@@ -1232,6 +2433,11 @@
 
         // Initialize playback controls
         function initializePlayback() {
+            if (playbackControlsInitialized) {
+                updatePlayback();
+                return;
+            }
+            playbackControlsInitialized = true;
             // Play/Pause button
             document.getElementById('playPauseBtn').addEventListener('click', togglePlayPause);
 
@@ -1298,7 +2504,7 @@
             if (!isPlaying) return;
 
             currentTime = (Date.now() - startTimestamp) * playbackSpeed;
-            const totalDuration = Math.max(1, totalDurationSeconds * 1000);
+            const totalDuration = Math.max(1, routeData.totalDurationMs || totalDurationSeconds * 1000);
 
             if (currentTime >= totalDuration) {
                 currentTime = totalDuration;
@@ -1312,6 +2518,12 @@
 
             updatePlayback();
             animationFrame = requestAnimationFrame(animatePlayback);
+        }
+
+        function jumpToTime(targetMs) {
+            const totalDuration = Math.max(1, routeData.totalDurationMs || totalDurationSeconds * 1000);
+            currentTime = Math.max(0, Math.min(targetMs, totalDuration));
+            updatePlayback();
         }
 
         // Update playback position
@@ -1341,6 +2553,7 @@
 
             // Check for voice notes at current time
             checkVoiceNotesAtTime(currentTime);
+            updateTimelineActiveState();
         }
 
         // Check and highlight active voice notes
@@ -1359,9 +2572,7 @@
 
         // Skip forward/backward
         function skip(ms) {
-            const totalDuration = Math.max(1, totalDurationSeconds * 1000);
-            currentTime = Math.max(0, Math.min(currentTime + ms, totalDuration));
-            updatePlayback();
+            jumpToTime(currentTime + ms);
         }
 
         // Jump to previous/next note
@@ -1369,8 +2580,7 @@
             const voiceNotes = routeData.voiceNotes || [];
             const prevNote = [...voiceNotes].reverse().find(n => (n.relativeMs || 0) < currentTime - 1000);
             if (prevNote) {
-                currentTime = prevNote.relativeMs || 0;
-                updatePlayback();
+                jumpToTime(prevNote.relativeMs || 0);
             }
         }
 
@@ -1378,8 +2588,7 @@
             const voiceNotes = routeData.voiceNotes || [];
             const nextNote = voiceNotes.find(n => (n.relativeMs || 0) > currentTime + 1000);
             if (nextNote) {
-                currentTime = nextNote.relativeMs || 0;
-                updatePlayback();
+                jumpToTime(nextNote.relativeMs || 0);
             }
         }
 
@@ -1401,7 +2610,13 @@
 
         // Hide loading overlay
         function hideLoading() {
-            document.getElementById('loadingOverlay').style.display = 'none';
+            const overlay = document.getElementById('loadingOverlay');
+            if (!overlay) return;
+            overlay.style.display = 'none';
+            const label = overlay.querySelector('p');
+            if (label) {
+                label.textContent = 'Loading route data...';
+            }
         }
     </script>
 </body>

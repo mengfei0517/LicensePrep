@@ -10,6 +10,7 @@ import json
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from pathlib import Path
+import uuid
 
 bp = Blueprint("mobile", __name__, url_prefix="/api/mobile")
 
@@ -45,6 +46,7 @@ def _save_session(session: Dict[str, Any]) -> None:
     if not session_id:
         raise ValueError("Session must include session_id")
 
+    session.setdefault("review_markers", [])
     session["last_updated"] = datetime.utcnow().isoformat()
     # Ensure preview_url stays in sync if snapshot present
     snapshot_name = session.get("preview_snapshot")
@@ -56,6 +58,18 @@ def _save_session(session: Dict[str, Any]) -> None:
     session_file = _session_file_path(session_id)
     with open(session_file, "w", encoding="utf-8") as f:
         json.dump(session, f, indent=2)
+    return session
+
+
+def _get_or_load_session(session_id: str) -> Optional[Dict[str, Any]]:
+    """Return an active session, loading it from disk if needed."""
+    if session_id in active_sessions:
+        return active_sessions[session_id]
+
+    session = _load_session(session_id)
+    if session:
+        active_sessions[session_id] = session
+    return session
 
 
 def _format_location(point: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
@@ -181,6 +195,7 @@ def start_session():
             "audio_notes": [],
             "status": "recording",
             "source": source,
+            "review_markers": [],
         }
 
         # Save to in-memory storage
@@ -238,7 +253,8 @@ def upload_gps_points(session_id):
 def upload_audio_note(session_id):
     """Upload audio note for a session"""
     try:
-        if session_id not in active_sessions:
+        session = _get_or_load_session(session_id)
+        if not session:
             return jsonify({"error": "Session not found"}), 404
 
         # Get audio file
@@ -266,6 +282,22 @@ def upload_audio_note(session_id):
         audio_file.save(audio_path)
 
         # Add audio note to session
+        raw_tags = request.form.get("tags")
+        tags: List[str] = []
+        if raw_tags:
+            try:
+                if isinstance(raw_tags, str):
+                    parsed = json.loads(raw_tags)
+                    if isinstance(parsed, list):
+                        tags = [str(tag) for tag in parsed if tag]
+                    elif isinstance(parsed, str):
+                        tags = [parsed]
+                elif isinstance(raw_tags, list):
+                    tags = [str(tag) for tag in raw_tags if tag]
+            except (json.JSONDecodeError, TypeError):
+                # Treat comma separated
+                tags = [part.strip() for part in raw_tags.split(",") if part.strip()]
+
         audio_note = {
             "filename": filename,
             "latitude": latitude_val,
@@ -273,6 +305,7 @@ def upload_audio_note(session_id):
             "timestamp": timestamp,
             "file_path": audio_path,
             "file_url": f"/api/mobile/routes/{session_id}/audio/{filename}",
+            "tags": tags,
         }
         if duration_ms not in (None, "", "null"):
             try:
@@ -280,7 +313,6 @@ def upload_audio_note(session_id):
             except ValueError:
                 pass
 
-        session = active_sessions[session_id]
         session["audio_notes"].append(audio_note)
 
         # Update session file
@@ -302,6 +334,171 @@ def upload_audio_note(session_id):
     except Exception as e:
         print(f"[Mobile API] ❌ Error uploading audio note: {e}")
         return jsonify({"error": str(e)}), 500
+
+
+@bp.patch("/routes/<session_id>/audio/<audio_id>")
+def update_audio_note(session_id, audio_id):
+    """Update metadata for an audio note (e.g., tags, label)."""
+    try:
+        session = _get_or_load_session(session_id)
+        if not session:
+            return jsonify({"error": "Session not found"}), 404
+
+        notes = session.setdefault("audio_notes", [])
+        note = next((n for n in notes if n.get("filename") == audio_id or n.get("filename") == f"{audio_id}.m4a"), None)
+        if not note:
+            return jsonify({"error": "Audio note not found"}), 404
+
+        data = request.get_json() or {}
+
+        tags = data.get("tags")
+        if tags is not None:
+            if isinstance(tags, list):
+                note["tags"] = [str(tag).strip() for tag in tags if str(tag).strip()]
+            elif isinstance(tags, str):
+                note["tags"] = [tag.strip() for tag in tags.split(",") if tag.strip()]
+            else:
+                return jsonify({"error": "Invalid tags format"}), 400
+
+        label = data.get("label")
+        if label is not None:
+            note["label"] = str(label).strip()
+
+        transcript = data.get("transcript")
+        if transcript is not None:
+            note["transcript"] = str(transcript).strip()
+
+        _save_session(session)
+
+        return jsonify({"success": True, "audio_note": note}), 200
+
+    except Exception as exc:
+        print(f"[Mobile API] ❌ Error updating audio note: {exc}")
+        return jsonify({"error": str(exc)}), 500
+
+
+@bp.post("/routes/<session_id>/markers")
+def create_marker(session_id):
+    """Create a review marker for a recorded session."""
+    try:
+        session = _get_or_load_session(session_id)
+        if not session:
+            return jsonify({"error": "Session not found"}), 404
+
+        data = request.get_json() or {}
+        try:
+            latitude = float(data.get("latitude"))
+            longitude = float(data.get("longitude"))
+        except (TypeError, ValueError):
+            return jsonify({"error": "latitude and longitude are required"}), 400
+
+        timestamp = data.get("timestamp")
+        label = data.get("label") or "Key location"
+        marker_type = data.get("type") or "general"
+        description = data.get("description") or ""
+        tags_raw = data.get("tags")
+        tags: List[str] = []
+        if isinstance(tags_raw, list):
+            tags = [str(tag).strip() for tag in tags_raw if str(tag).strip()]
+        elif isinstance(tags_raw, str):
+            tags = [tag.strip() for tag in tags_raw.split(",") if tag.strip()]
+
+        marker_id = data.get("marker_id") or uuid.uuid4().hex
+        created_at = datetime.utcnow().isoformat()
+
+        marker = {
+            "marker_id": marker_id,
+            "latitude": latitude,
+            "longitude": longitude,
+            "timestamp": timestamp,
+            "label": label,
+            "type": marker_type,
+            "description": description,
+            "tags": tags,
+            "created_at": created_at,
+        }
+
+        markers = session.setdefault("review_markers", [])
+        markers.append(marker)
+        _save_session(session)
+
+        return jsonify({"success": True, "marker": marker}), 201
+
+    except Exception as exc:
+        print(f"[Mobile API] ❌ Error creating marker: {exc}")
+        return jsonify({"error": str(exc)}), 500
+
+
+@bp.patch("/routes/<session_id>/markers/<marker_id>")
+def update_marker(session_id, marker_id):
+    """Update an existing review marker."""
+    try:
+        session = _get_or_load_session(session_id)
+        if not session:
+            return jsonify({"error": "Session not found"}), 404
+
+        markers = session.setdefault("review_markers", [])
+        marker = next((m for m in markers if m.get("marker_id") == marker_id), None)
+        if not marker:
+            return jsonify({"error": "Marker not found"}), 404
+
+        data = request.get_json() or {}
+
+        if "latitude" in data:
+            try:
+                marker["latitude"] = float(data["latitude"])
+            except (TypeError, ValueError):
+                return jsonify({"error": "Invalid latitude"}), 400
+        if "longitude" in data:
+            try:
+                marker["longitude"] = float(data["longitude"])
+            except (TypeError, ValueError):
+                return jsonify({"error": "Invalid longitude"}), 400
+
+        for key in ("timestamp", "label", "type", "description"):
+            if key in data:
+                marker[key] = data[key]
+
+        if "tags" in data:
+            tags_val = data["tags"]
+            if isinstance(tags_val, list):
+                marker["tags"] = [str(tag).strip() for tag in tags_val if str(tag).strip()]
+            elif isinstance(tags_val, str):
+                marker["tags"] = [tag.strip() for tag in tags_val.split(",") if tag.strip()]
+            else:
+                return jsonify({"error": "Invalid tags format"}), 400
+
+        marker["updated_at"] = datetime.utcnow().isoformat()
+        _save_session(session)
+
+        return jsonify({"success": True, "marker": marker}), 200
+
+    except Exception as exc:
+        print(f"[Mobile API] ❌ Error updating marker: {exc}")
+        return jsonify({"error": str(exc)}), 500
+
+
+@bp.delete("/routes/<session_id>/markers/<marker_id>")
+def delete_marker(session_id, marker_id):
+    """Remove a review marker."""
+    try:
+        session = _get_or_load_session(session_id)
+        if not session:
+            return jsonify({"error": "Session not found"}), 404
+
+        markers = session.setdefault("review_markers", [])
+        new_markers = [m for m in markers if m.get("marker_id") != marker_id]
+        if len(new_markers) == len(markers):
+            return jsonify({"error": "Marker not found"}), 404
+
+        session["review_markers"] = new_markers
+        _save_session(session)
+
+        return jsonify({"success": True}), 200
+
+    except Exception as exc:
+        print(f"[Mobile API] ❌ Error deleting marker: {exc}")
+        return jsonify({"error": str(exc)}), 500
 
 
 @bp.post("/routes/<session_id>/finish")

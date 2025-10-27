@@ -1,0 +1,57 @@
+[
+  {
+    "id": "parallel_parking",
+    "name": "Parallel Parking",
+    "description": "Park between two vehicles on the right-hand side without touching the curb.",
+    "recommended_tags": ["30_zone", "urban", "parking_slot"],
+    "steps": [
+      "Align rear bumpers, signal right, and check mirrors plus blind spot.",
+      "Reverse slowly while steering fully toward the curb when the rear wheel reaches the other vehicle's bumper.",
+      "Counter-steer to straighten and end parallel within 30 cm of the curb."
+    ]
+  },
+  {
+    "id": "three_point_turn",
+    "name": "Three-Point Turn (Wendeanlage)",
+    "description": "Turn around safely in a narrow residential street.",
+    "recommended_tags": ["turnaround", "30_zone", "urban"],
+    "steps": [
+      "Signal left, move close to left curb, and stop when front wheels reach edge.",
+      "Reverse with observation, steering fully right without mounting the curb.",
+      "Straighten vehicle and drive off in new direction, re-checking mirrors."
+    ]
+  },
+  {
+    "id": "emergency_brake",
+    "name": "Controlled Emergency Brake",
+    "description": "Simulate an emergency stop while maintaining steering control.",
+    "recommended_tags": ["urban", "complex_intersection", "tramway"],
+    "steps": [
+      "Accelerate to examiner-requested speed (usually 30-40 km/h).",
+      "On command, brake firmly and clutch simultaneously without locking wheels.",
+      "Secure vehicle (handbrake if requested), check mirrors, and move off safely."
+    ]
+  },
+  {
+    "id": "hill_start",
+    "name": "Incline Start",
+    "description": "Start smoothly on an incline without rolling backwards.",
+    "recommended_tags": ["task_stop", "rest_area", "autobahn"],
+    "steps": [
+      "Set handbrake, engage first gear, and apply slight throttle.",
+      "Balance clutch bite before releasing handbrake to avoid roll-back.",
+      "Check mirrors and blind spot, then merge back into traffic decisively."
+    ]
+  },
+  {
+    "id": "controlled_stop",
+    "name": "Controlled Stop & Safety Check",
+    "description": "Perform a safe, examiner-requested stop and restart.",
+    "recommended_tags": ["task_stop", "urban", "rest_area"],
+    "steps": [
+      "Choose a straight, safe shoulder; mirror-signal-manoeuvre.",
+      "Stop smoothly, secure vehicle (handbrake, neutral).",
+      "Before moving off, check mirrors, blind spot, signal, and rejoin traffic."
+    ]
+  }
+]

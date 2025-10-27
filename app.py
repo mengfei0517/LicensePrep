@@ -54,12 +54,14 @@ from api.routes_replay import bp as bp_replay
 from api.routes_planner import bp as bp_planner
 from api.routes_content import bp as bp_content
 from api.routes_mobile import bp as bp_mobile
+from api.routes_analysis import bp as bp_analysis
 
 app.register_blueprint(bp_rule_qa)
 app.register_blueprint(bp_replay)
 app.register_blueprint(bp_planner)
 app.register_blueprint(bp_content)
 app.register_blueprint(bp_mobile)
+app.register_blueprint(bp_analysis)
 
 # Enable CORS for Next.js frontend
 from flask_cors import CORS

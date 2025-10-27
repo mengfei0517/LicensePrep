@@ -50,8 +50,8 @@ export default function ProgressPage() {
             📊 Progress Tracking Coming Soon
           </h2>
           <p className="text-gray-700 mb-6">
-            We're building a comprehensive progress tracking system with Firebase integration. 
-            Soon you'll be able to see detailed analytics, set learning goals, and track your 
+            We&apos;re building a comprehensive progress tracking system with Firebase integration. 
+            Soon you&apos;ll be able to see detailed analytics, set learning goals, and track your 
             improvement over time across all your devices.
           </p>
           <div className="inline-flex items-center space-x-2 text-sm text-gray-600">
@@ -112,4 +112,3 @@ export default function ProgressPage() {
     </div>
   );
 }
-

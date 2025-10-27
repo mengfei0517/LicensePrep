@@ -501,6 +501,9 @@
         let voiceRecordingStartTime = null;
         let voiceTimerInterval = null;
         let microphoneStream = null;
+        const apiBasePath = window.location.pathname.startsWith('/backend')
+            ? '/backend/api/mobile'
+            : '/api/mobile';
 
         async function createSession() {
             const payload = {
@@ -509,7 +512,7 @@
                 source: 'web',
             };
 
-            const response = await fetch('/api/mobile/routes/start', {
+            const response = await fetch(`${apiBasePath}/routes/start`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -541,7 +544,7 @@
             gpsBatch = [];
 
             try {
-                const response = await fetch(`/api/mobile/routes/${sessionId}/gps`, {
+                const response = await fetch(`${apiBasePath}/routes/${sessionId}/gps`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -588,7 +591,7 @@
                 map_bounds: bounds,
             };
 
-            const response = await fetch(`/api/mobile/routes/${sessionId}/finish`, {
+            const response = await fetch(`${apiBasePath}/routes/${sessionId}/finish`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -620,7 +623,7 @@
                 formData.append('duration_ms', durationMs.toString());
             }
 
-            const response = await fetch(`/api/mobile/routes/${sessionId}/audio`, {
+            const response = await fetch(`${apiBasePath}/routes/${sessionId}/audio`, {
                 method: 'POST',
                 body: formData,
             });

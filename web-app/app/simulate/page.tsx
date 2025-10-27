@@ -1,377 +1,453 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import Image from 'next/image';
-import { 
-  MapPinIcon, 
-  PlayIcon, 
-  ChartBarIcon,
-  MicrophoneIcon,
+import clsx from 'clsx';
+import {
+  MapIcon,
   ClockIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  SparklesIcon,
+  FlagIcon,
+  MapPinIcon,
+  ClipboardDocumentCheckIcon,
+  ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
-import { useRoutes } from '@/lib/hooks/use-routes';
-import { apiClient } from '@/lib/api-client';
-import type { RouteInfo, RouteLocation } from '@/lib/api-client';
+import {
+  apiClient,
+  ExamPlanSegment,
+  ExamSimulationPlan,
+} from '@/lib/api-client';
 
-const BACKEND_BASE_PATH = '/backend';
+const START_OPTIONS = [
+  'Munich Test Center (Bodenseestraße)',
+  'Berlin Tegel TÜV Station',
+  'Hamburg Langenhorn Prüfzentrum',
+  'Cologne TÜV Nord - Poll',
+];
 
-const formatDurationLabel = (minutes: number | undefined): string => {
-  if (!minutes || Number.isNaN(minutes)) {
-    return '0 min';
-  }
+const DURATION_MIN = 45;
 
-  if (minutes < 1) {
-    const seconds = Math.max(Math.round(minutes * 60), 1);
-    return `${seconds}s`;
-  }
+export default function ExamSimulationPage() {
+  const [start, setStart] = useState<string>(START_OPTIONS[0]);
+  const [durationMin, setDurationMin] = useState<number>(DURATION_MIN);
+  const [seed, setSeed] = useState<string>('');
+  const [plan, setPlan] = useState<ExamSimulationPlan | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = Math.round(minutes % 60);
+  const summaryCards = useMemo(() => {
+    if (!plan) return [];
+    return [
+      {
+        title: 'Estimated Duration',
+        value: `${plan.estimated_duration_min} min`,
+        icon: ClockIcon,
+        tone: 'bg-blue-50 text-blue-600',
+        hint: `Target window ${plan.target_window_min.min}-${plan.target_window_min.max} min`,
+      },
+      {
+        title: 'Estimated Distance',
+        value: `${plan.estimated_distance_km} km`,
+        icon: MapIcon,
+        tone: 'bg-purple-50 text-purple-600',
+        hint: `${plan.segments.length} curated segments`,
+      },
+      {
+        title: 'Exam Tasks',
+        value: `${plan.exam_tasks.length} tasks`,
+        icon: FlagIcon,
+        tone: 'bg-orange-50 text-orange-600',
+        hint: 'Mix of manoeuvres & emergency exercises',
+      },
+      {
+        title: 'Hotspots Covered',
+        value: `${plan.hotspots.length}`,
+        icon: ShieldCheckIcon,
+        tone: 'bg-emerald-50 text-emerald-600',
+        hint: 'Targets recurring mistake zones',
+      },
+    ];
+  }, [plan]);
 
-  if (hours > 0) {
-    return `${hours}h ${remainingMinutes.toString().padStart(2, '0')}m`;
-  }
-
-  return `${Math.round(minutes)} min`;
-};
-
-const formatDistanceLabel = (distanceKm: number | undefined): string => {
-  if (!distanceKm || Number.isNaN(distanceKm)) {
-    return '0.00';
-  }
-  return distanceKm.toFixed(2);
-};
-
-const formatDateLabel = (isoDate: string | undefined): string => {
-  if (!isoDate) return 'Unknown date';
-  try {
-    return new Date(isoDate).toLocaleString('de-DE');
-  } catch {
-    return isoDate;
-  }
-};
-
-const formatLocationLabel = (location?: RouteLocation | null): string => {
-  if (!location) return 'Not captured';
-  if (location.description) return location.description;
-  const { latitude, longitude } = location;
-  if (latitude === undefined || longitude === undefined) return 'Not captured';
-  return `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-};
-
-interface SavedRouteCard {
-  id: string;
-  title: string;
-  recordedAt: string | undefined;
-  durationLabel: string;
-  distanceLabel: string;
-  startLocation: string;
-  endLocation: string;
-  status?: string;
-  gpsPoints: number;
-  audioNotes: number;
-  previewUrl?: string | null;
-}
-
-export default function SimulatePage() {
-  const { routes, isLoading, error, refresh } = useRoutes();
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-
-  const savedRoutes = useMemo<SavedRouteCard[]>(() => {
-    if (!routes) return [];
-
-    return routes.map((route: RouteInfo) => ({
-      id: route.route_id,
-      title: route.device_id ? `Drive (${route.device_id})` : route.route_id,
-      recordedAt: route.recorded_at,
-      durationLabel: formatDurationLabel(route.duration_min),
-      distanceLabel: formatDistanceLabel(route.distance_km),
-      startLocation: formatLocationLabel(route.start_location),
-      endLocation: formatLocationLabel(route.end_location),
-      status: route.status,
-      gpsPoints: route.gps_points_count ?? 0,
-      audioNotes: route.audio_notes_count ?? 0,
-      previewUrl: route.preview_url ? `/backend${route.preview_url}` : null,
-    }));
-  }, [routes]);
-
-  const handleDelete = async (routeId: string) => {
-    if (!confirm('Are you sure you want to delete this route?')) {
-      return;
-    }
-
-    setDeleteError(null);
-    setDeletingId(routeId);
+  const generatePlan = async (options?: { seed?: number | null }) => {
+    setIsLoading(true);
+    setError(null);
     try {
-      await apiClient.deleteRoute(routeId);
-      await refresh();
+      const response = await apiClient.planRoute(
+        start,
+        durationMin,
+        options?.seed ?? (seed ? Number(seed) : undefined)
+      );
+      setPlan(response);
+      if (response.seed !== undefined && response.seed !== null) {
+        setSeed(String(response.seed));
+      }
     } catch (err) {
-      console.error('Failed to delete route', err);
-      const message = err instanceof Error ? err.message : 'Failed to delete route. Please try again.';
-      setDeleteError(message);
+      console.error('Failed to generate plan', err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to generate exam simulation route.'
+      );
     } finally {
-      setDeletingId(null);
+      setIsLoading(false);
     }
   };
 
-  const openRecorder = () => {
-    // Open Flask route recorder in new window
-    window.open(`${BACKEND_BASE_PATH}/route-recorder`, '_blank');
-  };
-
-  const openReview = (routeId: string) => {
-    // Open Flask route review in new window
-    window.open(`${BACKEND_BASE_PATH}/route-review/${routeId}`, '_blank');
+  const handleRegenerate = () => {
+    const newSeed = Math.floor(Math.random() * 1_000_000);
+    setSeed(String(newSeed));
+    generatePlan({ seed: newSeed });
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">
-          Exam Route Simulation
-        </h1>
-        <p className="mt-2 text-lg text-gray-600">
-          Record, analyze, and review your practice driving routes
-        </p>
-      </div>
-
-      {/* Action Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-        <button
-          onClick={openRecorder}
-          className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg p-6 hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <MapPinIcon className="w-12 h-12" />
-            <span className="text-sm bg-white/20 px-3 py-1 rounded-full">New</span>
-          </div>
-          <h3 className="text-xl font-bold mb-2">Record Route</h3>
-          <p className="text-sm opacity-90">
-            Start GPS tracking and record your practice drive with voice notes
-          </p>
-        </button>
-
-        <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg p-6 shadow-lg">
-          <div className="flex items-center justify-between mb-4">
-            <ChartBarIcon className="w-12 h-12" />
-            <span className="text-sm bg-white/20 px-3 py-1 rounded-full">Pro</span>
-          </div>
-          <h3 className="text-xl font-bold mb-2">AI Analysis</h3>
-          <p className="text-sm opacity-90">
-            Get detailed feedback on your driving performance and mistakes
-          </p>
-        </div>
-
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg p-6 shadow-lg">
-          <div className="flex items-center justify-between mb-4">
-            <PlayIcon className="w-12 h-12" />
-            <span className="text-sm bg-white/20 px-3 py-1 rounded-full">Review</span>
-          </div>
-          <h3 className="text-xl font-bold mb-2">Playback Routes</h3>
-          <p className="text-sm opacity-90">
-            Replay your routes with speed visualization and voice notes
-          </p>
-        </div>
-      </div>
-
-      {/* Features Grid */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-12">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">Key Features</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="flex items-start space-x-3">
-            <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <MapPinIcon className="w-6 h-6 text-blue-600" />
-            </div>
+    <div className="min-h-screen bg-white">
+      <header className="border-b border-gray-200 bg-gradient-to-br from-purple-50 via-blue-50 to-white">
+        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h4 className="font-semibold text-gray-900">GPS Tracking</h4>
-              <p className="text-sm text-gray-600">High-accuracy GPS recording with OpenStreetMap visualization</p>
+              <span className="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-sm font-semibold text-purple-700">
+                <SparklesIcon className="mr-2 h-4 w-4" />
+                Beta · Exam Route Simulation
+              </span>
+              <h1 className="mt-4 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
+                Generate a TÜV-style Practice Route
+              </h1>
+              <p className="mt-4 max-w-2xl text-lg text-gray-600">
+                Our planner stitches curated segments across 30 zones, city cores,
+                Landstraße, and Autobahn—mirroring the 45-minute German driving exam
+                with AI-weighted hotspots from your learning history.
+              </p>
             </div>
-          </div>
-
-          <div className="flex items-start space-x-3">
-            <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-              <MicrophoneIcon className="w-6 h-6 text-green-600" />
-            </div>
-            <div>
-              <h4 className="font-semibold text-gray-900">Voice Notes</h4>
-              <p className="text-sm text-gray-600">Record voice observations during your drive with GPS coordinates</p>
-            </div>
-          </div>
-
-          <div className="flex items-start space-x-3">
-            <div className="flex-shrink-0 w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-              <ChartBarIcon className="w-6 h-6 text-purple-600" />
-            </div>
-            <div>
-              <h4 className="font-semibold text-gray-900">Speed Analysis</h4>
-              <p className="text-sm text-gray-600">Visualize speed changes, acceleration, and braking patterns</p>
-            </div>
-          </div>
-
-          <div className="flex items-start space-x-3">
-            <div className="flex-shrink-0 w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-              <PlayIcon className="w-6 h-6 text-orange-600" />
-            </div>
-            <div>
-              <h4 className="font-semibold text-gray-900">Route Playback</h4>
-              <p className="text-sm text-gray-600">Replay routes with adjustable speed and voice note synchronization</p>
+            <div className="rounded-xl border border-purple-200 bg-white/80 p-4 shadow-sm backdrop-blur">
+              <p className="text-sm text-gray-500">
+                Planner uses curated geo-fencing + AI heatmap weighting. Routes are
+                exam-level difficult yet fresh on each generation.
+              </p>
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Saved Routes */}
-      <div>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">
-            Saved Routes ({savedRoutes.length})
-          </h2>
-          {savedRoutes.length > 0 && (
-            <button
-              onClick={() => refresh()}
-              className="flex items-center space-x-2 text-sm text-blue-600 hover:text-blue-700"
-            >
-              <ArrowPathIcon className="w-4 h-4" />
-              <span>Refresh</span>
-            </button>
-          )}
-        </div>
-
-        {error && (
-          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            Failed to load routes: {error?.message || 'Unknown error'}
-          </div>
-        )}
-
-        {deleteError && (
-          <div className="mb-4 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-700">
-            {deleteError}
-          </div>
-        )}
-
-        {isLoading ? (
-          <div className="text-center py-12">
-            <div className="inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-            <p className="mt-4 text-gray-600">Loading routes...</p>
-          </div>
-        ) : savedRoutes.length === 0 ? (
-          <div className="bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
-            <MapPinIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              No routes recorded yet
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Start by recording your first practice route
-            </p>
-            <button
-              onClick={openRecorder}
-              className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <MapPinIcon className="w-5 h-5 mr-2" />
-              Record First Route
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {savedRoutes.map((route) => (
-              <div
-                key={route.id}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+      <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8 space-y-10">
+        {/* Form */}
+        <section className="rounded-2xl border border-gray-200 bg-white shadow-sm">
+          <form
+            className="grid gap-6 px-6 py-6 md:grid-cols-2"
+            onSubmit={(event) => {
+              event.preventDefault();
+              generatePlan();
+            }}
+          >
+            <div className="space-y-2">
+              <label
+                htmlFor="start"
+                className="text-sm font-medium text-gray-700"
               >
-                <div className="aspect-video relative overflow-hidden bg-gradient-to-r from-indigo-100 to-blue-50 flex items-center justify-center">
-                  <MapPinIcon className="w-12 h-12 text-indigo-400" />
-                  {route.previewUrl && (
-                    <Image
-                      src={route.previewUrl}
-                      alt={route.title}
-                      fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      className="object-cover"
-                      unoptimized
-                    />
-                  )}
-                </div>
+                Start Location / Test Center
+              </label>
+              <select
+                id="start"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200"
+                value={start}
+                onChange={(event) => setStart(event.target.value)}
+              >
+                {START_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500">
+                Select the exam centre you want to rehearse.
+              </p>
+            </div>
 
-                <div className="p-4 space-y-3">
-                  <h3 className="font-semibold text-gray-900 mb-2 truncate">
-                    {route.title}
-                  </h3>
-                  
-                  <div className="space-y-2 text-sm text-gray-600">
-                    <div className="flex items-center">
-                      <ClockIcon className="w-4 h-4 mr-2" />
-                      <span>{route.durationLabel}</span>
-                      <span className="mx-2">•</span>
-                      <span>{route.distanceLabel} km</span>
-                    </div>
-                    <div className="flex items-center">
-                      <MapPinIcon className="w-4 h-4 mr-2 flex-shrink-0" />
-                      <span className="truncate">{route.startLocation}</span>
-                    </div>
-                    <div className="flex items-center text-xs text-gray-500">
-                      <span className="mr-3">{route.gpsPoints} GPS pts</span>
-                      <span>{route.audioNotes} audio notes</span>
-                    </div>
-                    <div className="flex items-center text-xs text-gray-500">
-                      <ArrowPathIcon className="w-4 h-4 mr-2" />
-                      <span className="truncate">{route.endLocation}</span>
-                    </div>
-                    {route.status && (
-                      <span className="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-600">
-                        {route.status}
-                      </span>
-                    )}
-                    <div className="text-xs text-gray-500">
-                      {formatDateLabel(route.recordedAt)}
-                    </div>
-                  </div>
-
-                  <div className="flex space-x-2 pt-2">
-                    <button
-                      onClick={() => openReview(route.id)}
-                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                    >
-                      <PlayIcon className="w-4 h-4 inline mr-1" />
-                      Review
-                    </button>
-                    <button
-                      onClick={() => handleDelete(route.id)}
-                      disabled={deletingId === route.id}
-                      className="px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
-                    >
-                      {deletingId === route.id ? 'Deleting...' : 'Delete'}
-                    </button>
-                  </div>
-                </div>
+            <div className="space-y-2">
+              <label
+                htmlFor="duration"
+                className="text-sm font-medium text-gray-700"
+              >
+                Target Duration (minutes)
+              </label>
+              <input
+                id="duration"
+                type="range"
+                min={40}
+                max={50}
+                value={durationMin}
+                onChange={(event) => setDurationMin(Number(event.target.value))}
+                className="w-full accent-purple-500"
+              />
+              <div className="flex justify-between text-xs text-gray-500">
+                <span>40 min</span>
+                <span>{durationMin} min</span>
+                <span>50 min</span>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+              <p className="text-xs text-gray-500">
+                Official German practical exam typically runs 45 minutes.
+              </p>
+            </div>
 
-      {/* Info Banner */}
-      <div className="mt-12 bg-blue-50 border border-blue-200 rounded-lg p-6">
-        <h3 className="font-semibold text-blue-900 mb-2">
-          💡 How Route Simulation Works
-        </h3>
-        <div className="text-sm text-blue-800 space-y-2">
-          <p>
-            <strong>1. Record:</strong> Use the GPS recorder to track your practice drives. Add voice notes for mistakes or observations.
-          </p>
-          <p>
-            <strong>2. Review:</strong> Replay your routes with speed visualization, voice notes, and detailed statistics.
-          </p>
-          <p>
-            <strong>3. Analyze:</strong> Get AI-powered feedback on your driving performance and areas to improve.
-          </p>
-          <p className="pt-2 border-t border-blue-200">
-            <strong>Note:</strong> Sessions recorded in the mobile app upload automatically to this dashboard after you finish recording. Hit refresh if you do not see the latest drive.
+            <div className="space-y-2">
+              <label
+                htmlFor="seed"
+                className="text-sm font-medium text-gray-700"
+              >
+                Optional Seed (reproduce a previous plan)
+              </label>
+              <input
+                id="seed"
+                type="text"
+                inputMode="numeric"
+                placeholder="Auto"
+                value={seed}
+                onChange={(event) => setSeed(event.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200"
+              />
+              <p className="text-xs text-gray-500">
+                Leave empty for a fresh randomised route.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="submit"
+                className="inline-flex items-center rounded-md bg-purple-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-purple-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <ArrowPathIcon className="mr-2 h-4 w-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  'Generate Plan'
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={handleRegenerate}
+                className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50"
+              >
+                Surprise Me
+              </button>
+              <span className="text-xs text-gray-400">
+                Planner may take 1-2 seconds.
+              </span>
+            </div>
+
+            {error && (
+              <div className="md:col-span-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {error}
+              </div>
+            )}
+          </form>
+        </section>
+
+        {plan && (
+          <>
+            {/* Summary cards */}
+            <section className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {summaryCards.map((card) => (
+                <div
+                  key={card.title}
+                  className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
+                >
+                  <div className={clsx('inline-flex rounded-lg p-2', card.tone)}>
+                    <card.icon className="h-5 w-5" />
+                  </div>
+                  <h3 className="mt-4 text-sm font-medium text-gray-500">
+                    {card.title}
+                  </h3>
+                  <p className="text-2xl font-semibold text-gray-900">
+                    {card.value}
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500">{card.hint}</p>
+                </div>
+              ))}
+            </section>
+
+            {/* Segments */}
+            <section className="space-y-6">
+              <header className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    Route Segments
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    Required exam contexts (30 zone, complex city, Landstraße,
+                    Autobahn) are all woven into the plan.
+                  </p>
+                </div>
+              </header>
+
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                {plan.segments.map((segment) => (
+                  <SegmentCard key={segment.id} segment={segment} />
+                ))}
+              </div>
+            </section>
+
+            {/* Tasks & hotspots */}
+            <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Assigned Exam Tasks
+                </h2>
+                <p className="text-sm text-gray-500">
+                  Complete each manoeuvre exactly as TÜV examiners require.
+                </p>
+                <ul className="mt-4 space-y-4">
+                  {plan.exam_tasks.map((task) => (
+                    <li
+                      key={task.id}
+                      className="rounded-xl border border-gray-100 bg-gray-50/80 px-4 py-3"
+                    >
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold text-gray-900">
+                          {task.name}
+                        </p>
+                        <span className="text-xs uppercase tracking-wide text-gray-400">
+                          Segment:{' '}
+                          {task.recommended_segment_id ?? 'TBD'}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-gray-600">
+                        {task.description}
+                      </p>
+                      {task.steps.length > 0 && (
+                        <ol className="mt-2 list-decimal pl-5 text-xs text-gray-500 space-y-1">
+                          {task.steps.map((step, index) => (
+                            <li key={index}>{step}</li>
+                          ))}
+                        </ol>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Hotspots & Error Zones
+                </h2>
+                <p className="text-sm text-gray-500">
+                  Top mistake clusters blended into the route for targeted practice.
+                </p>
+                {plan.hotspots.length === 0 ? (
+                  <p className="mt-4 text-sm text-gray-500">
+                    Record more practice routes to feed heatmap intelligence.
+                  </p>
+                ) : (
+                  <ul className="mt-4 space-y-3">
+                    {plan.hotspots.map((hotspot) => (
+                      <li
+                        key={hotspot.cluster_id}
+                        className="rounded-lg border border-gray-100 bg-gray-50/80 px-4 py-3 text-sm text-gray-700"
+                      >
+                        <p className="font-semibold text-gray-900">
+                          {hotspot.dominant_label}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {hotspot.count} events · Lat {hotspot.latitude.toFixed(3)} ·
+                          Lng {hotspot.longitude.toFixed(3)}
+                        </p>
+                        {hotspot.dominant_tag && (
+                          <span className="mt-2 inline-flex rounded-full bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-600">
+                            #{hotspot.dominant_tag}
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </section>
+
+            {/* Checklist */}
+            <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Examiner Checklist
+              </h2>
+              <p className="text-sm text-gray-500">
+                Bring this list along and tick off each observation and manoeuvre.
+              </p>
+              <ol className="mt-4 space-y-2 pl-5 text-sm text-gray-700 list-decimal">
+                {plan.checklist.map((item, index) => (
+                  <li key={`${item}-${index}`}>{item}</li>
+                ))}
+              </ol>
+              <div className="mt-4 inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                <ClipboardDocumentCheckIcon className="mr-2 h-4 w-4" />
+                Bring a printed copy into the car for examiner notes.
+              </div>
+            </section>
+          </>
+        )}
+      </main>
+    </div>
+  );
+}
+
+function SegmentCard({ segment }: { segment: ExamPlanSegment }) {
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div className="flex items-start justify-between">
+        <div>
+          <h3 className="text-base font-semibold text-gray-900">
+            {segment.name}
+          </h3>
+          <p className="text-xs text-gray-500">
+            ~{segment.duration_min} min · {segment.distance_km} km ·{' '}
+            {segment.difficulty ?? 'balanced'}
           </p>
         </div>
+        <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-blue-600">
+          {segment.tags.slice(0, 2).join(' · ')}
+        </span>
       </div>
+
+      {segment.objectives && segment.objectives.length > 0 && (
+        <ul className="mt-3 space-y-1 text-xs text-gray-600">
+          {segment.objectives.map((objective, index) => (
+            <li key={index}>• {objective}</li>
+          ))}
+        </ul>
+      )}
+
+      {segment.waypoints && segment.waypoints.length > 0 && (
+        <div className="mt-3 space-y-1">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+            Waypoints
+          </p>
+          <ul className="space-y-1 text-xs text-gray-500">
+            {segment.waypoints.map((waypoint, index) => (
+              <li key={index} className="flex items-center gap-2">
+                <MapPinIcon className="h-3.5 w-3.5 text-purple-400" />
+                <span>{waypoint}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {segment.focus_hotspots && segment.focus_hotspots.length > 0 && (
+        <div className="mt-4 rounded-lg border border-dashed border-amber-200 bg-amber-50/60 p-3">
+          <p className="text-xs font-semibold text-amber-700">
+            Focus Hotspots
+          </p>
+          <ul className="mt-2 space-y-1 text-xs text-amber-700">
+            {segment.focus_hotspots.map((hotspot, index) => (
+              <li key={index}>
+                {hotspot.label ?? 'Hotspot'} — Lat{' '}
+                {hotspot.latitude?.toFixed(3)} / Lng{' '}
+                {hotspot.longitude?.toFixed(3)}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

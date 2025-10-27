@@ -1,0 +1,141 @@
+[
+  {
+    "id": "segment_departure_warmup",
+    "name": "Test Center Departure & Mirror Warm-up",
+    "duration_min": 6,
+    "distance_km": 3.0,
+    "difficulty": "easy",
+    "tags": ["urban", "warmup", "departure"],
+    "objectives": [
+      "Perform full mirror check before leaving the test center",
+      "Practice priority-to-the-right within residential side streets",
+      "Verbalise pedestrian scanning at crossings"
+    ],
+    "waypoints": [
+      "Test Center - Bodenseestraße 15",
+      "Fürstenrieder Straße 170",
+      "Laimer Weg"
+    ],
+    "notes": "Start calmly, build examiner confidence with clear observation routines.",
+    "suggested_tasks": []
+  },
+  {
+    "id": "segment_residential_30_loop",
+    "name": "Residential 30-Zone Loop & Parking Strip",
+    "duration_min": 8,
+    "distance_km": 4.2,
+    "difficulty": "moderate",
+    "tags": ["30_zone", "urban", "parking_slot", "turnaround"],
+    "objectives": [
+      "Reinforce speed discipline inside 30 zone with frequent priority changes",
+      "Execute mirror-signal manoeuvres before every lateral movement",
+      "Practice controlled turnaround on a narrow residential street"
+    ],
+    "waypoints": [
+      "Nymphenburger Straße 210",
+      "Stupfstraße 9",
+      "Valpichlerstraße 56"
+    ],
+    "notes": "Great location for parking manoeuvres and Wendeanlage practice.",
+    "suggested_tasks": ["parallel_parking", "three_point_turn"]
+  },
+  {
+    "id": "segment_city_core_complex",
+    "name": "City Core Priority Mix & Tram Junction",
+    "duration_min": 9,
+    "distance_km": 5.5,
+    "difficulty": "challenging",
+    "tags": ["urban", "complex_intersection", "tramway", "bus_lane"],
+    "objectives": [
+      "Handle multi-lane city junction with tram signals",
+      "Demonstrate lane discipline and legal bus-lane usage",
+      "Verbalise pedestrian and bicycle awareness at crossings"
+    ],
+    "waypoints": [
+      "Stachus (Karlsplatz)",
+      "Sonnenstraße 5",
+      "Sendlinger-Tor-Platz"
+    ],
+    "notes": "High examiner value: observe signalling, speed, and tram priority rules.",
+    "suggested_tasks": ["emergency_brake"]
+  },
+  {
+    "id": "segment_landstrasse_transition",
+    "name": "Landstraße Transition & Speed Adaptation",
+    "duration_min": 6,
+    "distance_km": 6.2,
+    "difficulty": "moderate",
+    "tags": ["rural", "landstrasse", "speed_change", "sight_distance"],
+    "objectives": [
+      "Adapt from urban 50 km/h to Landstraße 100 km/h limits smoothly",
+      "Plan overtaking zones and maintain safe following distance",
+      "Narrate use of engine braking when approaching villages"
+    ],
+    "waypoints": [
+      "Menzinger Straße 250",
+      "Allach-Untermenzing",
+      "Karlsfelder Straße 25"
+    ],
+    "notes": "Great stretch to evaluate anticipatory driving outside city centre.",
+    "suggested_tasks": []
+  },
+  {
+    "id": "segment_autobahn_entry",
+    "name": "Autobahn On-ramp & Cruise Section",
+    "duration_min": 11,
+    "distance_km": 13.5,
+    "difficulty": "challenging",
+    "tags": ["autobahn", "highway", "merge", "acceleration_lane"],
+    "objectives": [
+      "Use full acceleration lane, mirror checks, and shoulder glances",
+      "Maintain consistent cruising speed between 110-120 km/h where legal",
+      "Practice safe lane changes with German autobahn signalling cadence"
+    ],
+    "waypoints": [
+      "A96 Auffahrt Laim",
+      "A96 Richtung Lindau",
+      "Ausfahrt Germering"
+    ],
+    "notes": "Ensure examiner sees decisive but lawful merging behaviour.",
+    "suggested_tasks": []
+  },
+  {
+    "id": "segment_service_area_task",
+    "name": "Service Area Stop & Controlled Restart",
+    "duration_min": 4,
+    "distance_km": 2.3,
+    "difficulty": "moderate",
+    "tags": ["autobahn", "task_stop", "rest_area"],
+    "objectives": [
+      "Demonstrate safe deceleration into the service area",
+      "Practice pulling away on slight incline with mirror checks",
+      "Discuss navigation back to acceleration lane"
+    ],
+    "waypoints": [
+      "Rasthof Fürstenfeldbruck",
+      "Service Loop"
+    ],
+    "notes": "Good location to combine parking on slope or emergency stop task.",
+    "suggested_tasks": ["hill_start", "controlled_stop"]
+  },
+  {
+    "id": "segment_return_cooldown",
+    "name": "Return via Suburban Streets & Examiner Cool-down",
+    "duration_min": 6,
+    "distance_km": 3.6,
+    "difficulty": "easy",
+    "tags": ["urban", "return", "cooldown"],
+    "objectives": [
+      "Reintroduce 50 km/h limit with pedestrian crossings",
+      "Finish with calm mirror checks and precise vehicle positioning",
+      "Debrief manoeuvres and reinforce safe shutdown procedure"
+    ],
+    "waypoints": [
+      "Pasinger Marienplatz",
+      "Agnes-Bernauer-Straße 120",
+      "Test Center - Bodenseestraße 15"
+    ],
+    "notes": "End the drive smoothly while examiner completes paperwork.",
+    "suggested_tasks": []
+  }
+]

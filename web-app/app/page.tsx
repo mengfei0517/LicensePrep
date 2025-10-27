@@ -26,9 +26,16 @@ const features = [
     color: 'bg-green-500',
   },
   {
-    name: 'Exam Simulation',
-    description: 'Record and review your practice routes with GPS tracking and voice notes.',
+    name: 'Route Recording & Review',
+    description: 'Capture GPS routes from your practice drives and review every moment with voice notes.',
     icon: MapPinIcon,
+    href: '/routes',
+    color: 'bg-orange-500',
+  },
+  {
+    name: 'Exam Simulation',
+    description: 'Experience full-length theory and practical simulations with instant performance feedback.',
+    icon: ChartBarIcon,
     href: '/simulate',
     color: 'bg-purple-500',
   },

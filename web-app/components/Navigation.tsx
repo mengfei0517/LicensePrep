@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  HomeIcon, 
-  BookOpenIcon, 
+import {
+  HomeIcon,
+  BookOpenIcon,
   QuestionMarkCircleIcon,
   MapIcon,
-  ChartBarIcon 
+  FlagIcon,
+  ChartBarIcon,
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 
@@ -15,7 +16,8 @@ const navigation = [
   { name: 'Home', href: '/', icon: HomeIcon },
   { name: 'Learn', href: '/learn', icon: BookOpenIcon },
   { name: 'Q&A', href: '/qa', icon: QuestionMarkCircleIcon },
-  { name: 'Simulate', href: '/simulate', icon: MapIcon },
+  { name: 'Routes', href: '/routes', icon: MapIcon },
+  { name: 'Simulation', href: '/simulate', icon: FlagIcon },
   { name: 'Progress', href: '/progress', icon: ChartBarIcon },
 ];
 
@@ -90,4 +92,3 @@ export function Navigation() {
     </nav>
   );
 }
-

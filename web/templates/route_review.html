@@ -10,6 +10,31 @@
     
     <!-- Chart.js for speed visualization -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    {% if google_maps_api_key %}
+    <script>
+        window.googleMapsReady = false;
+        window.googleMapsLoadFailed = false;
+        window.initGoogleMapsLibrary = function() {
+            window.googleMapsReady = true;
+            if (typeof window.onGoogleMapsReady === 'function') {
+                window.onGoogleMapsReady();
+            }
+        };
+        window.handleGoogleMapsLoadError = function() {
+            window.googleMapsLoadFailed = true;
+            if (typeof window.onGoogleMapsFailure === 'function') {
+                window.onGoogleMapsFailure();
+            }
+        };
+    </script>
+    <script
+        async
+        defer
+        src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=initGoogleMapsLibrary&libraries=marker&v=weekly"
+        onerror="handleGoogleMapsLoadError()"
+    ></script>
+    {% endif %}
     
     <style>
         * {
@@ -78,18 +103,93 @@
             display: flex;
             flex: 1;
             overflow: hidden;
+            background: #f8f9fa;
+        }
+
+        .visual-panels {
+            flex: 1;
+            display: flex;
+            gap: 1px;
+            background: #e5e7eb;
+            min-height: 0;
         }
 
         /* Left Panel - Map */
-        .map-panel {
-            flex: 1;
+        .visual-panels > .map-panel,
+        .visual-panels > .street-panel {
+            flex: 1 1 0;
             position: relative;
             background: white;
+            overflow: hidden;
         }
 
         #map {
             width: 100%;
             height: 100%;
+        }
+
+        .street-panel {
+            display: flex;
+            flex-direction: column;
+            transition: flex 0.25s ease;
+        }
+
+        .street-panel.collapsed {
+            flex: 0 0 260px;
+        }
+
+        .street-panel.collapsed .streetview-container,
+        .street-panel.collapsed .streetview-help {
+            display: none;
+        }
+
+        .streetview-header {
+            padding: 16px 20px 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .streetview-header h3 {
+            margin: 0;
+            font-size: 1.05em;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .streetview-header h3 span {
+            font-size: 0.8em;
+            font-weight: 500;
+            color: #6b7280;
+        }
+
+        .streetview-toggle {
+            margin-left: auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75em;
+            border-radius: 999px;
+            border: 1px solid #d1d5db;
+            padding: 6px 12px;
+            cursor: pointer;
+            background: white;
+            color: #1f2937;
+            transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .streetview-toggle:hover {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+
+        .streetview-panel-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 16px 20px 20px;
         }
 
         /* Right Panel - Info & Controls */
@@ -824,17 +924,6 @@
             color: #6c757d;
         }
 
-        /* Map Markers */
-        .car-marker {
-            font-size: 2em;
-            animation: car-pulse 1.5s infinite;
-        }
-
-        @keyframes car-pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-
         .voice-marker {
             background: #667eea;
             width: 30px;
@@ -900,6 +989,94 @@
             font-size: 0.85em;
         }
 
+        .streetview-section {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .streetview-status {
+            font-size: 0.8em;
+            font-weight: 500;
+            color: #6b7280;
+        }
+
+        .streetview-status.error {
+            color: #dc2626;
+        }
+
+        .streetview-container {
+            width: 100%;
+            min-height: 260px;
+            flex: 1;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+            background: linear-gradient(135deg, #eef2ff 0%, #f8fafc 100%);
+            position: relative;
+            display: flex;
+            align-items: stretch;
+            justify-content: stretch;
+        }
+
+        .streetview-player {
+            flex: 1;
+            min-height: 100%;
+        }
+
+        .streetview-container::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+        }
+
+        .streetview-fallback {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: #111827;
+            color: #f9fafb;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            text-align: center;
+            gap: 12px;
+            flex-direction: column;
+        }
+
+        .streetview-fallback.active {
+            display: flex;
+        }
+
+        .streetview-fallback img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 8px;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.45);
+            background: #0f172a;
+        }
+
+        .streetview-fallback-meta {
+            font-size: 0.75em;
+            color: rgba(229, 231, 235, 0.8);
+        }
+
+        .streetview-help {
+            font-size: 0.75em;
+            color: #6b7280;
+            line-height: 1.4;
+        }
+
+        .street-panel.disabled .streetview-container,
+        .street-panel.disabled .streetview-help {
+            display: none;
+        }
+
+        .street-panel.disabled .streetview-status {
+            color: #dc2626;
+        }
+
         .speed-legend h4 {
             margin: 0 0 10px 0;
             font-size: 0.9em;
@@ -924,29 +1101,45 @@
         }
 
         /* Responsive */
-        @media (max-width: 1024px) {
+        @media (max-width: 1280px) {
             .info-panel {
                 width: 320px;
             }
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) {
             .review-content {
                 flex-direction: column;
             }
 
-            .info-panel {
-                width: 100%;
-                height: 50vh;
+            .visual-panels {
+                flex-direction: column;
+                gap: 0;
             }
 
-            .map-panel {
-                height: 50vh;
+            .map-panel,
+            .street-panel {
+                height: 45vh;
+            }
+
+            .info-panel {
+                width: 100%;
+                border-left: none;
+                border-top: 1px solid #e5e7eb;
+                height: auto;
+                max-height: 55vh;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .map-panel,
+            .street-panel {
+                height: 40vh;
             }
         }
     </style>
 </head>
-<body>
+<body data-google-maps-key="{{ google_maps_api_key }}">
     <div class="review-container">
         <!-- Header -->
         <div class="review-header">
@@ -959,34 +1152,66 @@
 
         <!-- Main Content -->
         <div class="review-content">
-            <!-- Map Panel -->
-            <div class="map-panel">
-                <div id="map"></div>
-                
-                <!-- Speed Legend -->
-                <div class="speed-legend">
-                    <h4>🌡️ Speed</h4>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: #38ef7d;"></div>
-                        <span class="legend-label">0-30 km/h</span>
+            <div class="visual-panels">
+                <!-- Map Panel -->
+                <div class="map-panel">
+                    <div id="map"></div>
+                    
+                    <!-- Speed Legend -->
+                    <div class="speed-legend">
+                        <h4>🌡️ Speed</h4>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #38ef7d;"></div>
+                            <span class="legend-label">0-30 km/h</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #ffd700;"></div>
+                            <span class="legend-label">30-50 km/h</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #ff9500;"></div>
+                            <span class="legend-label">50-80 km/h</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #ee0979;"></div>
+                            <span class="legend-label">80+ km/h</span>
+                        </div>
                     </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: #ffd700;"></div>
-                        <span class="legend-label">30-50 km/h</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: #ff9500;"></div>
-                        <span class="legend-label">50-80 km/h</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: #ee0979;"></div>
-                        <span class="legend-label">80+ km/h</span>
+                    
+                    <div class="loading-overlay" id="loadingOverlay">
+                        <div class="loading-spinner"></div>
+                        <p style="margin-top: 20px; color: #667eea; font-weight: 600;">Loading route data...</p>
                     </div>
                 </div>
-                
-                <div class="loading-overlay" id="loadingOverlay">
-                    <div class="loading-spinner"></div>
-                    <p style="margin-top: 20px; color: #667eea; font-weight: 600;">Loading route data...</p>
+
+                <!-- Street View Panel -->
+                <div class="street-panel streetview-section collapsed{% if not google_maps_api_key %} disabled{% endif %}" id="streetViewWrapper">
+                    <div class="streetview-header">
+                        <h3>🌍 Street View Replay <span id="streetViewStatus">
+                            {% if not google_maps_api_key %}
+                            Add a Google Maps API key to enable
+                            {% else %}
+                            Street View disabled to save API usage
+                            {% endif %}
+                        </span></h3>
+                        <button class="streetview-toggle" id="toggleStreetViewBtn"{% if not google_maps_api_key %} disabled{% endif %}>
+                            Enable
+                        </button>
+                    </div>
+                    <div class="streetview-panel-body">
+                        <div class="streetview-container" id="streetView">
+                            <div class="streetview-player" id="streetViewPlayer"></div>
+                            <div class="streetview-fallback" id="streetViewFallback">
+                                <img id="streetViewFallbackImage" alt="Street view fallback" />
+                                <div class="streetview-fallback-meta" id="streetViewFallbackMeta">
+                                    Street imagery preview will appear here.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="streetview-help">
+                            Use the playback controls or click the route to sync both views. Markers appear here when available.
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1171,7 +1396,6 @@
         let startTimestampMs = null;
         let totalDurationSeconds = 0;
         let routePath = null;
-        let carMarker = null;
         let voiceMarkers = [];
         let reviewMarkersLayer = null;
         let reviewMarkerIcons = {};
@@ -1181,6 +1405,8 @@
         let playbackControlsInitialized = false;
         let voiceFiltersInitialized = false;
         let routeLayerGroup = null;
+        let playbackLayerGroup = null;
+        let routeSegments = [];
         let analysisToggleInitialized = false;
 
         const escapeHtml = (input) => {
@@ -1200,6 +1426,159 @@
         let playbackSpeed = 1;
         let animationFrame = null;
         let startTimestamp = null;
+
+        const googleMapsKey = document.body.dataset.googleMapsKey || '';
+        let googleMapsReady = Boolean(window.googleMapsReady);
+        let googleMapsLoadFailed = Boolean(window.googleMapsLoadFailed);
+        let pendingStreetViewInit = false;
+        let streetViewEnabled = false;
+        let streetViewPanorama = null;
+        let streetViewService = null;
+        let streetViewMarkers = [];
+        let streetViewReady = false;
+        let streetViewFrames = [];
+        let streetViewLoading = false;
+        let lastStreetViewImageId = null;
+        const streetViewCache = new Map();
+        let streetViewFallbackActive = false;
+        const streetViewWrapper = document.getElementById('streetViewWrapper');
+        const streetViewStatus = document.getElementById('streetViewStatus');
+        const streetViewToggleBtn = document.getElementById('toggleStreetViewBtn');
+        const streetViewPlayerEl = document.getElementById('streetViewPlayer');
+        const streetViewFallbackContainer = document.getElementById('streetViewFallback');
+        const streetViewFallbackImage = document.getElementById('streetViewFallbackImage');
+        const streetViewFallbackMeta = document.getElementById('streetViewFallbackMeta');
+
+        const setStreetViewStatus = (message, isError = false) => {
+            if (!streetViewStatus) return;
+            streetViewStatus.textContent = message;
+            streetViewStatus.classList.toggle('error', Boolean(isError));
+        };
+
+        function onGoogleMapsLibraryReady() {
+            googleMapsReady = true;
+            googleMapsLoadFailed = false;
+            if (pendingStreetViewInit) {
+                pendingStreetViewInit = false;
+                initStreetViewContainer().catch((error) =>
+                    console.warn('Street view init after Maps ready failed', error)
+                );
+            }
+        }
+
+        if (googleMapsReady) {
+            onGoogleMapsLibraryReady();
+        } else {
+            window.onGoogleMapsReady = onGoogleMapsLibraryReady;
+        }
+
+        if (streetViewToggleBtn) {
+            streetViewToggleBtn.addEventListener('click', () => {
+                if (!streetViewEnabled) {
+                    enableStreetView();
+                } else {
+                    disableStreetView();
+                }
+            });
+        }
+
+        function enableStreetView() {
+            if (!googleMapsKey) {
+                setStreetViewStatus('Add a Google Maps API key to enable Street View.', true);
+                return;
+            }
+            streetViewEnabled = true;
+            if (streetViewWrapper) {
+                streetViewWrapper.classList.remove('collapsed');
+            }
+            if (streetViewToggleBtn) {
+                streetViewToggleBtn.textContent = 'Disable';
+                streetViewToggleBtn.disabled = false;
+            }
+            setStreetViewStatus('Loading Google Street View…');
+            activateStreetViewFallback('Loading Google Street View…');
+            streetViewCache.clear();
+            streetViewFrames = [];
+            lastStreetViewImageId = null;
+            streetViewReady = false;
+            initStreetViewContainer().catch((error) =>
+                console.warn('Street view initialization failed', error)
+            );
+        }
+
+        function disableStreetView() {
+            streetViewEnabled = false;
+            pendingStreetViewInit = false;
+            streetViewCache.clear();
+            streetViewFrames = [];
+            lastStreetViewImageId = null;
+            streetViewReady = false;
+            if (streetViewPanorama) {
+                streetViewPanorama.setVisible(false);
+            }
+            if (googleMapsKey) {
+                activateStreetViewFallback('Street View disabled. Enable to load imagery.');
+            } else {
+                activateStreetViewFallback('Add a Google Maps API key to enable Street View.');
+            }
+            if (streetViewWrapper) {
+                streetViewWrapper.classList.add('collapsed');
+            }
+            if (streetViewToggleBtn) {
+                streetViewToggleBtn.textContent = 'Enable';
+                streetViewToggleBtn.disabled = !googleMapsKey || googleMapsLoadFailed;
+            }
+            if (googleMapsKey) {
+                setStreetViewStatus('Street View disabled to save API usage.');
+            } else {
+                setStreetViewStatus('Add a Google Maps API key to enable Street View.', true);
+            }
+        }
+
+        function activateStreetViewFallback(message) {
+            streetViewFallbackActive = true;
+            if (streetViewPanorama) {
+                streetViewPanorama.setVisible(false);
+            }
+            if (streetViewFallbackContainer) {
+                streetViewFallbackContainer.classList.add('active');
+            }
+            if (streetViewFallbackMeta && message) {
+                streetViewFallbackMeta.textContent = message;
+            }
+        }
+
+        function deactivateStreetViewFallback() {
+            streetViewFallbackActive = false;
+            if (streetViewPanorama) {
+                streetViewPanorama.setVisible(true);
+            }
+            if (streetViewFallbackContainer) {
+                streetViewFallbackContainer.classList.remove('active');
+            }
+        }
+
+        if (googleMapsLoadFailed && googleMapsKey) {
+            setStreetViewStatus('Google Maps library failed to load. Showing static previews.', true);
+            activateStreetViewFallback('Google Maps library unavailable. Showing static previews.');
+        }
+
+        if (!googleMapsKey) {
+            setStreetViewStatus('Add a Google Maps API key to enable Street View.', true);
+            if (streetViewToggleBtn) {
+                streetViewToggleBtn.disabled = true;
+            }
+        }
+
+        window.onGoogleMapsFailure = function() {
+            googleMapsLoadFailed = true;
+            disableStreetView();
+            if (streetViewToggleBtn) {
+                streetViewToggleBtn.disabled = true;
+            }
+            setStreetViewStatus('Google Maps library failed to load. Showing static previews.', true);
+        };
+
 
         // Initialize on load
         window.onload = function() {
@@ -1252,10 +1631,11 @@
 
                 const normalizedPoints = points.map((p, index) => {
                     const timeMs = p.timestamp ? Date.parse(p.timestamp) - startTimestampMs : index * 1000;
+                    const rawSpeed = p.speed !== undefined && p.speed !== null ? Number(p.speed) : null;
                     return {
                         lat: p.latitude,
                         lng: p.longitude,
-                        speed: p.speed ?? 0,
+                        speed: Number.isFinite(rawSpeed) ? rawSpeed : null,
                         accuracy: p.accuracy ?? null,
                         timestamp: p.timestamp,
                         timeMs: Math.max(0, timeMs),
@@ -1313,9 +1693,15 @@
                     return R * c;
                 };
 
+                const toSpeedMs = (speedKmh) =>
+                    speedKmh !== null && speedKmh !== undefined && !Number.isNaN(speedKmh)
+                        ? speedKmh / 3.6
+                        : null;
+
                 normalizedPoints.forEach((point, idx) => {
                     if (idx === 0) {
-                        point.speedMs = point.speed ? Number(point.speed) : 0;
+                        const initialSpeedMs = toSpeedMs(point.speed);
+                        point.speedMs = initialSpeedMs !== null ? initialSpeedMs : 0;
                         point.deltaSpeed = 0;
                         point.deltaTime = 0;
                         return;
@@ -1324,7 +1710,7 @@
                     const deltaTime = Math.max(0, (point.timeMs - prev.timeMs) / 1000);
                     const travelled = haversine(prev, point);
                     const computedSpeed = deltaTime > 0 ? travelled / deltaTime : 0;
-                    const sensorSpeed = point.speed ? Number(point.speed) : null;
+                    const sensorSpeed = toSpeedMs(point.speed);
                     point.speedMs = sensorSpeed && sensorSpeed > 0 ? sensorSpeed : computedSpeed;
                     const prevSpeed = prev.speedMs ?? computedSpeed;
                     point.deltaSpeed = point.speedMs - prevSpeed;
@@ -1464,6 +1850,19 @@
             // Update header
             document.getElementById('routeName').textContent = routeData.name;
 
+            streetViewCache.clear();
+            streetViewFrames = [];
+            lastStreetViewImageId = null;
+
+            if (!streetViewEnabled) {
+                disableStreetView();
+            } else {
+                setStreetViewStatus('Loading Google Street View…');
+                initStreetViewContainer().catch((error) =>
+                    console.warn('Street view initialization failed', error)
+                );
+            }
+
             // Update statistics
             document.getElementById('statDuration').textContent = routeData.duration;
             document.getElementById('statDistance').textContent = routeData.distance + ' km';
@@ -1477,6 +1876,7 @@
             // Render markers on map + list
             renderReviewMarkersOnMap();
             renderMarkerList();
+            updateStreetViewMarkers();
 
             // Add voice notes
             initializeVoiceNoteFilters();
@@ -1512,9 +1912,15 @@
 
             // Calculate speed statistics (convert to km/h)
             const speeds = points
-                .map(p => (p.speedMs !== undefined ? p.speedMs : p.speed || 0))
-                .map(speed => speed * 3.6)
-                .filter(speed => speed > 0);
+                .map((p) => {
+                    if (typeof p.speedMs === 'number' && !Number.isNaN(p.speedMs)) {
+                        return p.speedMs * 3.6;
+                    }
+                    const speedKmh =
+                        p.speed !== null && p.speed !== undefined ? Number(p.speed) : 0;
+                    return Number.isFinite(speedKmh) ? speedKmh : 0;
+                })
+                .filter((speed) => speed > 0);
 
             if (speeds.length === 0) {
                 document.getElementById('avgSpeed').textContent = 'N/A';
@@ -1595,9 +2001,18 @@
             const ACCEL_THRESHOLD = 1.5; // m/s^2
             const BRAKE_THRESHOLD = -1.5;
 
+            const toMs = (value) =>
+                value !== null && value !== undefined && !Number.isNaN(value) ? value / 3.6 : 0;
+
             for (let i = 1; i < points.length; i++) {
-                const prevSpeed = points[i - 1].speedMs ?? points[i - 1].speed ?? 0;
-                const currSpeed = points[i].speedMs ?? points[i].speed ?? 0;
+                const prevSpeed =
+                    typeof points[i - 1].speedMs === 'number'
+                        ? points[i - 1].speedMs
+                        : toMs(points[i - 1].speed);
+                const currSpeed =
+                    typeof points[i].speedMs === 'number'
+                        ? points[i].speedMs
+                        : toMs(points[i].speed);
                 const timeDiff = ((points[i].timeMs || 0) - (points[i - 1].timeMs || 0)) / 1000;
 
                 if (!timeDiff) continue;
@@ -1728,6 +2143,17 @@
             }
         }
 
+        function getSpeedWidth(speed) {
+            if (speed < 30) {
+                return 10;
+            } else if (speed < 50) {
+                return 14;
+            } else if (speed < 80) {
+                return 18;
+            }
+            return 24;
+        }
+
         // Draw route on map with speed heatmap
         function drawRoute() {
             const points = routeData.points;
@@ -1742,30 +2168,70 @@
             } else {
                 routeLayerGroup.clearLayers();
             }
-
-            if (carMarker) {
-                map.removeLayer(carMarker);
-                carMarker = null;
+            if (!playbackLayerGroup) {
+                playbackLayerGroup = L.layerGroup().addTo(map);
+            } else {
+                playbackLayerGroup.clearLayers();
             }
+            routeSegments = [];
 
             // Draw route segments with speed-based colors
             for (let i = 0; i < points.length - 1; i++) {
                 const p1 = points[i];
                 const p2 = points[i + 1];
-                const speed = (p1.speedMs !== undefined ? p1.speedMs : p1.speed || 0) * 3.6;
-                
+                let speedKmh = 0;
+                if (typeof p1.speedMs === 'number' && !Number.isNaN(p1.speedMs)) {
+                    speedKmh = p1.speedMs * 3.6;
+                } else if (p1.speed !== null && p1.speed !== undefined) {
+                    const numericSpeed = Number(p1.speed);
+                    speedKmh = Number.isFinite(numericSpeed) ? numericSpeed : 0;
+                }
+
                 // Get color based on speed
-                const color = getSpeedColor(speed);
-                
+                const color = getSpeedColor(speedKmh);
+                const weight = getSpeedWidth(speedKmh);
+
+                // Base route line (always visible for context)
                 L.polyline(
                     [[p1.lat, p1.lng], [p2.lat, p2.lng]],
                     {
-                        color: color,
-                        weight: 4,
-                        opacity: 0.8
+                        color: '#d9d9d9',
+                        weight,
+                        opacity: 0.2,
+                        interactive: false
                     }
                 ).addTo(routeLayerGroup);
+
+                // Playback-highlighted line (revealed during replay)
+                const playbackLine = L.polyline(
+                    [[p1.lat, p1.lng], [p1.lat, p1.lng]],
+                    {
+                        color: color,
+                        weight,
+                        opacity: 0,
+                        interactive: false
+                    }
+                ).addTo(playbackLayerGroup);
+
+                const startMs = Math.min(p1.timeMs || 0, p2.timeMs || 0);
+                const endMs = Math.max(p1.timeMs || 0, p2.timeMs || 0);
+                const bearing = computeBearing(p1.lat, p1.lng, p2.lat, p2.lng);
+                routeSegments.push({
+                    line: playbackLine,
+                    startMs,
+                    endMs,
+                    startLatLng: [p1.lat, p1.lng],
+                    endLatLng: [p2.lat, p2.lng],
+                    weight,
+                    bearing,
+                });
             }
+            routeSegments.sort((a, b) => a.startMs - b.startMs);
+            playbackLayerGroup.eachLayer(layer => {
+                if (layer.bringToFront) {
+                    layer.bringToFront();
+                }
+            });
 
             // Create a reference polyline for bounds (invisible)
             const coordinates = points.map(p => [p.lat, p.lng]);
@@ -1792,16 +2258,477 @@
                 })
             }).addTo(routeLayerGroup).bindPopup('End');
 
-            // Initialize car marker (hidden initially)
-            carMarker = L.marker(coordinates[0], {
-                icon: L.divIcon({
-                    className: 'car-marker',
-                    html: '🚗',
-                    iconSize: [40, 40]
-                })
-            }).addTo(map);
-            carMarker.setOpacity(0);
+            updateRoutePlayback(0);
+
+            if (streetViewEnabled && googleMapsKey) {
+                if (googleMapsReady && !googleMapsLoadFailed) {
+                    initStreetViewContainer().catch((error) =>
+                        console.warn('Street view initialization failed', error)
+                    );
+                } else if (googleMapsLoadFailed) {
+                    activateStreetViewFallback('Google Maps library unavailable. Showing static previews.');
+                    streetViewReady = true;
+                    pendingStreetViewInit = false;
+                    prefetchStreetViewImages().catch((error) =>
+                        console.warn('Street view prefetch failed', error)
+                    );
+                } else {
+                    pendingStreetViewInit = true;
+                }
+            }
         }
+
+        function updateRoutePlayback(currentMs) {
+            if (!routeSegments.length) {
+                return;
+            }
+
+            for (const segment of routeSegments) {
+                const { line, startMs, endMs, startLatLng, endLatLng } = segment;
+                if (!line) {
+                    continue;
+                }
+
+                if (currentMs <= startMs) {
+                    line.setStyle({ opacity: 0 });
+                    line.setLatLngs([startLatLng, startLatLng]);
+                    continue;
+                }
+
+                if (currentMs >= endMs) {
+                    line.setStyle({ opacity: 0.85 });
+                    line.setLatLngs([startLatLng, endLatLng]);
+                    continue;
+                }
+
+                const [lat, lng] = interpolateSegment(currentMs, segment);
+
+                line.setStyle({ opacity: 0.85 });
+                line.setLatLngs([
+                    startLatLng,
+                    [lat, lng],
+                ]);
+            }
+        }
+
+        function interpolateSegment(currentMs, segment) {
+            const { startMs, endMs, startLatLng, endLatLng } = segment;
+            const duration = Math.max(1, endMs - startMs);
+            const ratio = Math.max(0, Math.min(1, (currentMs - startMs) / duration));
+            const lat = startLatLng[0] + (endLatLng[0] - startLatLng[0]) * ratio;
+            const lng = startLatLng[1] + (endLatLng[1] - startLatLng[1]) * ratio;
+            return [lat, lng];
+        }
+
+        function computeBearing(lat1, lng1, lat2, lng2) {
+            const toRad = (deg) => (deg * Math.PI) / 180;
+            const toDeg = (rad) => (rad * 180) / Math.PI;
+            const φ1 = toRad(lat1);
+            const φ2 = toRad(lat2);
+            const Δλ = toRad(lng2 - lng1);
+            const y = Math.sin(Δλ) * Math.cos(φ2);
+            const x =
+                Math.cos(φ1) * Math.sin(φ2) -
+                Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+            const θ = Math.atan2(y, x);
+            return (toDeg(θ) + 360) % 360;
+        }
+
+        function updateStreetViewMarkers() {
+            if (!streetViewEnabled || !googleMapsReady || !streetViewPanorama) {
+                return;
+            }
+
+            streetViewMarkers.forEach((marker) => {
+                if (!marker) return;
+                if (typeof marker.setMap === 'function') {
+                    marker.setMap(null);
+                }
+            });
+            streetViewMarkers = [];
+
+            const markersWithLocation = (reviewMarkers || []).filter(
+                (marker) =>
+                    marker &&
+                    marker.latitude !== undefined &&
+                    marker.longitude !== undefined &&
+                    !Number.isNaN(Number(marker.latitude)) &&
+                    !Number.isNaN(Number(marker.longitude))
+            );
+
+            if (!markersWithLocation.length) {
+                return;
+            }
+
+            markersWithLocation.forEach((markerData) => {
+                const position = {
+                    lat: Number(markerData.latitude),
+                    lng: Number(markerData.longitude),
+                };
+
+                const markerInstance = new google.maps.Marker({
+                    position,
+                    title: markerData.label || 'Key location',
+                    map: streetViewPanorama,
+                });
+                markerInstance.addListener('click', () => focusMarkerOnMap(markerData));
+                streetViewMarkers.push(markerInstance);
+            });
+        }
+
+        async function initStreetViewContainer() {
+            if (!streetViewEnabled) {
+                return;
+            }
+            const wrapper = document.getElementById('streetViewWrapper');
+            if (!wrapper) {
+                return;
+            }
+
+            if (!googleMapsKey) {
+                wrapper.classList.add('disabled');
+                return;
+            }
+
+            wrapper.classList.remove('disabled');
+
+            if (!googleMapsReady || typeof google === 'undefined' || !google.maps || !google.maps.StreetViewPanorama) {
+                pendingStreetViewInit = true;
+                const statusEl = document.getElementById('streetViewStatus');
+                if (statusEl) {
+                    statusEl.classList.toggle('error', googleMapsLoadFailed);
+                    statusEl.textContent = googleMapsLoadFailed
+                        ? 'Google Maps library failed to load. Showing static previews.'
+                        : 'Loading Google Maps Street View…';
+                }
+                if (googleMapsLoadFailed) {
+                    activateStreetViewFallback('Google Maps library unavailable. Showing static previews.');
+                    streetViewReady = true;
+                    await prefetchStreetViewImages();
+                } else {
+                    activateStreetViewFallback('Loading Google Maps Street View…');
+                    streetViewReady = true;
+                    await prefetchStreetViewImages();
+                }
+                return;
+            }
+            deactivateStreetViewFallback();
+
+            if (!streetViewService) {
+                streetViewService = new google.maps.StreetViewService();
+            }
+
+            if (!streetViewPanorama) {
+                const player = document.getElementById('streetViewPlayer');
+                if (!player) {
+                    return;
+                }
+                streetViewPanorama = new google.maps.StreetViewPanorama(player, {
+                    addressControl: false,
+                    zoomControl: true,
+                    linksControl: false,
+                    panControl: false,
+                    fullscreenControl: false,
+                    motionTracking: false,
+                    showRoadLabels: false,
+                });
+            }
+
+            streetViewPanorama.setVisible(true);
+
+            streetViewReady = true;
+            updateStreetViewMarkers();
+            await prefetchStreetViewImages();
+        }
+
+        async function prefetchStreetViewImages() {
+            if (!streetViewEnabled) {
+                streetViewLoading = false;
+                return;
+            }
+            if (!routeSegments.length) {
+                return;
+            }
+            if (streetViewLoading) {
+                return;
+            }
+
+            streetViewLoading = true;
+            streetViewFrames = [];
+            lastStreetViewImageId = null;
+
+            setStreetViewStatus(
+                googleMapsReady
+                    ? 'Fetching Google Street View imagery…'
+                    : 'Preparing static Street View previews…'
+            );
+
+            const sampledSegments = [...routeSegments];
+            const interval = Math.max(1, Math.floor(sampledSegments.length / 25));
+            const frameIndices = new Set();
+            for (let i = 0; i < sampledSegments.length; i += interval) {
+                frameIndices.add(i);
+            }
+            if (sampledSegments.length) {
+                frameIndices.add(sampledSegments.length - 1);
+            }
+
+            const frames = [];
+
+            for (const index of Array.from(frameIndices).sort((a, b) => a - b)) {
+                const segment = sampledSegments[index];
+                if (!segment) continue;
+                const midLat = (segment.startLatLng[0] + segment.endLatLng[0]) / 2;
+                const midLng = (segment.startLatLng[1] + segment.endLatLng[1]) / 2;
+                const fallbackHeading = segment.bearing ?? computeBearing(
+                    segment.startLatLng[0],
+                    segment.startLatLng[1],
+                    segment.endLatLng[0],
+                    segment.endLatLng[1]
+                );
+
+                let frame = null;
+
+                if (googleMapsReady && streetViewService) {
+                    const panorama = await fetchPanoramaForLocation(midLat, midLng, fallbackHeading);
+                    if (panorama) {
+                        frame = {
+                            startMs: segment.startMs,
+                            endMs: segment.endMs,
+                            panoId: panorama.panoId,
+                            lat: panorama.lat,
+                            lng: panorama.lng,
+                            heading: panorama.heading,
+                            thumbUrl: buildStaticStreetViewUrl({
+                                panoId: panorama.panoId,
+                                heading: panorama.heading,
+                            }),
+                        };
+                    }
+                }
+
+                if (!frame) {
+                    frame = {
+                        startMs: segment.startMs,
+                        endMs: segment.endMs,
+                        panoId: null,
+                        lat: midLat,
+                        lng: midLng,
+                        heading: fallbackHeading,
+                        thumbUrl: buildStaticStreetViewUrl({
+                            lat: midLat,
+                            lng: midLng,
+                            heading: fallbackHeading,
+                        }),
+                    };
+                }
+
+                frames.push(frame);
+            }
+
+            frames.sort((a, b) => a.startMs - b.startMs);
+            streetViewFrames = frames;
+
+            if (googleMapsReady && streetViewService) {
+                setStreetViewStatus(
+                    streetViewFrames.length
+                        ? 'Street imagery via Google Street View'
+                        : 'No Google Street View coverage for this route.'
+                );
+            } else {
+                setStreetViewStatus(
+                    streetViewFrames.length
+                        ? 'Static Street View previews'
+                        : 'No Street View previews for this route.'
+                );
+            }
+
+            if (streetViewFallbackActive && streetViewFrames.length) {
+                updateStreetViewFallback(streetViewFrames[0]);
+            } else if (streetViewFallbackActive && streetViewFallbackMeta && !streetViewFrames.length) {
+                streetViewFallbackMeta.textContent = 'No Street View previews for this route.';
+            }
+
+            if (streetViewPanorama && googleMapsReady && streetViewFrames.length && !streetViewFallbackActive) {
+                updateStreetView(currentTime);
+            }
+
+            streetViewLoading = false;
+        }
+
+        function buildStaticStreetViewUrl({ panoId, lat, lng, heading }) {
+            if (!googleMapsKey) {
+                return null;
+            }
+            const params = new URLSearchParams({
+                size: '640x360',
+                pitch: '0',
+                key: googleMapsKey,
+            });
+            if (heading !== undefined && heading !== null) {
+                params.set('heading', String(Math.round((heading + 360) % 360)));
+            }
+            if (panoId) {
+                params.set('pano', panoId);
+            } else if (lat !== undefined && lng !== undefined) {
+                params.set('location', `${lat},${lng}`);
+            } else {
+                return null;
+            }
+            return `https://maps.googleapis.com/maps/api/streetview?${params.toString()}`;
+        }
+
+        async function fetchPanoramaForLocation(lat, lng, fallbackHeading) {
+            const cacheKey = `${lat.toFixed(5)},${lng.toFixed(5)}`;
+            if (streetViewCache.has(cacheKey)) {
+                return streetViewCache.get(cacheKey);
+            }
+
+            if (!streetViewService) {
+                return null;
+            }
+
+            const searchRadii = [30, 60, 120, 240, 400];
+            let panoramaData = null;
+
+            for (const radius of searchRadii) {
+                const result = await new Promise((resolve) => {
+                    const request = {
+                        location: { lat, lng },
+                        radius,
+                    };
+                    if (google.maps.StreetViewSource && google.maps.StreetViewSource.OUTDOOR) {
+                        request.source = google.maps.StreetViewSource.OUTDOOR;
+                    }
+                    streetViewService.getPanorama(request, (data, status) => {
+                        if (status === google.maps.StreetViewStatus.OK) {
+                            resolve(data);
+                        } else {
+                            resolve(null);
+                        }
+                    });
+                });
+
+                if (result) {
+                    panoramaData = result;
+                    break;
+                }
+            }
+
+            if (!panoramaData) {
+                streetViewCache.set(cacheKey, null);
+                return null;
+            }
+
+            const panoId = panoramaData.location?.pano || null;
+            const latLng = panoramaData.location?.latLng;
+            const heading = panoramaData.tiles?.centerHeading ?? fallbackHeading ?? 0;
+            const panorama = {
+                panoId,
+                lat: latLng ? latLng.lat() : lat,
+                lng: latLng ? latLng.lng() : lng,
+                heading,
+            };
+
+            streetViewCache.set(cacheKey, panorama);
+            return panorama;
+        }
+
+        function getFrameForTime(currentMs) {
+            if (!streetViewFrames.length) {
+                return null;
+            }
+            const firstFrame = streetViewFrames[0];
+            const lastFrame = streetViewFrames[streetViewFrames.length - 1];
+            if (currentMs <= firstFrame.startMs) return firstFrame;
+            if (currentMs >= lastFrame.endMs) return lastFrame;
+            for (const frame of streetViewFrames) {
+                if (currentMs >= frame.startMs && currentMs <= frame.endMs) {
+                    return frame;
+                }
+            }
+            return lastFrame;
+        }
+
+        function updateStreetViewFallback(frame) {
+            if (!streetViewFallbackActive || !frame) {
+                return;
+            }
+            if (streetViewFallbackImage) {
+                const previewUrl = frame.thumbUrl || buildStaticStreetViewUrl({
+                    panoId: frame.panoId,
+                    lat: frame.lat,
+                    lng: frame.lng,
+                    heading: frame.heading,
+                });
+                if (previewUrl) {
+                    streetViewFallbackImage.src = previewUrl;
+                    streetViewFallbackImage.style.display = 'block';
+                } else {
+                    streetViewFallbackImage.removeAttribute('src');
+                    streetViewFallbackImage.style.display = 'none';
+                }
+            }
+            if (streetViewFallbackMeta) {
+                const compass = frame.heading !== null && frame.heading !== undefined
+                    ? `${Math.round(frame.heading)}°`
+                    : '—';
+                const index = Math.max(0, streetViewFrames.indexOf(frame));
+                streetViewFallbackMeta.textContent = `Frame ${index + 1}/${streetViewFrames.length} · Heading ${compass}`;
+            }
+        }
+
+        function updateStreetView(currentMs) {
+            if (!streetViewEnabled || !streetViewFrames.length) {
+                return;
+            }
+
+            const frame = getFrameForTime(currentMs);
+            if (!frame) {
+                return;
+            }
+
+            if (streetViewFallbackActive) {
+                if (frame.panoId) {
+                    deactivateStreetViewFallback();
+                } else {
+                    updateStreetViewFallback(frame);
+                    return;
+                }
+            }
+
+            if (!frame.panoId) {
+                activateStreetViewFallback('Limited Street View coverage. Showing static previews.');
+                updateStreetViewFallback(frame);
+                return;
+            }
+
+            if (!streetViewPanorama) {
+                return;
+            }
+
+            if (frame.panoId === lastStreetViewImageId) {
+                streetViewPanorama.setPosition({ lat: frame.lat, lng: frame.lng });
+                streetViewPanorama.setPov({
+                    heading: frame.heading ?? 0,
+                    pitch: 0,
+                    zoom: 1,
+                });
+                return;
+            }
+
+            lastStreetViewImageId = frame.panoId;
+            if (frame.panoId) {
+                streetViewPanorama.setPano(frame.panoId);
+            }
+            streetViewPanorama.setPosition({ lat: frame.lat, lng: frame.lng });
+            streetViewPanorama.setPov({
+                heading: frame.heading ?? 0,
+                pitch: 0,
+                zoom: 1,
+            });
+        }
+
 
         function getReviewMarkerIcon(type = 'general') {
             const palette = {
@@ -2011,6 +2938,8 @@
                     }
                 });
             });
+
+            updateStreetViewMarkers();
         }
 
         function renderMarkerList() {
@@ -2483,10 +3412,29 @@
 
         // Start playback
         function startPlayback() {
-            if (!routeData.points.length || !carMarker) {
+            if (!routeData.points.length) {
                 return;
             }
-            carMarker.setOpacity(1);
+            const totalDuration = Math.max(1, routeData.totalDurationMs || totalDurationSeconds * 1000);
+            const hasSegments = routeSegments.length > 0;
+            const highlightStartMs = hasSegments ? routeSegments[0].startMs : 0;
+            const highlightEndMs = hasSegments ? routeSegments[routeSegments.length - 1].endMs : totalDuration;
+
+            if (currentTime >= totalDuration) {
+                currentTime = 0;
+            }
+
+            if (hasSegments) {
+                const isReplay = currentTime <= highlightStartMs || currentTime >= highlightEndMs;
+                if (isReplay) {
+                    currentTime = highlightStartMs;
+                    updateRoutePlayback(0);
+                    updateStreetView(0);
+                } else {
+                    updateRoutePlayback(currentTime);
+                    updateStreetView(currentTime);
+                }
+            }
             startTimestamp = Date.now() - currentTime;
             animatePlayback();
         }
@@ -2510,9 +3458,6 @@
                 currentTime = totalDuration;
                 isPlaying = false;
                 document.getElementById('playPauseBtn').textContent = '▶️';
-                if (carMarker) {
-                    carMarker.setOpacity(0);
-                }
                 return;
             }
 
@@ -2536,20 +3481,8 @@
             document.getElementById('progressBar').style.width = `${progress}%`;
             document.getElementById('currentTime').textContent = formatTimestamp(currentTime);
 
-            // Update car position
-            let point = null;
-            for (let i = 0; i < routeData.points.length; i++) {
-                if (routeData.points[i].timeMs >= currentTime) {
-                    point = routeData.points[i];
-                    break;
-                }
-            }
-            if (!point && routeData.points.length) {
-                point = routeData.points[routeData.points.length - 1];
-            }
-            if (point) {
-                carMarker.setLatLng([point.lat, point.lng]);
-            }
+            updateRoutePlayback(currentTime);
+            updateStreetView(currentTime);
 
             // Check for voice notes at current time
             checkVoiceNotesAtTime(currentTime);

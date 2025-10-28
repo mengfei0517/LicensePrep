@@ -1,8 +1,39 @@
 import os
 from typing import List
-from dotenv import load_dotenv
 
-load_dotenv()
+try:
+    from dotenv import load_dotenv  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover
+    load_dotenv = None
+
+
+def _load_env_file_fallback() -> None:
+    """Fallback loader for .env when python-dotenv is missing."""
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+    dotenv_path = os.path.join(project_root, ".env")
+    if not os.path.exists(dotenv_path):
+        return
+    try:
+        with open(dotenv_path, "r", encoding="utf-8") as env_file:
+            for line in env_file:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                if "=" not in line:
+                    continue
+                key, value = line.split("=", 1)
+                key = key.strip()
+                value = value.strip()
+                if key and key not in os.environ:
+                    os.environ[key] = value
+    except OSError:
+        pass
+
+
+if load_dotenv is not None:
+    load_dotenv()
+else:  # pragma: no cover
+    _load_env_file_fallback()
 
 
 def _parse_csv_env(value: str | None, default: List[str]) -> List[str]:
@@ -48,6 +79,9 @@ class Settings:
     # AWS settings
     AWS_REGION: str = os.getenv("AWS_REGION", "eu-central-1")
     S3_BUCKET: str = os.getenv("S3_BUCKET", "")
+
+    # Google Maps API
+    GOOGLE_MAPS_API_KEY: str = os.getenv("GOOGLE_MAPS_API_KEY", "")
 
 
 settings = Settings()

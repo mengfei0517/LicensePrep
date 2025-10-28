@@ -3,7 +3,6 @@ from __future__ import annotations
 from collections import Counter, defaultdict
 from datetime import datetime
 from math import asin, cos, radians, sin, sqrt
-from statistics import mean
 from typing import Any, Dict, List, Optional, Tuple
 
 from flask import Blueprint, jsonify
@@ -73,7 +72,7 @@ def _compute_harsh_events(points: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             continue
         speed = point.get("speed")
         if isinstance(speed, (int, float)):
-            speed_ms = float(speed)
+            speed_ms = float(speed) / 3.6  # stored as km/h; convert to m/s
         else:
             speed_ms = None
         enriched.append(
@@ -162,10 +161,12 @@ def _compute_segments(points: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             prev["lat"], prev["lng"], current["lat"], current["lng"]
         )
         speed_ms = (
-            float(current["speed"])
+            float(current["speed"]) / 3.6
             if isinstance(current["speed"], (int, float))
-            else distance_m / delta_t
+            else None
         )
+        if speed_ms is None or speed_ms < 0:
+            speed_ms = distance_m / delta_t
         segments.append(
             {
                 "start": prev["timestamp"].isoformat(),
@@ -439,9 +440,13 @@ def _build_route_note(session: Dict[str, Any]) -> Dict[str, Any]:
     segments = _compute_segments(gps_points)
     harsh_events = _compute_harsh_events(gps_points)
 
+    total_distance_km = sum(segment["distance_km"] for segment in segments)
+    total_duration_hours = sum(segment["duration_s"] for segment in segments) / 3600.0
     avg_speed = (
-        mean(segment["speed_kmh"] for segment in segments) if segments else 0.0
+        (total_distance_km / total_duration_hours) if total_duration_hours > 0 else 0.0
     )
+    if avg_speed == 0.0 and duration_min > 0 and distance_km > 0:
+        avg_speed = distance_km / (duration_min / 60.0)
     max_speed = (
         max(segment["speed_kmh"] for segment in segments) if segments else 0.0
     )

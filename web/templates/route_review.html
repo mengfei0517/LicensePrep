@@ -128,6 +128,64 @@
             height: 100%;
         }
 
+        .speed-overlay {
+            position: absolute;
+            top: 120px;
+            left: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            background: rgba(17, 24, 39, 0.75);
+            color: #f9fafb;
+            font-size: 0.9em;
+            min-width: 150px;
+            z-index: 1100;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.35);
+            backdrop-filter: blur(6px);
+        }
+
+        .speed-overlay-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 12px;
+        }
+
+        .speed-overlay-label {
+            font-weight: 500;
+            opacity: 0.8;
+        }
+
+        .speed-overlay-value {
+            font-weight: 700;
+            font-size: 1.05em;
+            white-space: nowrap;
+        }
+
+        .speed-overlay-value.manual-source,
+        .speed-overlay-value.api-source {
+            border-radius: 6px;
+            padding: 2px 6px;
+        }
+
+        .speed-overlay-value.manual-source {
+            background: rgba(52, 211, 153, 0.18);
+        }
+
+        .speed-overlay-value.api-source {
+            background: rgba(59, 130, 246, 0.18);
+        }
+
+        .speed-overlay-value.limit-warning {
+            color: #fbbf24;
+        }
+
+        .speed-overlay-value.limit-danger {
+            color: #f87171;
+        }
+
         .street-panel {
             display: flex;
             flex-direction: column;
@@ -144,27 +202,40 @@
         }
 
         .streetview-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
             padding: 16px 20px 12px;
             border-bottom: 1px solid #e5e7eb;
+        }
+
+        .streetview-title-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
         }
 
         .streetview-header h3 {
             margin: 0;
             font-size: 1.05em;
             color: #1f2937;
-            display: flex;
-            align-items: center;
-            gap: 10px;
         }
 
-        .streetview-header h3 span {
-            font-size: 0.8em;
-            font-weight: 500;
+        .streetview-status-note {
+            margin: 0;
+            font-size: 0.78em;
             color: #6b7280;
+            line-height: 1.4;
+        }
+
+        .streetview-status-note.error {
+            color: #dc2626;
         }
 
         .streetview-toggle {
             margin-left: auto;
+            align-self: flex-start;
             display: inline-flex;
             align-items: center;
             gap: 6px;
@@ -260,6 +331,10 @@
             margin-bottom: 15px;
         }
 
+        .speed-stats.single {
+            grid-template-columns: 1fr;
+        }
+
         .speed-stat-item {
             background: #f8f9fa;
             padding: 10px;
@@ -290,39 +365,53 @@
         .marker-section {
             padding: 20px;
             border-bottom: 2px solid #f0f0f0;
-            max-height: 220px;
-            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .marker-section-header {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
         .marker-section h3 {
-            margin: 0 0 15px 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            margin: 0;
             color: #495057;
             font-size: 1.1em;
+        }
+
+        .marker-hint {
+            margin: 0;
+            font-size: 0.8em;
+            color: #6b7280;
         }
 
         .marker-action-btn {
             background: #f59e0b;
             border: none;
             color: white;
-            padding: 6px 12px;
-            border-radius: 6px;
+            padding: 7px 14px;
+            border-radius: 999px;
             cursor: pointer;
             font-size: 0.85em;
+            font-weight: 600;
             transition: all 0.3s ease;
+            box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);
         }
 
         .marker-action-btn.active {
             background: #d97706;
-            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.3);
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25);
         }
 
         .marker-list {
             display: flex;
             flex-direction: column;
             gap: 12px;
+            max-height: 180px;
+            overflow-y: auto;
         }
 
         .marker-card {
@@ -364,34 +453,6 @@
             padding: 4px 10px;
             font-size: 0.7em;
             font-weight: 600;
-        }
-
-        .heat-list {
-            margin-top: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .heat-card {
-            background: #fff5f5;
-            border-left: 3px solid #ef4444;
-            border-radius: 10px;
-            padding: 10px 12px;
-            color: #7f1d1d;
-            font-size: 0.85em;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .heat-card strong {
-            font-size: 0.9em;
-        }
-
-        .heat-card .heat-meta {
-            color: #9f1239;
-            font-size: 0.75em;
         }
 
         .marker-actions {
@@ -527,6 +588,11 @@
             cursor: pointer;
         }
 
+        .marker-modal textarea {
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
         .marker-modal .modal-actions .save-btn {
             background: #f59e0b;
             color: white;
@@ -537,43 +603,20 @@
             color: #495057;
         }
 
-        .speed-chart-container {
-            height: 150px;
-            margin-top: 10px;
-            background: white;
-            border-radius: 8px;
-            padding: 10px;
-        }
-
-        .analysis-toggle {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 10px;
-        }
-
-        .toggle-btn {
-            flex: 1;
-            background: #f8f9fa;
-            border: 2px solid #e0e0e0;
-            color: #495057;
-            padding: 8px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.85em;
-            transition: all 0.3s ease;
-        }
-
-        .toggle-btn.active {
-            background: #667eea;
-            border-color: #667eea;
-            color: white;
-        }
-
         /* Voice Notes Section */
         .voice-notes-section {
             flex: 1;
-            overflow-y: auto;
             padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow: hidden;
+        }
+
+        .voice-notes-header {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
 
         .voice-notes-section h3 {
@@ -589,6 +632,12 @@
             font-size: 0.9em;
             color: #667eea;
             font-weight: normal;
+        }
+
+        .voice-note-list-wrapper {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 4px;
         }
 
         .voice-note-list {
@@ -713,11 +762,13 @@
             gap: 8px;
         }
 
-        .note-tag-editor input {
+        .note-tag-editor select {
+            width: 100%;
             padding: 8px 10px;
             border-radius: 6px;
             border: 1px solid #ced4da;
             font-size: 0.9em;
+            min-height: 90px;
         }
 
         .note-tag-editor .editor-actions {
@@ -901,10 +952,6 @@
             pointer-events: auto;
         }
 
-        .timeline-range.heat {
-            background: linear-gradient(90deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.6));
-        }
-
         .progress-marker {
             position: absolute;
             width: 10px;
@@ -989,9 +1036,195 @@
             font-size: 0.85em;
         }
 
+        .speed-edit-controls {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 1100;
+        }
+
+        .speed-edit-controls.offset {
+            left: 92px;
+        }
+
+        @media (max-width: 768px) {
+            .speed-edit-controls.offset {
+                left: 12px;
+            }
+        }
+
+        .speed-edit-toggle {
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 8px 14px;
+            font-size: 0.85em;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            color: #1f2937;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+            transition: all 0.2s ease;
+        }
+
+        .speed-edit-toggle.active {
+            border-color: #34d399;
+            color: #047857;
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.25);
+        }
+
+        .speed-edit-toggle span {
+            font-weight: 600;
+        }
+
+        .manual-speed-marker {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: rgba(52, 211, 153, 0.95);
+            color: #064e3b;
+            font-weight: 700;
+            border: 2px solid white;
+            box-shadow: 0 3px 8px rgba(4, 120, 87, 0.3);
+            font-size: 0.85em;
+        }
+
+        .speed-limit-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .speed-limit-modal-backdrop.active {
+            display: flex;
+        }
+
+        .speed-limit-modal {
+            width: 360px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.35);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .speed-limit-modal header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .speed-limit-modal header h4 {
+            margin: 0;
+            font-size: 1.05em;
+            color: #0f172a;
+        }
+
+        .speed-limit-modal .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.2em;
+            cursor: pointer;
+            color: #6b7280;
+        }
+
+        .speed-limit-modal form {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .speed-limit-modal label {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 0.85em;
+            color: #4b5563;
+        }
+
+        .speed-limit-modal input,
+        .speed-limit-modal select,
+        .speed-limit-modal textarea {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 0.95em;
+            background: white;
+        }
+
+        .speed-limit-modal textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .speed-limit-meta {
+            font-size: 0.8em;
+            color: #6b7280;
+        }
+
+        .speed-limit-modal .modal-actions {
+            display: flex;
+            gap: 10px;
+            padding: 0 20px 20px 20px;
+        }
+
+        .speed-limit-modal .modal-actions button {
+            flex: 1;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.9em;
+            cursor: pointer;
+        }
+
+        .speed-limit-modal .save-btn {
+            background: #34d399;
+            color: #065f46;
+            font-weight: 600;
+        }
+
+        .speed-limit-modal .delete-btn {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .speed-limit-modal .cancel-btn {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
         .streetview-section {
             display: flex;
             flex-direction: column;
+        }
+
+        .gps-marker-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gps-marker-icon svg {
+            width: 36px;
+            height: 36px;
+            pointer-events: none;
         }
 
         .streetview-status {
@@ -1156,6 +1389,25 @@
                 <!-- Map Panel -->
                 <div class="map-panel">
                     <div id="map"></div>
+                    <div class="speed-edit-controls" id="speedEditControls">
+                        <button class="speed-edit-toggle" id="toggleSpeedLimitModeBtn">
+                            ✏️ <span>Edit Speed Limits</span>
+                        </button>
+                        <button class="marker-action-btn" id="addMarkerBtnFloating" title="Add review location">📌 Add Key Location</button>
+                        <div class="speed-limit-meta" id="speedLimitModeHint" style="display:none;">
+                            Click the route to add a custom limit segment.
+                        </div>
+                    </div>
+                    <div class="speed-overlay" id="speedOverlay">
+                        <div class="speed-overlay-row">
+                            <span class="speed-overlay-label">Speed</span>
+                            <span class="speed-overlay-value" id="currentSpeedValue">-- km/h</span>
+                        </div>
+                        <div class="speed-overlay-row">
+                            <span class="speed-overlay-label">Limit</span>
+                            <span class="speed-overlay-value" id="currentSpeedLimitValue">-- km/h</span>
+                        </div>
+                    </div>
                     
                     <!-- Speed Legend -->
                     <div class="speed-legend">
@@ -1187,13 +1439,16 @@
                 <!-- Street View Panel -->
                 <div class="street-panel streetview-section collapsed{% if not google_maps_api_key %} disabled{% endif %}" id="streetViewWrapper">
                     <div class="streetview-header">
-                        <h3>🌍 Street View Replay <span id="streetViewStatus">
-                            {% if not google_maps_api_key %}
-                            Add a Google Maps API key to enable
-                            {% else %}
-                            Street View disabled to save API usage
-                            {% endif %}
-                        </span></h3>
+                        <div class="streetview-title-group">
+                            <h3>🌍 Street Review</h3>
+                            <p class="streetview-status-note" id="streetViewStatus">
+                                {% if not google_maps_api_key %}
+                                Add a Google Maps API key to enable
+                                {% else %}
+                                Street View disabled to save API usage.
+                                {% endif %}
+                            </p>
+                        </div>
                         <button class="streetview-toggle" id="toggleStreetViewBtn"{% if not google_maps_api_key %} disabled{% endif %}>
                             Enable
                         </button>
@@ -1242,71 +1497,47 @@
 
                 <!-- Speed Analysis Section -->
                 <div class="speed-analysis-section">
-                    <h3>📈 Speed Analysis</h3>
-                    
-                    <div class="analysis-toggle">
-                        <button class="toggle-btn active" data-view="stats">Statistics</button>
-                        <button class="toggle-btn" data-view="chart">Chart</button>
-                    </div>
-
-                    <div id="speedStatsView">
-                        <div class="speed-stats">
-                            <div class="speed-stat-item">
-                                <div class="speed-stat-label">Avg Speed</div>
-                                <div class="speed-stat-value" id="avgSpeed">-- km/h</div>
-                            </div>
-                            <div class="speed-stat-item">
-                                <div class="speed-stat-label">Max Speed</div>
-                                <div class="speed-stat-value" id="maxSpeed">-- km/h</div>
-                            </div>
-                            <div class="speed-stat-item">
-                                <div class="speed-stat-label">Acceleration</div>
-                                <div class="speed-stat-value" id="accelCount">-- times</div>
-                            </div>
-                            <div class="speed-stat-item">
-                                <div class="speed-stat-label">Braking</div>
-                                <div class="speed-stat-value" id="brakeCount">-- times</div>
-                            </div>
+                    <h3>🚦 Overspeed Summary</h3>
+                    <div class="speed-stats single">
+                        <div class="speed-stat-item">
+                            <div class="speed-stat-label">Times exceeding limit</div>
+                            <div class="speed-stat-value" id="overspeedCount">--</div>
                         </div>
                     </div>
-
-                    <div id="speedChartView" style="display: none;">
-                        <div class="speed-chart-container">
-                            <canvas id="speedChart"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="heat-list" id="heatHotspots"></div>
                 </div>
 
                 <!-- Key Locations Section -->
                 <div class="marker-section">
-                    <h3>
-                        📌 Key Review Locations
-                        <button class="marker-action-btn" id="addMarkerBtn">Add location</button>
-                    </h3>
+                    <div class="marker-section-header">
+                        <h3>📌 Key Review Locations</h3>
+                        <p class="marker-hint">Suggestions: on-ramp to highway • coaching tip • tricky intersection notes</p>
+                    </div>
                     <div id="markerList" class="marker-list">
-                        <div class="marker-empty">Click “Add location” and then tap on the map to drop a flag.</div>
+                        <div class="marker-empty">Click “Add Key Location” and then tap on the map to drop a flag.</div>
                     </div>
                 </div>
 
                 <!-- Voice Notes List -->
                 <div class="voice-notes-section">
-                    <h3>
-                        🎙️ Voice Notes
-                        <span class="note-count" id="noteCount">(0)</span>
-                    </h3>
-                    <div class="voice-notes-filters">
-                        <input type="text" id="voiceSearchInput" placeholder="Search notes or tags…" />
-                        <select id="voiceTagFilter">
-                            <option value="">All tags</option>
-                        </select>
+                    <div class="voice-notes-header">
+                        <h3>
+                            🎙️ Voice Notes
+                            <span class="note-count" id="noteCount">(0)</span>
+                        </h3>
+                        <div class="voice-notes-filters">
+                            <input type="text" id="voiceSearchInput" placeholder="Search notes or tags…" />
+                            <select id="voiceTagFilter">
+                                <option value="">All tags</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="voice-note-list" id="voiceNoteList">
+                    <div class="voice-note-list-wrapper">
+                        <div class="voice-note-list" id="voiceNoteList">
                         <div class="empty-notes">
                             <div class="empty-notes-icon">🎵</div>
                             <p>No voice notes in this route</p>
                         </div>
+                    </div>
                     </div>
                 </div>
             </div>
@@ -1381,6 +1612,44 @@
             </form>
         </div>
     </div>
+
+    <!-- Speed Limit Modal -->
+    <div class="speed-limit-modal-backdrop" id="speedLimitModal">
+        <div class="speed-limit-modal">
+            <header>
+                <h4 id="speedLimitModalTitle">Add speed limit</h4>
+                <button class="close-modal" type="button" onclick="closeSpeedLimitModal()">✕</button>
+            </header>
+            <form id="speedLimitForm">
+                <input type="hidden" id="speedLimitIdField" />
+                <input type="hidden" id="speedLimitStartIndexField" />
+                <label>
+                    Limit (km/h)
+                    <input type="number" id="speedLimitValueField" min="10" max="130" step="5" required />
+                </label>
+                <label>
+                    Applies for
+                    <select id="speedLimitLengthField" required>
+                        <option value="200">200 m</option>
+                        <option value="500">500 m</option>
+                        <option value="1000">1 km</option>
+                        <option value="2000">2 km</option>
+                        <option value="5000">5 km</option>
+                    </select>
+                </label>
+                <label>
+                    Note (optional)
+                    <textarea id="speedLimitNoteField" placeholder="e.g. School zone during weekdays"></textarea>
+                </label>
+                <div class="speed-limit-meta" id="speedLimitMetaInfo"></div>
+                <div class="modal-actions">
+                    <button type="button" class="delete-btn" id="speedLimitDeleteBtn" style="display:none;">Delete</button>
+                    <button type="button" class="cancel-btn" onclick="closeSpeedLimitModal()">Cancel</button>
+                    <button type="submit" class="save-btn">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
     </div>
 
     <!-- Leaflet JS -->
@@ -1400,14 +1669,12 @@
         let reviewMarkersLayer = null;
         let reviewMarkerIcons = {};
         let reviewMarkers = [];
-        let heatWindows = [];
         let markerControlsInitialized = false;
         let playbackControlsInitialized = false;
         let voiceFiltersInitialized = false;
         let routeLayerGroup = null;
         let playbackLayerGroup = null;
         let routeSegments = [];
-        let analysisToggleInitialized = false;
 
         const escapeHtml = (input) => {
             if (input === undefined || input === null) return '';
@@ -1418,6 +1685,13 @@
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#39;');
         };
+        const toNumberOrNull = (value) => {
+            if (value === null || value === undefined) {
+                return null;
+            }
+            const num = Number(value);
+            return Number.isFinite(num) ? num : null;
+        };
         let isAddingMarker = false;
         let pendingMarkerLatLng = null;
         let voiceNoteFilters = { search: '', tag: '' };
@@ -1426,6 +1700,9 @@
         let playbackSpeed = 1;
         let animationFrame = null;
         let startTimestamp = null;
+        let playbackPointIndex = 0;
+        let overspeedSummary = { count: 0, durationMs: 0 };
+        const VOICE_TAG_SUGGESTIONS = ['observation', 'hazard', 'coaching', 'exam-note', 'reminder'];
 
         const googleMapsKey = document.body.dataset.googleMapsKey || '';
         let googleMapsReady = Boolean(window.googleMapsReady);
@@ -1441,6 +1718,12 @@
         let lastStreetViewImageId = null;
         const streetViewCache = new Map();
         let streetViewFallbackActive = false;
+        let manualSpeedLimits = [];
+        let manualSpeedLimitLayer = null;
+        let manualSpeedLimitMarkerLayer = null;
+        let speedLimitModeEnabled = false;
+        let pendingSpeedLimitStart = null;
+        let activeSpeedLimit = null;
         const streetViewWrapper = document.getElementById('streetViewWrapper');
         const streetViewStatus = document.getElementById('streetViewStatus');
         const streetViewToggleBtn = document.getElementById('toggleStreetViewBtn');
@@ -1448,6 +1731,22 @@
         const streetViewFallbackContainer = document.getElementById('streetViewFallback');
         const streetViewFallbackImage = document.getElementById('streetViewFallbackImage');
         const streetViewFallbackMeta = document.getElementById('streetViewFallbackMeta');
+        const speedOverlayEl = document.getElementById('speedOverlay');
+        const speedOverlayCurrentEl = document.getElementById('currentSpeedValue');
+        const speedOverlayLimitEl = document.getElementById('currentSpeedLimitValue');
+        const speedLimitToggleBtn = document.getElementById('toggleSpeedLimitModeBtn');
+        const speedLimitModeHint = document.getElementById('speedLimitModeHint');
+        const speedEditControlsEl = document.getElementById('speedEditControls');
+        const speedLimitModal = document.getElementById('speedLimitModal');
+        const speedLimitForm = document.getElementById('speedLimitForm');
+        const speedLimitIdField = document.getElementById('speedLimitIdField');
+        const speedLimitStartIndexField = document.getElementById('speedLimitStartIndexField');
+        const speedLimitValueField = document.getElementById('speedLimitValueField');
+        const speedLimitLengthField = document.getElementById('speedLimitLengthField');
+        const speedLimitNoteField = document.getElementById('speedLimitNoteField');
+        const speedLimitMetaInfo = document.getElementById('speedLimitMetaInfo');
+        const speedLimitDeleteBtn = document.getElementById('speedLimitDeleteBtn');
+        const speedLimitModalTitle = document.getElementById('speedLimitModalTitle');
 
         const setStreetViewStatus = (message, isError = false) => {
             if (!streetViewStatus) return;
@@ -1482,6 +1781,335 @@
             });
         }
 
+        if (speedLimitToggleBtn) {
+            speedLimitToggleBtn.addEventListener('click', () => {
+                setSpeedLimitMode(!speedLimitModeEnabled);
+            });
+        } else {
+            const controls = document.getElementById('speedEditControls');
+            if (controls) {
+                controls.style.display = 'none';
+            }
+            console.warn('Speed limit editing disabled (toggle button not rendered)');
+        }
+
+        if (speedLimitForm) {
+            speedLimitForm.addEventListener('submit', submitSpeedLimitForm);
+        }
+
+        if (speedLimitDeleteBtn) {
+            speedLimitDeleteBtn.addEventListener('click', () => {
+                if (activeSpeedLimit) {
+                    deleteSpeedLimit(activeSpeedLimit.id);
+                    closeSpeedLimitModal();
+                }
+            });
+        }
+
+        function setSpeedLimitMode(enabled) {
+            speedLimitModeEnabled = Boolean(enabled);
+            if (speedLimitToggleBtn) {
+                speedLimitToggleBtn.classList.toggle('active', speedLimitModeEnabled);
+                speedLimitToggleBtn.innerHTML = speedLimitModeEnabled
+                    ? '✅ <span>Speed Limit Mode</span>'
+                    : '✏️ <span>Edit Speed Limits</span>';
+            }
+            if (speedLimitModeHint) {
+                speedLimitModeHint.style.display = speedLimitModeEnabled ? 'block' : 'none';
+            }
+            if (map) {
+                map.getContainer().style.cursor = speedLimitModeEnabled ? 'crosshair' : '';
+            }
+            pendingSpeedLimitStart = null;
+        }
+
+        function openSpeedLimitModal({ limit = null, startIndex = null } = {}) {
+            activeSpeedLimit = limit;
+            const isEdit = Boolean(limit);
+            const title = isEdit ? 'Edit speed limit' : 'Add speed limit';
+            if (speedLimitModalTitle) {
+                speedLimitModalTitle.textContent = title;
+            }
+            if (speedLimitIdField) {
+                speedLimitIdField.value = isEdit ? limit.id : '';
+            }
+            if (speedLimitStartIndexField) {
+                speedLimitStartIndexField.value = isEdit
+                    ? String(limit.startIndex)
+                    : (startIndex !== null ? String(startIndex) : '');
+            }
+            if (speedLimitValueField) {
+                speedLimitValueField.value = isEdit ? limit.limitKmh : 50;
+            }
+            if (speedLimitLengthField) {
+                const lengthChoices = [200, 500, 1000, 2000, 5000];
+                if (isEdit) {
+                    const measuredLength = Math.max(20, Math.round(calculateLimitLength(limit)));
+                    const nearest = lengthChoices.reduce((prev, curr) =>
+                        Math.abs(curr - measuredLength) < Math.abs(prev - measuredLength) ? curr : prev
+                    , lengthChoices[0]);
+                    speedLimitLengthField.value = String(nearest);
+                } else {
+                    speedLimitLengthField.value = '200';
+                }
+            }
+            if (speedLimitNoteField) {
+                speedLimitNoteField.value = isEdit ? (limit.note || '') : '';
+            }
+            if (speedLimitMetaInfo) {
+                if (isEdit) {
+                    speedLimitMetaInfo.textContent = `Covers GPS points ${limit.startIndex + 1} to ${limit.endIndex + 1}.`;
+                } else if (startIndex !== null) {
+                    speedLimitMetaInfo.textContent = `Starting near GPS point ${startIndex + 1}.`;
+                } else {
+                    speedLimitMetaInfo.textContent = '';
+                }
+            }
+            if (speedLimitDeleteBtn) {
+                speedLimitDeleteBtn.style.display = isEdit ? 'inline-flex' : 'none';
+            }
+            if (speedLimitModal) {
+                speedLimitModal.classList.add('active');
+            }
+        }
+
+        function closeSpeedLimitModal() {
+            activeSpeedLimit = null;
+            if (speedLimitModal) {
+                speedLimitModal.classList.remove('active');
+            }
+        }
+
+        function submitSpeedLimitForm(event) {
+            event.preventDefault();
+            if (!routeData || !Array.isArray(routeData.points) || !routeData.points.length) {
+                alert('Route data unavailable. Reload and try again.');
+                return;
+            }
+            const limitValue = Number(speedLimitValueField?.value || 0);
+            const lengthValue = Number(speedLimitLengthField?.value || 0);
+            const startIndex = Number(speedLimitStartIndexField?.value || -1);
+            const note = speedLimitNoteField?.value?.trim() || '';
+
+            if (!Number.isFinite(limitValue) || limitValue <= 0) {
+                alert('Please enter a valid speed limit.');
+                return;
+            }
+            if (!Number.isFinite(lengthValue) || lengthValue <= 0) {
+                alert('Please enter a valid segment length.');
+                return;
+            }
+            if (!Number.isInteger(startIndex) || startIndex < 0 || startIndex >= routeData.points.length) {
+                alert('Invalid start position.');
+                return;
+            }
+
+            const endIndex = computeEndIndexFromLength(startIndex, lengthValue);
+            const segmentLength = calculateSegmentDistance(startIndex, endIndex);
+
+            if (activeSpeedLimit) {
+                activeSpeedLimit.limitKmh = Math.round(limitValue);
+                activeSpeedLimit.startIndex = startIndex;
+                activeSpeedLimit.endIndex = endIndex;
+                activeSpeedLimit.note = note;
+                activeSpeedLimit.updatedAt = new Date().toISOString();
+                activeSpeedLimit.lengthMeters = Math.round(segmentLength);
+            } else {
+                const newLimit = {
+                    id: `limit_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+                    limitKmh: Math.round(limitValue),
+                    startIndex,
+                    endIndex,
+                    lengthMeters: Math.round(segmentLength),
+                    note,
+                    createdAt: new Date().toISOString(),
+                };
+                manualSpeedLimits.push(newLimit);
+            }
+
+            applyManualSpeedLimitsToPoints();
+            renderManualSpeedLimits();
+            updatePlayback();
+            closeSpeedLimitModal();
+            persistManualSpeedLimitChanges();
+        }
+
+        function deleteSpeedLimit(limitId) {
+            manualSpeedLimits = manualSpeedLimits.filter((limit) => limit.id !== limitId);
+            applyManualSpeedLimitsToPoints();
+            renderManualSpeedLimits();
+            updatePlayback();
+            persistManualSpeedLimitChanges();
+        }
+
+        function computeEndIndexFromLength(startIndex, lengthMeters) {
+            const points = routeData.points || [];
+            if (!points.length) return startIndex;
+            let remaining = Number.isFinite(lengthMeters) ? lengthMeters : 0;
+            let endIndex = startIndex;
+            for (let i = startIndex; i < points.length - 1; i++) {
+                const segmentDistance = calculateDistanceBetweenPoints(points[i], points[i + 1]);
+                remaining -= segmentDistance;
+                endIndex = i + 1;
+                if (remaining <= 0) {
+                    break;
+                }
+            }
+            return Math.min(points.length - 1, endIndex);
+        }
+
+        function calculateLimitLength(limit) {
+            if (!limit) return 0;
+            return calculateSegmentDistance(limit.startIndex, limit.endIndex);
+        }
+
+        function calculateSegmentDistance(startIndex, endIndex) {
+            const points = routeData.points || [];
+            if (!points.length) return 0;
+            const start = Math.max(0, startIndex);
+            const end = Math.max(start, Math.min(points.length - 1, endIndex));
+            let distance = 0;
+            for (let i = start; i < end; i++) {
+                distance += calculateDistanceBetweenPoints(points[i], points[i + 1]);
+            }
+            return distance;
+        }
+
+        function calculateDistanceBetweenPoints(pointA, pointB) {
+            if (!pointA || !pointB) return 0;
+            const toRad = (deg) => (deg * Math.PI) / 180;
+            const lat1 = pointA.lat;
+            const lng1 = pointA.lng;
+            const lat2 = pointB.lat;
+            const lng2 = pointB.lng;
+            const R = 6371000;
+            const dLat = toRad(lat2 - lat1);
+            const dLng = toRad(lng2 - lng1);
+            const a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        function applyManualSpeedLimitsToPoints() {
+            if (!routeData || !Array.isArray(routeData.points)) {
+                return;
+            }
+            routeData.points.forEach((point) => {
+                point.speedLimitKmh = point.originalSpeedLimitKmh ?? null;
+                point.speedLimitSource = point.originalSpeedLimitKmh ? 'api' : null;
+            });
+            manualSpeedLimits.forEach((limit) => {
+                if (!limit.lengthMeters || limit.lengthMeters <= 0) {
+                    limit.lengthMeters = Math.round(calculateSegmentDistance(limit.startIndex, limit.endIndex));
+                }
+                for (let idx = limit.startIndex; idx <= limit.endIndex && idx < routeData.points.length; idx++) {
+                    const point = routeData.points[idx];
+                    point.speedLimitKmh = limit.limitKmh;
+                    point.speedLimitSource = 'manual';
+                }
+            });
+        }
+
+        function renderManualSpeedLimits() {
+            if (!manualSpeedLimitLayer || !manualSpeedLimitMarkerLayer || !map || !routeData?.points?.length) {
+                return;
+            }
+            manualSpeedLimitLayer.clearLayers();
+            manualSpeedLimitMarkerLayer.clearLayers();
+
+            manualSpeedLimits.forEach((limit) => {
+                const startIndex = Math.max(0, Math.min(routeData.points.length - 1, limit.startIndex));
+                const endIndex = Math.max(startIndex, Math.min(routeData.points.length - 1, limit.endIndex));
+                limit.startIndex = startIndex;
+                limit.endIndex = endIndex;
+                const slice = routeData.points.slice(startIndex, endIndex + 1);
+                if (slice.length < 2) {
+                    return;
+                }
+                const polyline = L.polyline(
+                    slice.map((pt) => [pt.lat, pt.lng]),
+                    {
+                        color: '#34d399',
+                        weight: 4,
+                        opacity: 0.8,
+                        dashArray: '6 6',
+                        lineCap: 'butt',
+                    }
+                );
+                polyline.addTo(manualSpeedLimitLayer);
+                if (polyline.bringToFront) {
+                    polyline.bringToFront();
+                }
+
+                const midpoint = slice[Math.floor(slice.length / 2)];
+                const marker = L.marker([midpoint.lat, midpoint.lng], {
+                    icon: L.divIcon({
+                        className: 'manual-speed-marker',
+                        html: `${limit.limitKmh}`,
+                        iconSize: [34, 34],
+                        iconAnchor: [17, 17],
+                    }),
+                });
+                marker.addTo(manualSpeedLimitMarkerLayer);
+                if (marker.bringToFront) {
+                    marker.bringToFront();
+                }
+                marker.on('click', () => {
+                    openSpeedLimitModal({ limit });
+                });
+                marker.bindTooltip(
+                    `${limit.limitKmh} km/h${limit.note ? ` • ${limit.note}` : ''}`,
+                    { direction: 'top' }
+                );
+            });
+        }
+
+        function beginManualSpeedLimit(latlng) {
+            if (!routeData || !routeData.points?.length || !routeData.findNearestPointByLocation) {
+                return;
+            }
+            const nearest = routeData.findNearestPointByLocation(latlng.lat, latlng.lng);
+            if (!nearest || !nearest.point) {
+                alert('Please click closer to the recorded route to set a limit.');
+                return;
+            }
+            const startIndex = routeData.points.indexOf(nearest.point);
+            if (startIndex < 0) {
+                alert('Unable to determine the nearest route segment.');
+                return;
+            }
+            openSpeedLimitModal({ startIndex });
+        }
+
+        async function persistManualSpeedLimitChanges() {
+            if (!routeData || !routeData.id) {
+                return;
+            }
+            const payload = {
+                limits: manualSpeedLimits.map((limit) => ({
+                    id: limit.id,
+                    limit_kmh: limit.limitKmh,
+                    start_index: limit.startIndex,
+                    end_index: limit.endIndex,
+                    length_meters: Math.round(limit.lengthMeters || calculateSegmentDistance(limit.startIndex, limit.endIndex)),
+                    note: limit.note || null,
+                    created_at: limit.createdAt,
+                    updated_at: limit.updatedAt || limit.createdAt,
+                })),
+            };
+            try {
+                await fetch(`/backend/api/mobile/routes/${routeData.id}/speed-limits`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+            } catch (error) {
+                console.warn('Speed limit sync failed', error);
+            }
+        }
         function enableStreetView() {
             if (!googleMapsKey) {
                 setStreetViewStatus('Add a Google Maps API key to enable Street View.', true);
@@ -1597,8 +2225,14 @@
                 maxZoom: 19
             }).addTo(map);
 
+            manualSpeedLimitLayer = L.layerGroup().addTo(map);
+            manualSpeedLimitMarkerLayer = L.layerGroup().addTo(map);
             reviewMarkersLayer = L.layerGroup().addTo(map);
             map.on('click', handleMapClick);
+
+            if (speedEditControlsEl) {
+                speedEditControlsEl.classList.add('offset');
+            }
         }
 
         // Load route data from backend API
@@ -1632,13 +2266,26 @@
                 const normalizedPoints = points.map((p, index) => {
                     const timeMs = p.timestamp ? Date.parse(p.timestamp) - startTimestampMs : index * 1000;
                     const rawSpeed = p.speed !== undefined && p.speed !== null ? Number(p.speed) : null;
+                    const rawSpeedLimit =
+                        p.speed_limit_kmh ??
+                        p.speedLimitKmh ??
+                        p.speedLimit ??
+                        p.speed_limit ??
+                        null;
+                    const speedLimitValue = toNumberOrNull(rawSpeedLimit);
                     return {
+                        index,
                         lat: p.latitude,
                         lng: p.longitude,
                         speed: Number.isFinite(rawSpeed) ? rawSpeed : null,
                         accuracy: p.accuracy ?? null,
                         timestamp: p.timestamp,
                         timeMs: Math.max(0, timeMs),
+                        speedLimitKmh: speedLimitValue,
+                        originalSpeedLimitKmh: speedLimitValue,
+                        speedLimitSource: speedLimitValue ? 'api' : null,
+                        distanceFromPrev: 0,
+                        distanceFromStart: 0,
                     };
                 });
 
@@ -1704,17 +2351,23 @@
                         point.speedMs = initialSpeedMs !== null ? initialSpeedMs : 0;
                         point.deltaSpeed = 0;
                         point.deltaTime = 0;
+                        point.speedKmh = Math.max(0, point.speedMs * 3.6);
+                        point.distanceFromPrev = 0;
+                        point.distanceFromStart = 0;
                         return;
                     }
                     const prev = normalizedPoints[idx - 1];
                     const deltaTime = Math.max(0, (point.timeMs - prev.timeMs) / 1000);
                     const travelled = haversine(prev, point);
+                    point.distanceFromPrev = travelled;
+                    point.distanceFromStart = (prev.distanceFromStart || 0) + travelled;
                     const computedSpeed = deltaTime > 0 ? travelled / deltaTime : 0;
                     const sensorSpeed = toSpeedMs(point.speed);
                     point.speedMs = sensorSpeed && sensorSpeed > 0 ? sensorSpeed : computedSpeed;
                     const prevSpeed = prev.speedMs ?? computedSpeed;
                     point.deltaSpeed = point.speedMs - prevSpeed;
                     point.deltaTime = deltaTime;
+                    point.speedKmh = Math.max(0, point.speedMs * 3.6);
                 });
 
                 const findNearestPointByLocation = (lat, lng) => {
@@ -1771,33 +2424,6 @@
                     };
                 }).sort((a, b) => (a.relativeMs || 0) - (b.relativeMs || 0));
 
-                const brakingEvents = [];
-                for (let i = 1; i < normalizedPoints.length; i++) {
-                    const prev = normalizedPoints[i - 1];
-                    const curr = normalizedPoints[i];
-                    const dt = curr.deltaTime || Math.max(0, (curr.timeMs - prev.timeMs) / 1000);
-                    if (!dt || dt <= 0) continue;
-                    const prevSpeed = prev.speedMs ?? 0;
-                    const currSpeed = curr.speedMs ?? prevSpeed;
-                    const acceleration = (currSpeed - prevSpeed) / dt;
-                    if (acceleration < -1.5) {
-                        brakingEvents.push({
-                            startMs: Math.max(0, prev.timeMs - 1500),
-                            endMs: curr.timeMs + 1500,
-                            acceleration,
-                            location: { lat: curr.lat, lng: curr.lng },
-                        });
-                    }
-                }
-                brakingEvents.sort((a, b) => a.acceleration - b.acceleration);
-                const topBrakingWindows = brakingEvents.slice(0, 3).map((event, idx) => ({
-                    id: `brake_${idx}`,
-                    startMs: Math.max(0, event.startMs),
-                    endMs: Math.min(totalDurationSeconds * 1000, event.endMs),
-                    acceleration: event.acceleration,
-                    location: event.location,
-                }));
-
                 const routeName = summary.recorded_at
                     ? `Drive ${new Date(summary.recorded_at).toLocaleString()}`
                     : (summary.route_id || 'Practice Route');
@@ -1810,7 +2436,6 @@
                     points: normalizedPoints,
                     voiceNotes: audioNotes,
                     markers,
-                    heatWindows: topBrakingWindows,
                     totalDurationMs: totalDurationSeconds * 1000,
                     previewUrl: toBackendUrl(summary.preview_url),
                     summary,
@@ -1818,9 +2443,35 @@
                 };
 
                 reviewMarkers = markers;
-                heatWindows = topBrakingWindows;
                 routeData.findNearestPointByLocation = (lat, lng) => findNearestPointByLocation(lat, lng);
                 routeData.toRelativeMs = toRelativeMs;
+                manualSpeedLimits = Array.isArray(session.manual_speed_limits)
+                    ? session.manual_speed_limits
+                          .map((limit) => {
+                              const limitValue =
+                                  Number(limit.limit_kmh ?? limit.limitKmh ?? limit.speed_limit_kmh ?? limit.speedLimitKmh);
+                              const startIndex = Number(limit.start_index ?? limit.startIndex ?? 0);
+                              const endIndex = Number(limit.end_index ?? limit.endIndex ?? startIndex);
+                              if (
+                                  !Number.isFinite(limitValue) ||
+                                  !Number.isInteger(startIndex) ||
+                                  !Number.isInteger(endIndex)
+                              ) {
+                                  return null;
+                              }
+                              return {
+                                  id: limit.id || limit.limit_id || `limit_${startIndex}_${endIndex}`,
+                                  limitKmh: Math.round(limitValue),
+                                  startIndex: Math.max(0, startIndex),
+                                  endIndex: Math.max(startIndex, endIndex),
+                                  lengthMeters: Number(limit.length_meters ?? limit.lengthMeters ?? 0) || null,
+                                  note: limit.note || '',
+                                  createdAt: limit.created_at || limit.createdAt || null,
+                                  updatedAt: limit.updated_at || limit.updatedAt || null,
+                              };
+                          })
+                          .filter(Boolean)
+                    : [];
 
                 console.log('Route data loaded:', routeData);
 
@@ -1871,7 +2522,12 @@
             document.getElementById('totalTime').textContent = formatTimestamp(totalDurationSeconds * 1000);
 
             // Draw route on map
+            playbackPointIndex = 0;
             drawRoute();
+            applyManualSpeedLimitsToPoints();
+            renderManualSpeedLimits();
+            setSpeedLimitMode(false);
+            updateSpeedOverlay(0);
 
             // Render markers on map + list
             renderReviewMarkersOnMap();
@@ -1884,7 +2540,6 @@
 
             // Analyze speed data
             analyzeSpeedData();
-            renderHeatHotspots();
 
             // Timeline markers
             renderTimelineEvents();
@@ -1894,239 +2549,73 @@
         }
 
         // Analyze speed data
-        let speedChart = null;
-        let speedAnalysis = null;
-
         function analyzeSpeedData() {
             const points = routeData.points || [];
-            
-            if (points.length === 0) {
+            const overspeedEl = document.getElementById('overspeedCount');
+
+            if (!points.length) {
                 console.warn('No GPS points with speed data');
+                if (overspeedEl) overspeedEl.textContent = '0';
                 return;
             }
 
-            if (speedChart) {
-                speedChart.destroy();
-                speedChart = null;
+            overspeedSummary = calculateOverspeedSummary(points);
+
+            if (overspeedEl) {
+                overspeedEl.textContent = overspeedSummary.count;
+                overspeedEl.classList.toggle('danger', overspeedSummary.count > 0);
             }
-
-            // Calculate speed statistics (convert to km/h)
-            const speeds = points
-                .map((p) => {
-                    if (typeof p.speedMs === 'number' && !Number.isNaN(p.speedMs)) {
-                        return p.speedMs * 3.6;
-                    }
-                    const speedKmh =
-                        p.speed !== null && p.speed !== undefined ? Number(p.speed) : 0;
-                    return Number.isFinite(speedKmh) ? speedKmh : 0;
-                })
-                .filter((speed) => speed > 0);
-
-            if (speeds.length === 0) {
-                document.getElementById('avgSpeed').textContent = 'N/A';
-                document.getElementById('maxSpeed').textContent = 'N/A';
-                document.getElementById('accelCount').textContent = '0';
-                document.getElementById('brakeCount').textContent = '0';
-                return;
-            }
-
-            const avgSpeed = (speeds.reduce((a, b) => a + b, 0) / speeds.length).toFixed(1);
-            const maxSpeed = Math.max(...speeds).toFixed(1);
-
-            // Identify acceleration and braking events
-            const segments = identifySpeedSegments(points);
-            const accelCount = segments.filter(s => s.type === 'accelerating').length;
-            const brakeCount = segments.filter(s => s.type === 'braking').length;
-
-            // Store analysis
-            speedAnalysis = {
-                avgSpeed,
-                maxSpeed,
-                accelCount,
-                brakeCount,
-                segments,
-                speeds,
-                timestamps: points.map((p, i) => i)
-            };
-
-            // Update UI
-            document.getElementById('avgSpeed').textContent = avgSpeed + ' km/h';
-            const maxSpeedEl = document.getElementById('maxSpeed');
-            maxSpeedEl.textContent = maxSpeed + ' km/h';
-            maxSpeedEl.classList.remove('danger', 'warning');
-            document.getElementById('accelCount').textContent = accelCount;
-            document.getElementById('brakeCount').textContent = brakeCount;
-
-            // Add color if speed is high
-            if (maxSpeed > 100) {
-                maxSpeedEl.classList.add('danger');
-            } else if (maxSpeed > 80) {
-                maxSpeedEl.classList.add('warning');
-            }
-
-            // Setup toggle buttons
-            setupAnalysisToggle();
         }
 
-        function renderHeatHotspots() {
-            const container = document.getElementById('heatHotspots');
-            if (!container) return;
-
-            if (!heatWindows.length) {
-                container.innerHTML = '<div class="heat-card">No heavy braking detected on this drive.</div>';
-                return;
-            }
-
-            container.innerHTML = '';
-            heatWindows.forEach((window) => {
-                const card = document.createElement('div');
-                card.className = 'heat-card';
-                card.innerHTML = `
-                    <strong>Hard brake at ${formatTimestamp(window.startMs)}</strong>
-                    <div class="heat-meta">Deceleration: ${Math.abs(window.acceleration).toFixed(2)} m/s²</div>
-                `;
-                card.addEventListener('click', () => {
-                    jumpToTime(window.startMs);
-                    if (window.location) {
-                        map.setView([window.location.lat, window.location.lng], 15, { animate: true });
-                    }
-                });
-                container.appendChild(card);
-            });
-        }
-
-        // Identify speed segments (acceleration, braking, steady)
-        function identifySpeedSegments(points) {
-            const segments = [];
-            const ACCEL_THRESHOLD = 1.5; // m/s^2
-            const BRAKE_THRESHOLD = -1.5;
-
-            const toMs = (value) =>
-                value !== null && value !== undefined && !Number.isNaN(value) ? value / 3.6 : 0;
+        function calculateOverspeedSummary(points) {
+            let count = 0;
+            let durationMs = 0;
+            let inEvent = false;
 
             for (let i = 1; i < points.length; i++) {
-                const prevSpeed =
-                    typeof points[i - 1].speedMs === 'number'
-                        ? points[i - 1].speedMs
-                        : toMs(points[i - 1].speed);
-                const currSpeed =
-                    typeof points[i].speedMs === 'number'
-                        ? points[i].speedMs
-                        : toMs(points[i].speed);
-                const timeDiff = ((points[i].timeMs || 0) - (points[i - 1].timeMs || 0)) / 1000;
-
-                if (!timeDiff) continue;
-
-                const acceleration = (currSpeed - prevSpeed) / timeDiff;
-
-                let type = 'steady';
-                if (acceleration > ACCEL_THRESHOLD) {
-                    type = 'accelerating';
-                } else if (acceleration < BRAKE_THRESHOLD) {
-                    type = 'braking';
+                const prev = points[i - 1];
+                const curr = points[i];
+                const limit = curr.speedLimitKmh ?? curr.originalSpeedLimitKmh ?? prev.speedLimitKmh ?? prev.originalSpeedLimitKmh;
+                if (!Number.isFinite(limit)) {
+                    inEvent = false;
+                    continue;
                 }
 
-                if (segments.length > 0 && segments[segments.length - 1].type === type) {
-                    segments[segments.length - 1].endIndex = i;
+                const prevSpeed = getPointSpeedKmh(prev);
+                const currSpeed = getPointSpeedKmh(curr);
+                const timeDelta = Math.max(0, (curr.timeMs || 0) - (prev.timeMs || 0));
+
+                const prevOver = prevSpeed !== null && prevSpeed > limit + 2;
+                const currOver = currSpeed !== null && currSpeed > limit + 2;
+
+                if (currOver) {
+                    if (!inEvent) {
+                        count += 1;
+                        inEvent = true;
+                    }
+                    if (prevOver && timeDelta) {
+                        durationMs += timeDelta;
+                    }
                 } else {
-                    segments.push({
-                        type,
-                        startIndex: i - 1,
-                        endIndex: i
-                    });
+                    inEvent = false;
                 }
             }
 
-            return segments;
+            return { count, durationMs };
         }
 
-        // Setup analysis toggle
-        function setupAnalysisToggle() {
-            if (analysisToggleInitialized) {
-                return;
+        function getPointSpeedKmh(point) {
+            if (!point) return null;
+            if (typeof point.speedKmh === 'number' && !Number.isNaN(point.speedKmh)) {
+                return point.speedKmh;
             }
-            analysisToggleInitialized = true;
-
-            document.querySelectorAll('.toggle-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const view = btn.dataset.view;
-                    
-                    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-
-                    if (view === 'stats') {
-                        document.getElementById('speedStatsView').style.display = 'block';
-                        document.getElementById('speedChartView').style.display = 'none';
-                    } else if (view === 'chart') {
-                        document.getElementById('speedStatsView').style.display = 'none';
-                        document.getElementById('speedChartView').style.display = 'block';
-                        if (!speedChart && speedAnalysis) {
-                            initSpeedChart();
-                        }
-                    }
-                });
-            });
-        }
-
-        // Initialize speed chart
-        function initSpeedChart() {
-            const ctx = document.getElementById('speedChart').getContext('2d');
-            
-            speedChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: speedAnalysis.timestamps.map((_, i) => {
-                        if (i % Math.floor(speedAnalysis.timestamps.length / 10) === 0) {
-                            return formatTimestamp(routeData.points[i].timeMs || 0);
-                        }
-                        return '';
-                    }),
-                    datasets: [{
-                        label: 'Speed (km/h)',
-                        data: speedAnalysis.speeds,
-                        borderColor: '#667eea',
-                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                        borderWidth: 2,
-                        tension: 0.4,
-                        pointRadius: 0,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false
-                        }
-                    },
-                    scales: {
-                        x: {
-                            display: true,
-                            grid: {
-                                display: false
-                            }
-                        },
-                        y: {
-                            display: true,
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'km/h'
-                            }
-                        }
-                    },
-                    interaction: {
-                        mode: 'nearest',
-                        axis: 'x',
-                        intersect: false
-                    }
-                }
-            });
+            if (typeof point.speedMs === 'number' && !Number.isNaN(point.speedMs)) {
+                return point.speedMs * 3.6;
+            }
+            if (typeof point.speed === 'number' && !Number.isNaN(point.speed)) {
+                return point.speed;
+            }
+            return null;
         }
 
         // Get color based on speed (heatmap)
@@ -2243,18 +2732,20 @@
             // Add start marker
             L.marker(coordinates[0], {
                 icon: L.divIcon({
-                    className: 'start-marker',
-                    html: '🏁',
-                    iconSize: [30, 30]
+                    className: 'gps-marker-icon start-marker',
+                    html: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" fill="#2563eb"/></svg>',
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 36]
                 })
             }).addTo(routeLayerGroup).bindPopup('Start');
 
             // Add end marker
             L.marker(coordinates[coordinates.length - 1], {
                 icon: L.divIcon({
-                    className: 'end-marker',
-                    html: '🎯',
-                    iconSize: [30, 30]
+                    className: 'gps-marker-icon end-marker',
+                    html: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" fill="#f97316"/></svg>',
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 36]
                 })
             }).addTo(routeLayerGroup).bindPopup('End');
 
@@ -2318,6 +2809,127 @@
             const lat = startLatLng[0] + (endLatLng[0] - startLatLng[0]) * ratio;
             const lng = startLatLng[1] + (endLatLng[1] - startLatLng[1]) * ratio;
             return [lat, lng];
+        }
+
+        function getSpeedSampleForTime(currentMs) {
+            if (!routeData || !Array.isArray(routeData.points) || !routeData.points.length) {
+                return null;
+            }
+            const points = routeData.points;
+            const lastIndex = points.length - 1;
+            const targetMs = Math.max(0, Number(currentMs) || 0);
+
+            playbackPointIndex = Math.max(0, Math.min(playbackPointIndex, lastIndex));
+
+            const currentIndexTime = points[playbackPointIndex].timeMs ?? 0;
+            if (targetMs >= currentIndexTime) {
+                while (
+                    playbackPointIndex < lastIndex &&
+                    targetMs >= (points[playbackPointIndex + 1].timeMs ?? Number.POSITIVE_INFINITY)
+                ) {
+                    playbackPointIndex += 1;
+                }
+            } else {
+                while (
+                    playbackPointIndex > 0 &&
+                    targetMs < (points[playbackPointIndex].timeMs ?? 0)
+                ) {
+                    playbackPointIndex -= 1;
+                }
+            }
+
+            const baseIndex = playbackPointIndex;
+            const basePoint = points[baseIndex];
+            const baseTime = basePoint.timeMs ?? 0;
+
+            if (baseIndex === lastIndex || targetMs <= baseTime) {
+                return {
+                    lat: basePoint.lat,
+                    lng: basePoint.lng,
+                    speedKmh: Number.isFinite(basePoint.speedKmh) ? basePoint.speedKmh : (basePoint.speedMs ?? 0) * 3.6,
+                    speedLimitKmh: basePoint.speedLimitKmh ?? null,
+                };
+            }
+
+            const nextPoint = points[baseIndex + 1];
+            if (!nextPoint) {
+                return {
+                    lat: basePoint.lat,
+                    lng: basePoint.lng,
+                    speedKmh: Number.isFinite(basePoint.speedKmh) ? basePoint.speedKmh : (basePoint.speedMs ?? 0) * 3.6,
+                    speedLimitKmh: basePoint.speedLimitKmh ?? null,
+                    speedLimitSource: basePoint.speedLimitSource ?? null,
+                };
+            }
+            const nextTime = nextPoint.timeMs ?? baseTime;
+            if (nextTime <= baseTime) {
+                return {
+                    lat: basePoint.lat,
+                    lng: basePoint.lng,
+                    speedKmh: Number.isFinite(basePoint.speedKmh) ? basePoint.speedKmh : (basePoint.speedMs ?? 0) * 3.6,
+                    speedLimitKmh: basePoint.speedLimitKmh ?? null,
+                    speedLimitSource: basePoint.speedLimitSource ?? null,
+                };
+            }
+
+            const span = nextTime - baseTime;
+            const ratio = Math.max(0, Math.min(1, (targetMs - baseTime) / span));
+            const startSpeedMs = basePoint.speedMs ?? 0;
+            const endSpeedMs = nextPoint.speedMs ?? startSpeedMs;
+            const interpolatedSpeedMs = startSpeedMs + (endSpeedMs - startSpeedMs) * ratio;
+
+            let speedLimit = basePoint.speedLimitKmh ?? null;
+            let speedLimitSource = basePoint.speedLimitSource ?? null;
+            const nextSpeedLimit = nextPoint.speedLimitKmh ?? null;
+            const nextSpeedLimitSource = nextPoint.speedLimitSource ?? null;
+            if (nextSpeedLimit !== null) {
+                if (speedLimit === null || ratio > 0.5) {
+                    speedLimit = nextSpeedLimit;
+                    speedLimitSource = nextSpeedLimitSource ?? speedLimitSource;
+                }
+            }
+
+            return {
+                lat: basePoint.lat + (nextPoint.lat - basePoint.lat) * ratio,
+                lng: basePoint.lng + (nextPoint.lng - basePoint.lng) * ratio,
+                speedKmh: Math.max(0, interpolatedSpeedMs * 3.6),
+                speedLimitKmh: speedLimit,
+                speedLimitSource,
+            };
+        }
+
+        function updateSpeedOverlay(currentMs) {
+            if (!speedOverlayEl || !speedOverlayCurrentEl || !speedOverlayLimitEl) {
+                return;
+            }
+            const sample = getSpeedSampleForTime(currentMs);
+            const speedValue = sample && Number.isFinite(sample.speedKmh) ? sample.speedKmh : null;
+            const limitValue = sample && Number.isFinite(sample.speedLimitKmh) ? sample.speedLimitKmh : null;
+            const limitSource = sample?.speedLimitSource ?? null;
+
+            speedOverlayCurrentEl.textContent = speedValue !== null
+                ? `${speedValue.toFixed(1)} km/h`
+                : '-- km/h';
+
+            speedOverlayLimitEl.classList.remove('limit-warning', 'limit-danger', 'manual-source', 'api-source');
+            if (limitValue !== null) {
+                speedOverlayLimitEl.textContent = `${Math.round(limitValue)} km/h`;
+                if (limitSource === 'manual') {
+                    speedOverlayLimitEl.classList.add('manual-source');
+                } else if (limitSource === 'api') {
+                    speedOverlayLimitEl.classList.add('api-source');
+                }
+                if (speedValue !== null) {
+                    const delta = speedValue - limitValue;
+                    if (delta >= 10) {
+                        speedOverlayLimitEl.classList.add('limit-danger');
+                    } else if (delta >= 3) {
+                        speedOverlayLimitEl.classList.add('limit-warning');
+                    }
+                }
+            } else {
+                speedOverlayLimitEl.textContent = '-- km/h';
+            }
         }
 
         function computeBearing(lat1, lng1, lat2, lng2) {
@@ -2488,6 +3100,11 @@
                 );
 
                 let frame = null;
+                const midMs = Number.isFinite(segment.startMs) && Number.isFinite(segment.endMs)
+                    ? segment.startMs + (segment.endMs - segment.startMs) / 2
+                    : (Number.isFinite(segment.startMs)
+                        ? segment.startMs
+                        : (Number.isFinite(segment.endMs) ? segment.endMs : 0));
 
                 if (googleMapsReady && streetViewService) {
                     const panorama = await fetchPanoramaForLocation(midLat, midLng, fallbackHeading);
@@ -2503,6 +3120,7 @@
                                 panoId: panorama.panoId,
                                 heading: panorama.heading,
                             }),
+                            midMs,
                         };
                     }
                 }
@@ -2520,6 +3138,7 @@
                             lng: midLng,
                             heading: fallbackHeading,
                         }),
+                        midMs,
                     };
                 }
 
@@ -2634,20 +3253,45 @@
             return panorama;
         }
 
+        function getFrameReferenceMs(frame) {
+            if (!frame) {
+                return 0;
+            }
+            if (typeof frame.midMs === 'number' && !Number.isNaN(frame.midMs)) {
+                return frame.midMs;
+            }
+            const hasStart = typeof frame.startMs === 'number' && !Number.isNaN(frame.startMs);
+            const hasEnd = typeof frame.endMs === 'number' && !Number.isNaN(frame.endMs);
+            if (hasStart && hasEnd) {
+                return frame.startMs + (frame.endMs - frame.startMs) / 2;
+            }
+            if (hasStart) {
+                return frame.startMs;
+            }
+            if (hasEnd) {
+                return frame.endMs;
+            }
+            return 0;
+        }
+
         function getFrameForTime(currentMs) {
             if (!streetViewFrames.length) {
                 return null;
             }
-            const firstFrame = streetViewFrames[0];
-            const lastFrame = streetViewFrames[streetViewFrames.length - 1];
-            if (currentMs <= firstFrame.startMs) return firstFrame;
-            if (currentMs >= lastFrame.endMs) return lastFrame;
-            for (const frame of streetViewFrames) {
-                if (currentMs >= frame.startMs && currentMs <= frame.endMs) {
-                    return frame;
+            const targetMs = Math.max(0, currentMs || 0);
+            let bestFrame = streetViewFrames[0];
+            let bestDistance = Math.abs(targetMs - getFrameReferenceMs(bestFrame));
+
+            for (let i = 1; i < streetViewFrames.length; i++) {
+                const frame = streetViewFrames[i];
+                const referenceMs = getFrameReferenceMs(frame);
+                const distance = Math.abs(targetMs - referenceMs);
+                if (distance < bestDistance) {
+                    bestDistance = distance;
+                    bestFrame = frame;
                 }
             }
-            return lastFrame;
+            return bestFrame;
         }
 
         function updateStreetViewFallback(frame) {
@@ -2753,7 +3397,7 @@
             if (markerControlsInitialized) return;
             markerControlsInitialized = true;
 
-            const addBtn = document.getElementById('addMarkerBtn');
+            const addBtn = document.getElementById('addMarkerBtnFloating');
             if (addBtn) {
                 addBtn.addEventListener('click', () => {
                     setMarkerPlacementMode(!isAddingMarker);
@@ -2768,10 +3412,10 @@
 
         function setMarkerPlacementMode(active) {
             isAddingMarker = active;
-            const addBtn = document.getElementById('addMarkerBtn');
+            const addBtn = document.getElementById('addMarkerBtnFloating');
             if (addBtn) {
                 addBtn.classList.toggle('active', active);
-                addBtn.textContent = active ? 'Click on map…' : 'Add location';
+                addBtn.textContent = active ? 'Click on map…' : '📌 Add Key Location';
             }
             if (active) {
                 pendingMarkerLatLng = null;
@@ -2779,6 +3423,10 @@
         }
 
         function handleMapClick(event) {
+            if (speedLimitModeEnabled) {
+                beginManualSpeedLimit(event.latlng);
+                return;
+            }
             if (!isAddingMarker) {
                 return;
             }
@@ -3036,7 +3684,7 @@
 
             if (!searchInput || !tagSelect) return;
 
-            const uniqueTags = new Set();
+            const uniqueTags = new Set(VOICE_TAG_SUGGESTIONS);
             (routeData.voiceNotes || []).forEach(note => {
                 (note.tags || []).forEach(tag => uniqueTags.add(tag));
             });
@@ -3052,12 +3700,12 @@
                 voiceNoteFilters.tag = '';
             }
 
-            if (!voiceFiltersInitialized) {
-                searchInput.addEventListener('input', (event) => {
-                    voiceNoteFilters.search = event.target.value.toLowerCase();
-                    displayVoiceNotes();
-                    renderTimelineEvents();
-                });
+        if (!voiceFiltersInitialized) {
+            searchInput.addEventListener('input', (event) => {
+                voiceNoteFilters.search = event.target.value.toLowerCase();
+                displayVoiceNotes();
+                renderTimelineEvents();
+            });
 
                 tagSelect.addEventListener('change', (event) => {
                     voiceNoteFilters.tag = event.target.value;
@@ -3068,10 +3716,23 @@
             }
         }
 
+        function getVoiceTagOptionsHtml(selectedTags = []) {
+            const unique = new Set(VOICE_TAG_SUGGESTIONS);
+            (routeData.voiceNotes || []).forEach(note => {
+                (note.tags || []).forEach(tag => unique.add(tag));
+            });
+            return [...unique].sort().map(tag => {
+                const isSelected = selectedTags && selectedTags.includes(tag);
+                return `<option value="${escapeHtml(tag)}" ${isSelected ? 'selected' : ''}>${escapeHtml(tag)}</option>`;
+            }).join('');
+        }
+
         async function saveVoiceNoteTags(noteId, tagsInput) {
-            const tags = tagsInput
-                ? tagsInput.split(',').map(tag => tag.trim()).filter(Boolean)
-                : [];
+            const tags = Array.isArray(tagsInput)
+                ? tagsInput
+                : (tagsInput
+                    ? tagsInput.split(',').map(tag => tag.trim()).filter(Boolean)
+                    : []);
             try {
                 const response = await fetch(`/backend/api/mobile/routes/${ROUTE_ID}/audio/${encodeURIComponent(noteId)}`, {
                     method: 'PATCH',
@@ -3096,10 +3757,9 @@
             if (!editor) return;
             editor.style.display = show ? 'flex' : 'none';
             if (show) {
-                const input = editor.querySelector('input');
-                if (input) {
-                    input.focus();
-                    input.select();
+                const select = editor.querySelector('select');
+                if (select) {
+                    select.focus();
                 }
             }
         }
@@ -3120,24 +3780,6 @@
             }
 
             container.innerHTML = '';
-
-            heatWindows.forEach((window) => {
-                const range = document.createElement('div');
-                range.className = 'timeline-range heat';
-                const windowStart = Math.min(window.startMs, window.endMs);
-                const windowEnd = Math.max(window.startMs, window.endMs);
-                const startPercent = percentOfTime(windowStart, totalMs);
-                const endPercent = percentOfTime(windowEnd, totalMs);
-                const widthPercent = Math.max(2, endPercent - startPercent);
-                range.style.left = `${startPercent}%`;
-                range.style.width = `${widthPercent}%`;
-                range.title = `Hard braking at ${formatTimestamp(window.startMs)} (${Math.abs(window.acceleration).toFixed(2)} m/s²)`;
-                range.addEventListener('click', (event) => {
-                    event.stopPropagation();
-                    jumpToTime(window.startMs);
-                });
-                container.appendChild(range);
-            });
 
             reviewMarkers.forEach((marker) => {
                 if (typeof marker.relativeMs !== 'number') return;
@@ -3261,10 +3903,12 @@
                     ${durationStr ? `<div class="note-duration">${durationStr}</div>` : ''}
                     <div class="note-tags">
                         ${tagsHtml}
-                        <button type="button" class="note-tag-edit-btn" data-action="edit-tags">✏️ Edit tags</button>
+                        <button type="button" class="note-tag-edit-btn" data-action="edit-tags">✏️ Tag</button>
                     </div>
                     <div class="note-tag-editor" data-editor>
-                        <input type="text" value="${escapeHtml((note.tags || []).join(', '))}" placeholder="observation, hazard" />
+                        <select data-tag-select multiple size="4">
+                            ${getVoiceTagOptionsHtml(note.tags)}
+                        </select>
                         <div class="editor-actions">
                             <button type="button" class="save-btn" data-action="save-tags">Save</button>
                             <button type="button" class="cancel-btn" data-action="cancel-tags">Cancel</button>
@@ -3292,9 +3936,10 @@
                     }
                     if (action === 'save-tags') {
                         event.stopPropagation();
-                        const input = noteCard.querySelector('.note-tag-editor input');
+                        const select = noteCard.querySelector('.note-tag-editor select');
+                        const values = Array.from(select?.selectedOptions || []).map(option => option.value);
                         toggleTagEditor(noteCard, false);
-                        saveVoiceNoteTags(note.id, input.value);
+                        saveVoiceNoteTags(note.id, values);
                         return;
                     }
                     if (action === 'cancel-tags') {
@@ -3483,6 +4128,7 @@
 
             updateRoutePlayback(currentTime);
             updateStreetView(currentTime);
+            updateSpeedOverlay(currentTime);
 
             // Check for voice notes at current time
             checkVoiceNotesAtTime(currentTime);

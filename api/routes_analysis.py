@@ -5,9 +5,18 @@ from datetime import datetime
 from math import asin, cos, radians, sin, sqrt
 from typing import Any, Dict, List, Optional, Tuple
 
+import requests
+from requests import RequestException
+
 from flask import Blueprint, jsonify
 
-from api.routes_mobile import _list_sessions, _load_session  # type: ignore
+from api.routes_mobile import _list_sessions, _load_session, _save_session  # type: ignore
+from config.settings import settings
+
+ROADS_SPEED_LIMITS_URL = "https://roads.googleapis.com/v1/speedLimits"
+ROADS_SNAP_TO_ROADS_URL = "https://roads.googleapis.com/v1/snapToRoads"
+ROADS_PATH_BATCH_SIZE = 90
+ROADS_PLACE_BATCH_SIZE = 90
 
 bp = Blueprint("analysis", __name__, url_prefix="/api/analysis")
 
@@ -124,10 +133,15 @@ def _compute_harsh_events(points: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return events
 
 
-def _compute_segments(points: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def _compute_segments(points: List[Dict[str, Any]]) -> Tuple[
+    List[Dict[str, Any]],
+    List[Dict[str, Any]],
+]:
+    """Return derived segments and chronologically ordered points."""
+
     segments: List[Dict[str, Any]] = []
     if len(points) < 2:
-        return segments
+        return segments, []
 
     parsed_points: List[Dict[str, Any]] = []
     for point in points:
@@ -142,13 +156,17 @@ def _compute_segments(points: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                 "lng": float(lng),
                 "timestamp": timestamp,
                 "speed": point.get("speed"),
+                "source": point,
             }
         )
 
     if len(parsed_points) < 2:
-        return segments
+        return [], []
 
     parsed_points.sort(key=lambda item: item["timestamp"])
+    for idx, point in enumerate(parsed_points):
+        point["seq_index"] = idx
+
     prev = parsed_points[0]
 
     for current in parsed_points[1:]:
@@ -175,11 +193,143 @@ def _compute_segments(points: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                 "distance_km": distance_m / 1000.0,
                 "speed_ms": speed_ms,
                 "speed_kmh": speed_ms * 3.6,
+                "start_index": prev["seq_index"],
+                "end_index": current["seq_index"],
             }
         )
         prev = current
 
-    return segments
+    return segments, parsed_points
+
+
+def _fetch_speed_limits(points: List[Dict[str, Any]]) -> Dict[int, float]:
+    """Fetch speed limit data via Google Roads API for ordered points."""
+
+    api_key = settings.GOOGLE_MAPS_API_KEY
+    if not api_key:
+        return {}
+
+    # Build ordered list of (index, lat, lng) entries
+    ordered_coordinates: List[Tuple[int, float, float]] = []
+    for point in points:
+        idx = point.get("seq_index")
+        lat = point.get("lat")
+        lng = point.get("lng")
+        if (
+            isinstance(idx, int)
+            and isinstance(lat, (int, float))
+            and isinstance(lng, (int, float))
+        ):
+            ordered_coordinates.append((idx, float(lat), float(lng)))
+
+    if not ordered_coordinates:
+        return {}
+
+    index_to_place: Dict[int, str] = {}
+    place_ids_order: List[str] = []
+
+    # First snap to roads to obtain stable place IDs
+    for batch_start in range(0, len(ordered_coordinates), ROADS_PATH_BATCH_SIZE):
+        batch = ordered_coordinates[batch_start : batch_start + ROADS_PATH_BATCH_SIZE]
+        if not batch:
+            continue
+        path_param = "|".join(f"{lat:.6f},{lng:.6f}" for _, lat, lng in batch)
+        snap_params = {
+            "path": path_param,
+            "key": api_key,
+        }
+        try:
+            snap_response = requests.get(
+                ROADS_SNAP_TO_ROADS_URL,
+                params=snap_params,
+                timeout=8,
+            )
+            snap_response.raise_for_status()
+            snap_payload = snap_response.json()
+        except (RequestException, ValueError) as exc:
+            print(f"[Analysis] ⚠️ Snap to Roads failed: {exc}")
+            continue
+
+        for snapped in snap_payload.get("snappedPoints", []):
+            place_id = snapped.get("placeId")
+            original_index = snapped.get("originalIndex")
+            if (
+                not isinstance(original_index, int)
+                or not place_id
+                or not (0 <= original_index < len(batch))
+            ):
+                continue
+            global_index = batch[original_index][0]
+            index_to_place[global_index] = place_id
+            if place_id not in place_ids_order:
+                place_ids_order.append(place_id)
+
+    if not index_to_place or not place_ids_order:
+        return {}
+
+    place_limit_lookup: Dict[str, float] = {}
+
+    for batch_start in range(0, len(place_ids_order), ROADS_PLACE_BATCH_SIZE):
+        batch_place_ids = place_ids_order[
+            batch_start : batch_start + ROADS_PLACE_BATCH_SIZE
+        ]
+        if not batch_place_ids:
+            continue
+        params: List[Tuple[str, str]] = [("key", api_key), ("units", "KPH")]
+        for place_id in batch_place_ids:
+            params.append(("placeId", place_id))
+        try:
+            response = requests.get(
+                ROADS_SPEED_LIMITS_URL,
+                params=params,
+                timeout=8,
+            )
+            if response.status_code != 200:
+                body_preview = ""
+                try:
+                    body_preview = response.text[:300]
+                except Exception:
+                    body_preview = "<unable to read response body>"
+                print(
+                    "[Analysis] ⚠️ speedLimits request failed "
+                    f"(status {response.status_code}): {body_preview}"
+                )
+                if response.status_code in (400, 403, 404):
+                    # These indicate configuration issues; stop retrying further batches.
+                    break
+                response.raise_for_status()
+                continue
+            payload = response.json()
+        except (RequestException, ValueError) as exc:
+            detail = ""
+            if isinstance(exc, requests.HTTPError) and exc.response is not None:
+                try:
+                    detail = f" Body: {exc.response.text[:300]}"
+                except Exception:
+                    detail = " Body: <unreadable>"
+            print(f"[Analysis] ⚠️ Failed to fetch speed limits: {exc}{detail}")
+            break
+
+        for limit in payload.get("speedLimits", []):
+            place_id = limit.get("placeId")
+            value = limit.get("speedLimit")
+            units = limit.get("units")
+            if place_id and isinstance(value, (int, float)):
+                speed_kmh = float(value)
+                if units == "MPH":
+                    speed_kmh *= 1.60934
+                place_limit_lookup[place_id] = speed_kmh
+
+    if not place_limit_lookup:
+        return {}
+
+    limits_by_index: Dict[int, float] = {}
+    for index, place_id in index_to_place.items():
+        limit = place_limit_lookup.get(place_id)
+        if limit is not None:
+            limits_by_index[index] = limit
+
+    return limits_by_index
 
 
 def _load_all_sessions() -> List[Dict[str, Any]]:
@@ -437,7 +587,33 @@ def _build_route_note(session: Dict[str, Any]) -> Dict[str, Any]:
     device_id = session.get("device_id")
 
     gps_points = session.get("gps_points") or []
-    segments = _compute_segments(gps_points)
+    segments, ordered_points = _compute_segments(gps_points)
+    speed_limit_lookup = _fetch_speed_limits(ordered_points) if ordered_points else {}
+
+    limits_written = False
+    if speed_limit_lookup:
+        for point in ordered_points:
+            seq_index = point.get("seq_index")
+            if not isinstance(seq_index, int):
+                continue
+            limit_value = speed_limit_lookup.get(seq_index)
+            if limit_value is None:
+                continue
+            source_point = point.get("source")
+            if isinstance(source_point, dict):
+                existing = source_point.get("speed_limit_kmh")
+                rounded_limit = round(float(limit_value), 1)
+                if existing != rounded_limit:
+                    source_point["speed_limit_kmh"] = rounded_limit
+                    source_point["speed_limit_source"] = "roads_api"
+                    limits_written = True
+
+    if limits_written:
+        try:
+            _save_session(session)
+        except Exception as exc:
+            print(f"[Analysis] ⚠️ Failed to persist speed limits for {session_id}: {exc}")
+
     harsh_events = _compute_harsh_events(gps_points)
 
     total_distance_km = sum(segment["distance_km"] for segment in segments)
@@ -480,7 +656,55 @@ def _build_route_note(session: Dict[str, Any]) -> Dict[str, Any]:
     speeds = [segment["speed_kmh"] for segment in segments if segment["speed_kmh"] > 0]
     compliance_pct = 100.0
     compliance_comment = "Insufficient speed data recorded."
-    if speeds:
+    compliance_basis = "none"
+    limit_checks = 0
+    max_over_kmh: Optional[float] = None
+
+    limit_samples: List[Tuple[float, float]] = []
+    if speed_limit_lookup:
+        for segment in segments:
+            speed = segment.get("speed_kmh")
+            if not speed or speed <= 0:
+                continue
+            limit = None
+            for index_key in ("end_index", "start_index"):
+                idx = segment.get(index_key)
+                if isinstance(idx, int) and idx in speed_limit_lookup:
+                    limit = speed_limit_lookup[idx]
+                    break
+            if limit is None:
+                continue
+            limit_samples.append((speed, limit))
+
+    if limit_samples:
+        compliance_basis = "limits"
+        tolerance_kmh = 5.0
+        total_samples = len(limit_samples)
+        compliant_count = sum(
+            1 for speed, limit in limit_samples if speed <= limit + tolerance_kmh
+        )
+        compliance_pct = (compliant_count / total_samples) * 100.0
+        limit_checks = total_samples
+        overages = [
+            speed - limit
+            for speed, limit in limit_samples
+            if speed > limit + tolerance_kmh
+        ]
+        if overages:
+            worst_over = max(overages)
+            max_over_kmh = worst_over
+            compliance_comment = (
+                f"{compliance_pct:.0f}% of sampled segments stayed within "
+                f"{tolerance_kmh:.0f} km/h of the posted limit "
+                f"({total_samples} checks, max over +{worst_over:.0f} km/h)."
+            )
+        else:
+            compliance_comment = (
+                f"{compliance_pct:.0f}% of sampled segments stayed within "
+                f"{tolerance_kmh:.0f} km/h of the posted limit across {total_samples} checks."
+            )
+    elif speeds:
+        compliance_basis = "median"
         median_speed = sorted(speeds)[len(speeds) // 2]
         lower_bound = median_speed * 0.7
         upper_bound = median_speed * 1.2
@@ -578,6 +802,9 @@ def _build_route_note(session: Dict[str, Any]) -> Dict[str, Any]:
             "max_kmh": round(max_speed, 1),
             "compliance_percent": round(compliance_pct, 1),
             "commentary": compliance_comment,
+            "basis": compliance_basis,
+            "limit_checks": limit_checks,
+            "max_over_kmh": round(max_over_kmh, 1) if max_over_kmh is not None else None,
         },
         "context_mix": context_mix,
         "voice_tags": top_tags,

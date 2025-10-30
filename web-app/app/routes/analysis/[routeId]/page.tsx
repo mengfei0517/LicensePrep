@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import {
   ArrowLeftIcon,
   ArrowPathIcon,
@@ -29,6 +30,82 @@ export default function RouteAnalysisDetailPage() {
   const params = useParams<{ routeId: string }>();
   const routeId = params?.routeId ?? null;
   const { analysis, isLoading, error, refresh } = useRouteAnalysis(routeId);
+
+  const [personalSummary, setPersonalSummary] = useState<string>('');
+  type PersonalTodo = { id: string; text: string; done: boolean };
+  const [personalTodos, setPersonalTodos] = useState<PersonalTodo[]>([]);
+  const [scenario, setScenario] = useState<string>('Normal');
+  const [selfAssessment, setSelfAssessment] = useState<string>('Fair');
+  const [coachAssessment, setCoachAssessment] = useState<string>('Fair');
+
+  const summaryKey = routeId ? `route:${routeId}:personal_summary` : 'route:unknown:personal_summary';
+  const todosKey = routeId ? `route:${routeId}:personal_todos` : 'route:unknown:personal_todos';
+  const scenarioKey = routeId ? `route:${routeId}:scenario` : 'route:unknown:scenario';
+  const selfKey = routeId ? `route:${routeId}:self_assessment` : 'route:unknown:self_assessment';
+  const coachKey = routeId ? `route:${routeId}:coach_assessment` : 'route:unknown:coach_assessment';
+
+  useEffect(() => {
+    try {
+      const savedSummary = typeof window !== 'undefined' ? localStorage.getItem(summaryKey) : null;
+      const savedTodos = typeof window !== 'undefined' ? localStorage.getItem(todosKey) : null;
+      if (savedSummary) setPersonalSummary(savedSummary);
+      if (savedTodos) setPersonalTodos(JSON.parse(savedTodos));
+    } catch {}
+  }, [summaryKey, todosKey]);
+
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') localStorage.setItem(summaryKey, personalSummary);
+    } catch {}
+  }, [summaryKey, personalSummary]);
+
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') localStorage.setItem(todosKey, JSON.stringify(personalTodos));
+    } catch {}
+  }, [todosKey, personalTodos]);
+
+  useEffect(() => {
+    try {
+      if (typeof window === 'undefined') return;
+      const s = localStorage.getItem(scenarioKey);
+      const se = localStorage.getItem(selfKey);
+      const ce = localStorage.getItem(coachKey);
+      if (s) setScenario(s);
+      if (se) setSelfAssessment(se);
+      if (ce) setCoachAssessment(ce);
+    } catch {}
+  }, [scenarioKey, selfKey, coachKey]);
+
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') localStorage.setItem(scenarioKey, scenario);
+    } catch {}
+  }, [scenarioKey, scenario]);
+
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') localStorage.setItem(selfKey, selfAssessment);
+    } catch {}
+  }, [selfKey, selfAssessment]);
+
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') localStorage.setItem(coachKey, coachAssessment);
+    } catch {}
+  }, [coachKey, coachAssessment]);
+
+  const addTodo = (text: string) => {
+    const value = text.trim();
+    if (!value) return;
+    setPersonalTodos((prev) => [{ id: `${Date.now()}`, text: value, done: false }, ...prev]);
+  };
+  const toggleTodo = (id: string) => {
+    setPersonalTodos((prev) => prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
+  };
+  const removeTodo = (id: string) => {
+    setPersonalTodos((prev) => prev.filter((t) => t.id !== id));
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-10">
@@ -102,6 +179,42 @@ export default function RouteAnalysisDetailPage() {
               />
             </div>
 
+            <div className="px-6 pb-2">
+              <div className="mt-2 grid gap-4 sm:grid-cols-3">
+                <LabeledSelect
+                  label="Scenario"
+                  value={scenario}
+                  onChange={setScenario}
+                  options={[
+                    { value: 'Normal', label: 'Normal' },
+                    { value: 'Rainy', label: 'Rainy' },
+                    { value: 'Night', label: 'Night' },
+                    { value: 'Rush hour', label: 'Rush hour' },
+                  ]}
+                />
+                <LabeledSelect
+                  label="Self assessment"
+                  value={selfAssessment}
+                  onChange={setSelfAssessment}
+                  options={[
+                    { value: 'Good', label: 'Good' },
+                    { value: 'Fair', label: 'Fair' },
+                    { value: 'Poor', label: 'Poor' },
+                  ]}
+                />
+                <LabeledSelect
+                  label="Coach assessment"
+                  value={coachAssessment}
+                  onChange={setCoachAssessment}
+                  options={[
+                    { value: 'Good', label: 'Good' },
+                    { value: 'Fair', label: 'Fair' },
+                    { value: 'Poor', label: 'Poor' },
+                  ]}
+                />
+              </div>
+            </div>
+
             <div className="px-6 py-6 space-y-6">
               <div className="relative">
                 <SectionTitle
@@ -117,69 +230,7 @@ export default function RouteAnalysisDetailPage() {
               <div className="grid gap-8 md:grid-cols-2">
                 <div>
                   <SectionTitle
-                    title="Speed & Compliance"
-                    description="Relative to your median pace this session."
-                  />
-                  <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50/60 p-4">
-                    <dl className="space-y-2 text-sm text-gray-700">
-                      <div className="flex justify-between">
-                        <dt>Average speed</dt>
-                        <dd>{analysis.speed_profile.average_kmh.toFixed(1)} km/h</dd>
-                      </div>
-                      <div className="flex justify-between">
-                        <dt>Max speed</dt>
-                        <dd>{analysis.speed_profile.max_kmh.toFixed(1)} km/h</dd>
-                      </div>
-                      <div className="flex justify-between">
-                        <dt>Stability window compliance</dt>
-                        <dd>
-                          {analysis.speed_profile.compliance_percent.toFixed(0)}%
-                        </dd>
-                      </div>
-                    </dl>
-                    <p className="mt-3 text-xs text-gray-500">
-                      {analysis.speed_profile.commentary}
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <SectionTitle
-                    title="Driving Context Mix"
-                    description="Speed-based estimate of environment types."
-                  />
-                  <div className="mt-3 space-y-3">
-                    {analysis.context_mix.length === 0 ? (
-                      <div className="rounded-lg border border-dashed border-gray-200 p-4 text-sm text-gray-500">
-                        Not enough GPS samples to classify environment.
-                      </div>
-                    ) : (
-                      analysis.context_mix.map((context) => (
-                        <div key={context.label}>
-                          <div className="flex justify-between text-sm text-gray-600">
-                            <span className="capitalize">{context.label}</span>
-                            <span>
-                              {shareFormatter.format(context.share)} ·{' '}
-                              {context.distance_km.toFixed(1)} km
-                            </span>
-                          </div>
-                          <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-gray-100">
-                            <div
-                              className="h-full rounded-full bg-blue-500"
-                              style={{ width: `${context.share * 100}%` }}
-                            />
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid gap-8 md:grid-cols-2">
-                <div>
-                  <SectionTitle
-                    title="Voice & Marker Tags"
+                    title="Voice Notes Tags"
                     description="Top labels you captured during this drive."
                   />
                   {analysis.voice_tags.length === 0 ? (
@@ -205,7 +256,7 @@ export default function RouteAnalysisDetailPage() {
 
                 <div>
                   <SectionTitle
-                    title="Notable Events"
+                    title="Marked Locations"
                     description="Voice notes and markers captured along the drive."
                   />
                   {analysis.notable_events.length === 0 ? (
@@ -213,26 +264,20 @@ export default function RouteAnalysisDetailPage() {
                       No events recorded on this route. Consider adding markers or notes during playback.
                     </div>
                   ) : (
-                    <ul className="mt-4 space-y-3">
+                    <ul className="mt-2 space-y-1">
                       {analysis.notable_events.map((event, index) => (
                         <li
                           key={`${event.timestamp}-${index}`}
-                          className="rounded-lg border border-gray-100 bg-gray-50/70 px-4 py-3"
+                          className="rounded border border-gray-100 bg-gray-50/90 px-3 py-2"
                         >
-                          <div className="flex items-center justify-between">
+                          <div className="flex items-center">
                             <p className="text-sm font-semibold text-gray-900">
                               {event.label ?? 'Event'}
                             </p>
-                            <MicrophoneIcon className="h-4 w-4 text-gray-400" />
                           </div>
                           {event.description && (
                             <p className="mt-1 text-xs text-gray-600">
                               {event.description}
-                            </p>
-                          )}
-                          {event.timestamp && (
-                            <p className="mt-1 text-[10px] uppercase tracking-wide text-gray-400">
-                              {dateFormatter.format(new Date(event.timestamp))}
                             </p>
                           )}
                         </li>
@@ -264,6 +309,92 @@ export default function RouteAnalysisDetailPage() {
             </div>
           </div>
         </>
+      )}
+      {analysis && (
+        <section className="mt-10 rounded-2xl border border-blue-100 bg-blue-50/60 px-6 py-6">
+          <h2 className="text-lg font-bold text-blue-900 mb-4">Session Summary</h2>
+          <p className="mb-2 text-sm text-blue-800">
+            Today's practice duration: <strong>{analysis.summary.duration_min.toFixed(1)} min</strong>,
+            distance: <strong>{analysis.summary.distance_km.toFixed(2)} km</strong>,
+            average speed: <strong>{analysis.speed_profile?.average_kmh?.toFixed(1) ?? '-'} km/h</strong>,
+            maximum speed: <strong>{analysis.speed_profile?.max_kmh?.toFixed(1) ?? '-'} km/h</strong>.
+          </p>
+          <p className="mb-2 text-sm text-blue-800">
+            During the drive, a total of <strong>{analysis.voice_tags.reduce((acc, t) => acc + t.count, 0)}</strong> voice notes were recorded,
+            covering <strong>{analysis.voice_tags.length}</strong> distinct domains; most important to focus on: <strong>{[...analysis.voice_tags].sort((a, b) => b.count - a.count).slice(0,2).map(t => `#${t.label}`).join(', ') || '-'}</strong>.
+          </p>
+          <p className="mb-2 text-sm text-blue-800">
+            During route review, <strong>{analysis.notable_events.length}</strong> key locations were marked, related to <strong>{[...new Set(analysis.notable_events.map(e => e.label))].filter(Boolean).length}</strong> different types of driving actions; most important to focus on: <strong>{(() => {
+              const freq: { [key: string]: number } = analysis.notable_events.reduce((acc, e) => {
+                if (e.label) acc[e.label] = (acc[e.label] || 0) + 1;
+                return acc;
+              }, {} as { [key: string]: number });
+              return (Object.entries(freq) as [string, number][])  
+                .sort((a, b) => b[1] - a[1])  
+                .slice(0, 2)  
+                .map(([label]) => label)  
+                .join(', ') || '-';
+            })()}</strong>.
+          </p>
+          <div className="mt-4 bg-blue-100 rounded p-3">
+            <div className="mb-1 font-semibold text-blue-700 text-xs">Key exam-relevant skill domains:</div>
+            <ul className="text-xs text-blue-700 list-disc ml-5 space-y-0.5">
+              <li>Traffic Observation</li>
+              <li>Vehicle Positioning &amp; Route Selection</li>
+              <li>Speed Adaptation</li>
+              <li>Communication with Other Road Users</li>
+              <li>Vehicle Operation / Environmentally-conscious driving</li>
+            </ul>
+          </div>
+        </section>
+      )}
+      {analysis && (
+        <section className="mt-6 rounded-2xl border border-purple-100 bg-purple-50/60 px-6 py-6">
+          <h2 className="text-lg font-bold text-purple-900 mb-4">Add Personal Summary</h2>
+          <p className="text-xs text-purple-700 mb-2">Personal summary (locally saved, not uploaded):</p>
+          <textarea
+            className="w-full resize-none rounded-md border border-purple-200 bg-white p-3 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-300"
+            rows={4}
+            placeholder="Today's practice, insights, areas to reinforce..."
+            value={personalSummary}
+            onChange={(e) => setPersonalSummary(e.target.value)}
+          />
+          <div className="mt-1 text-[11px] text-purple-600">Auto-saved locally</div>
+
+          <div className="mt-6">
+            <h3 className="text-sm font-semibold text-gray-900">Add Personal To-do</h3>
+            <p className="text-xs text-gray-500 mt-1">Today's practice questions (waiting for confirmation from the coach)</p>
+            <TodoInput onAdd={addTodo} />
+            {personalTodos.length === 0 ? (
+              <div className="mt-3 rounded border border-dashed border-gray-200 p-3 text-xs text-gray-500">
+                No pending items, record your questions first.
+              </div>
+            ) : (
+              <ul className="mt-3 space-y-2">
+                {personalTodos.map((todo) => (
+                  <li key={todo.id} className="flex items-start justify-between rounded border border-gray-100 bg-white px-3 py-2">
+                    <label className="flex items-start gap-2 text-sm text-gray-800">
+                      <input
+                        type="checkbox"
+                        className="mt-0.5 h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-300"
+                        checked={todo.done}
+                        onChange={() => toggleTodo(todo.id)}
+                      />
+                      <span className={todo.done ? 'line-through text-gray-400' : ''}>{todo.text}</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => removeTodo(todo.id)}
+                      className="text-xs text-gray-400 hover:text-red-500"
+                    >
+                      Delete
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
       )}
     </div>
   );
@@ -512,5 +643,64 @@ function SectionTitle({
         <p className="text-xs text-gray-500 mt-1">{description}</p>
       )}
     </div>
+  );
+}
+
+function TodoInput({ onAdd }: { onAdd: (text: string) => void }) {
+  const [value, setValue] = useState('');
+  return (
+    <div className="mt-3 flex items-center gap-2">
+      <input
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            onAdd(value);
+            setValue('');
+          }
+        }}
+        placeholder="Enter your question, press Enter to add"
+        className="flex-1 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+      />
+      <button
+        type="button"
+        onClick={() => {
+          onAdd(value);
+          setValue('');
+        }}
+        className="rounded-md bg-purple-600 px-3 py-2 text-sm font-medium text-white hover:bg-purple-700"
+      >
+        Add
+      </button>
+    </div>
+  );
+}
+
+function LabeledSelect({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-xs font-medium text-gray-600">{label}</span>
+      <select
+        className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-300"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }

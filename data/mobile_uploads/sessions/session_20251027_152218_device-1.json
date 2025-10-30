@@ -3,7 +3,7 @@
   "device_id": "device-1761592919667",
   "start_time": "2025-10-27T19:22:17.818Z",
   "created_at": "2025-10-27T19:22:18.017407",
-  "last_updated": "2025-10-29T09:02:48.579597",
+  "last_updated": "2025-10-30T11:19:17.969588",
   "gps_points": [
     {
       "latitude": 48.19665649444628,
@@ -9742,7 +9742,9 @@
       "timestamp": "2025-10-27T19:26:26.001Z",
       "file_path": "data/mobile_uploads/audio/session_20251027_152218_device-1_20251027_152627.m4a",
       "file_url": "/api/mobile/routes/session_20251027_152218_device-1/audio/session_20251027_152218_device-1_20251027_152627.m4a",
-      "tags": []
+      "tags": [
+        "Vehicle Operation"
+      ]
     },
     {
       "filename": "session_20251027_152218_device-1_20251027_152640.m4a",
@@ -9751,7 +9753,9 @@
       "timestamp": "2025-10-27T19:26:40.000Z",
       "file_path": "data/mobile_uploads/audio/session_20251027_152218_device-1_20251027_152640.m4a",
       "file_url": "/api/mobile/routes/session_20251027_152218_device-1/audio/session_20251027_152218_device-1_20251027_152640.m4a",
-      "tags": []
+      "tags": [
+        "Traffic Observation"
+      ]
     },
     {
       "filename": "session_20251027_152218_device-1_20251027_152820.m4a",
@@ -9760,7 +9764,9 @@
       "timestamp": "2025-10-27T19:28:20.001Z",
       "file_path": "data/mobile_uploads/audio/session_20251027_152218_device-1_20251027_152820.m4a",
       "file_url": "/api/mobile/routes/session_20251027_152218_device-1/audio/session_20251027_152218_device-1_20251027_152820.m4a",
-      "tags": []
+      "tags": [
+        "Speed Adaptation"
+      ]
     },
     {
       "filename": "session_20251027_152218_device-1_20251027_152906.m4a",
@@ -9778,7 +9784,9 @@
       "timestamp": "2025-10-27T19:31:44.000Z",
       "file_path": "data/mobile_uploads/audio/session_20251027_152218_device-1_20251027_153145.m4a",
       "file_url": "/api/mobile/routes/session_20251027_152218_device-1/audio/session_20251027_152218_device-1_20251027_153145.m4a",
-      "tags": []
+      "tags": [
+        "Vehicle Positioning"
+      ]
     },
     {
       "filename": "session_20251027_152218_device-1_20251027_153234.m4a",
@@ -9787,7 +9795,9 @@
       "timestamp": "2025-10-27T19:32:33.001Z",
       "file_path": "data/mobile_uploads/audio/session_20251027_152218_device-1_20251027_153234.m4a",
       "file_url": "/api/mobile/routes/session_20251027_152218_device-1/audio/session_20251027_152218_device-1_20251027_153234.m4a",
-      "tags": []
+      "tags": [
+        "Speed Adaptation"
+      ]
     },
     {
       "filename": "session_20251027_152218_device-1_20251027_153544.m4a",
@@ -9796,7 +9806,9 @@
       "timestamp": "2025-10-27T19:35:43.000Z",
       "file_path": "data/mobile_uploads/audio/session_20251027_152218_device-1_20251027_153544.m4a",
       "file_url": "/api/mobile/routes/session_20251027_152218_device-1/audio/session_20251027_152218_device-1_20251027_153544.m4a",
-      "tags": []
+      "tags": [
+        "Vehicle Positioning"
+      ]
     },
     {
       "filename": "session_20251027_152218_device-1_20251027_154319.m4a",
@@ -9805,7 +9817,9 @@
       "timestamp": "2025-10-27T19:43:15.001Z",
       "file_path": "data/mobile_uploads/audio/session_20251027_152218_device-1_20251027_154319.m4a",
       "file_url": "/api/mobile/routes/session_20251027_152218_device-1/audio/session_20251027_152218_device-1_20251027_154319.m4a",
-      "tags": []
+      "tags": [
+        "Vehicle Operation"
+      ]
     }
   ],
   "status": "completed",
@@ -9816,24 +9830,80 @@
       "latitude": 48.18931117824964,
       "longitude": 11.637783613243352,
       "timestamp": "2025-10-27T19:25:10.000Z",
-      "label": "key point 2",
+      "label": "Yield exit",
       "type": "general",
-      "description": "",
-      "tags": [],
-      "created_at": "2025-10-28T10:53:56.160489"
+      "description": "Yield when leaving the 30-zone and entering the city zone",
+      "tags": [
+        "30zone-50zone"
+      ],
+      "created_at": "2025-10-28T10:53:56.160489",
+      "updated_at": "2025-10-30T09:20:23.533866"
     },
     {
-      "marker_id": "c19ba88835af46098b4eeb6a1cb31be4",
-      "latitude": 48.182815661175226,
-      "longitude": 11.632697786412397,
-      "timestamp": "2025-10-27T19:26:17.001Z",
-      "label": "key point 3",
-      "type": "general",
-      "description": "on-ramp to landstrasse",
-      "tags": [
-        "on-ramp"
-      ],
-      "created_at": "2025-10-29T09:02:48.579570"
+      "marker_id": "45e32cabcd764a0bb05ca66b86f89fb3",
+      "latitude": 48.19690490227479,
+      "longitude": 11.648329938188821,
+      "timestamp": "2025-10-27T19:43:28.999Z",
+      "label": "Richts on links",
+      "type": "crossing",
+      "description": "Richts on links in 30 Zone",
+      "tags": [],
+      "created_at": "2025-10-30T10:00:06.247826"
+    },
+    {
+      "marker_id": "fa581885bfbe4122bf9f04863f86a4bb",
+      "latitude": 48.18238192796477,
+      "longitude": 11.63085281318964,
+      "timestamp": "2025-10-27T19:26:35.000Z",
+      "label": "Entry of the landstrasse",
+      "type": "lane-change",
+      "description": "more observation, Entry of the landstrasse",
+      "tags": [],
+      "created_at": "2025-10-30T10:01:15.408972"
+    },
+    {
+      "marker_id": "305f456dca1546a08ce0769321ee33ff",
+      "latitude": 48.18961825010403,
+      "longitude": 11.613643355998818,
+      "timestamp": "2025-10-27T19:28:27.001Z",
+      "label": "entry of the highway",
+      "type": "lane-change",
+      "description": "pay attention to adjust the speed",
+      "tags": [],
+      "created_at": "2025-10-30T10:02:20.165040"
+    },
+    {
+      "marker_id": "c3aae107d58c48feb5ef9920ae07fe48",
+      "latitude": 48.20154424280874,
+      "longitude": 11.619622061394297,
+      "timestamp": "2025-10-27T19:29:24.000Z",
+      "label": "overtaking LKV",
+      "type": "overtaking",
+      "description": "when there is no car in the right side, then change the line to the right one, when there are some slow LKV, overtake them safy",
+      "tags": [],
+      "created_at": "2025-10-30T10:03:47.691196"
+    },
+    {
+      "marker_id": "2fa2cb6282c84954b985f4abff556edd",
+      "latitude": 48.21289145792299,
+      "longitude": 11.625281493129386,
+      "timestamp": "2025-10-27T19:30:11.001Z",
+      "label": "direction sign and line",
+      "type": "exam",
+      "description": "pay attention to the direction sign, prepare to change the line to the  right line",
+      "tags": [],
+      "created_at": "2025-10-30T10:07:03.323512"
+    },
+    {
+      "marker_id": "55abfe7d65c540d9b3e4181b8c8301df",
+      "latitude": 48.240033372083325,
+      "longitude": 11.638888798420487,
+      "timestamp": "2025-10-27T19:32:01.000Z",
+      "label": "exit of highway",
+      "type": "lane-change",
+      "description": "Signal 300 meters in advance, keep right, and do not overtake.",
+      "tags": [],
+      "created_at": "2025-10-30T10:08:18.164064"
     }
   ],
   "end_time": "2025-10-27T19:43:31.895Z",

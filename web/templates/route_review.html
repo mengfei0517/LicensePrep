@@ -311,57 +311,6 @@
         }
 
         /* Speed Analysis Section */
-        .speed-analysis-section {
-            border-bottom: 2px solid #f0f0f0;
-            padding: 20px;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .speed-analysis-section h3 {
-            margin: 0 0 15px 0;
-            color: #495057;
-            font-size: 1.1em;
-        }
-
-        .speed-stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .speed-stats.single {
-            grid-template-columns: 1fr;
-        }
-
-        .speed-stat-item {
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 8px;
-            text-align: center;
-        }
-
-        .speed-stat-label {
-            font-size: 0.8em;
-            color: #6c757d;
-            margin-bottom: 5px;
-        }
-
-        .speed-stat-value {
-            font-size: 1.2em;
-            font-weight: 600;
-            color: #495057;
-        }
-
-        .speed-stat-value.warning {
-            color: #ffc107;
-        }
-
-        .speed-stat-value.danger {
-            color: #ee0979;
-        }
-
         .marker-section {
             padding: 20px;
             border-bottom: 2px solid #f0f0f0;
@@ -486,22 +435,6 @@
             padding: 20px 10px;
         }
 
-        .voice-notes-filters {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-
-        .voice-notes-filters input,
-        .voice-notes-filters select {
-            width: 100%;
-            padding: 8px 10px;
-            border-radius: 6px;
-            border: 1px solid #ced4da;
-            font-size: 0.85em;
-        }
-
         .marker-modal-backdrop {
             position: fixed;
             inset: 0;
@@ -570,7 +503,7 @@
 
         .marker-modal textarea {
             resize: vertical;
-            min-height: 80px;
+            min-height: 120px;
         }
 
         .marker-modal .modal-actions {
@@ -589,8 +522,8 @@
         }
 
         .marker-modal textarea {
-            font-size: 0.95em;
-            line-height: 1.5;
+            font-size: 1.05em;
+            line-height: 1.6;
         }
 
         .marker-modal .modal-actions .save-btn {
@@ -1495,17 +1428,6 @@
                     </div>
                 </div>
 
-                <!-- Speed Analysis Section -->
-                <div class="speed-analysis-section">
-                    <h3>🚦 Overspeed Summary</h3>
-                    <div class="speed-stats single">
-                        <div class="speed-stat-item">
-                            <div class="speed-stat-label">Times exceeding limit</div>
-                            <div class="speed-stat-value" id="overspeedCount">--</div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Key Locations Section -->
                 <div class="marker-section">
                     <div class="marker-section-header">
@@ -1524,12 +1446,6 @@
                             🎙️ Voice Notes
                             <span class="note-count" id="noteCount">(0)</span>
                         </h3>
-                        <div class="voice-notes-filters">
-                            <input type="text" id="voiceSearchInput" placeholder="Search notes or tags…" />
-                            <select id="voiceTagFilter">
-                                <option value="">All tags</option>
-                            </select>
-                        </div>
                     </div>
                     <div class="voice-note-list-wrapper">
                         <div class="voice-note-list" id="voiceNoteList">
@@ -1591,8 +1507,14 @@
                     Marker type
                     <select id="markerTypeField">
                         <option value="exam">🚩 Driving exam focus</option>
-                        <option value="hazard">⚠️ Complex intersection</option>
-                        <option value="tip">💡 Coaching tip</option>
+                        <option value="lane-change">↔️ Lane change, merging and leaving lanes</option>
+                        <option value="turning">↩️ Turning and cornering</option>
+                        <option value="overtaking">⏭️ Overtaking and being overtaken</option>
+                        <option value="crossing">🚦 Crossing, merging and entering traffic flow</option>
+                        <option value="roundabout">⭕ Roundabout driving</option>
+                        <option value="railway">🚆 Railway crossing situations</option>
+                        <option value="parking">🅿️ Parking and pedestrian crossing situations</option>
+                        <option value="straight-driving">➡️ Straight driving and section driving</option>
                         <option value="general">📍 Custom</option>
                     </select>
                 </label>
@@ -1671,10 +1593,10 @@
         let reviewMarkers = [];
         let markerControlsInitialized = false;
         let playbackControlsInitialized = false;
-        let voiceFiltersInitialized = false;
         let routeLayerGroup = null;
         let playbackLayerGroup = null;
         let routeSegments = [];
+        const BASE_ROUTE_LINE_WEIGHT = 10;
 
         const escapeHtml = (input) => {
             if (input === undefined || input === null) return '';
@@ -1694,15 +1616,32 @@
         };
         let isAddingMarker = false;
         let pendingMarkerLatLng = null;
-        let voiceNoteFilters = { search: '', tag: '' };
         let isPlaying = false;
         let currentTime = 0;
         let playbackSpeed = 1;
         let animationFrame = null;
         let startTimestamp = null;
         let playbackPointIndex = 0;
-        let overspeedSummary = { count: 0, durationMs: 0 };
-        const VOICE_TAG_SUGGESTIONS = ['observation', 'hazard', 'coaching', 'exam-note', 'reminder'];
+        const VOICE_TAG_SUGGESTIONS = [
+            'Traffic Observation',
+            'Vehicle Positioning',
+            'Speed Adaptation',
+            'Communication',
+            'Vehicle Operation',
+            'Environmentally-conscious driving',
+        ];
+        const MARKER_TYPE_OPTIONS = new Set([
+            'exam',
+            'lane-change',
+            'turning',
+            'overtaking',
+            'crossing',
+            'roundabout',
+            'railway',
+            'parking',
+            'straight-driving',
+            'general',
+        ]);
 
         const googleMapsKey = document.body.dataset.googleMapsKey || '';
         let googleMapsReady = Boolean(window.googleMapsReady);
@@ -2535,87 +2474,13 @@
             updateStreetViewMarkers();
 
             // Add voice notes
-            initializeVoiceNoteFilters();
             displayVoiceNotes();
-
-            // Analyze speed data
-            analyzeSpeedData();
 
             // Timeline markers
             renderTimelineEvents();
 
             // Initialize playback
             initializePlayback();
-        }
-
-        // Analyze speed data
-        function analyzeSpeedData() {
-            const points = routeData.points || [];
-            const overspeedEl = document.getElementById('overspeedCount');
-
-            if (!points.length) {
-                console.warn('No GPS points with speed data');
-                if (overspeedEl) overspeedEl.textContent = '0';
-                return;
-            }
-
-            overspeedSummary = calculateOverspeedSummary(points);
-
-            if (overspeedEl) {
-                overspeedEl.textContent = overspeedSummary.count;
-                overspeedEl.classList.toggle('danger', overspeedSummary.count > 0);
-            }
-        }
-
-        function calculateOverspeedSummary(points) {
-            let count = 0;
-            let durationMs = 0;
-            let inEvent = false;
-
-            for (let i = 1; i < points.length; i++) {
-                const prev = points[i - 1];
-                const curr = points[i];
-                const limit = curr.speedLimitKmh ?? curr.originalSpeedLimitKmh ?? prev.speedLimitKmh ?? prev.originalSpeedLimitKmh;
-                if (!Number.isFinite(limit)) {
-                    inEvent = false;
-                    continue;
-                }
-
-                const prevSpeed = getPointSpeedKmh(prev);
-                const currSpeed = getPointSpeedKmh(curr);
-                const timeDelta = Math.max(0, (curr.timeMs || 0) - (prev.timeMs || 0));
-
-                const prevOver = prevSpeed !== null && prevSpeed > limit + 2;
-                const currOver = currSpeed !== null && currSpeed > limit + 2;
-
-                if (currOver) {
-                    if (!inEvent) {
-                        count += 1;
-                        inEvent = true;
-                    }
-                    if (prevOver && timeDelta) {
-                        durationMs += timeDelta;
-                    }
-                } else {
-                    inEvent = false;
-                }
-            }
-
-            return { count, durationMs };
-        }
-
-        function getPointSpeedKmh(point) {
-            if (!point) return null;
-            if (typeof point.speedKmh === 'number' && !Number.isNaN(point.speedKmh)) {
-                return point.speedKmh;
-            }
-            if (typeof point.speedMs === 'number' && !Number.isNaN(point.speedMs)) {
-                return point.speedMs * 3.6;
-            }
-            if (typeof point.speed === 'number' && !Number.isNaN(point.speed)) {
-                return point.speed;
-            }
-            return null;
         }
 
         // Get color based on speed (heatmap)
@@ -2633,14 +2498,7 @@
         }
 
         function getSpeedWidth(speed) {
-            if (speed < 30) {
-                return 10;
-            } else if (speed < 50) {
-                return 14;
-            } else if (speed < 80) {
-                return 18;
-            }
-            return 24;
+            return BASE_ROUTE_LINE_WEIGHT; // keep line thickness consistent while color reflects speed
         }
 
         // Draw route on map with speed heatmap
@@ -3375,22 +3233,18 @@
 
 
         function getReviewMarkerIcon(type = 'general') {
-            const palette = {
-                exam: '#2563eb',
-                hazard: '#ef4444',
-                tip: '#10b981',
-                general: '#f59e0b',
-            };
-            const color = palette[type] || palette.general;
-            if (!reviewMarkerIcons[type]) {
-                reviewMarkerIcons[type] = L.divIcon({
+            const iconKey = type || 'general';
+            if (!reviewMarkerIcons[iconKey]) {
+                reviewMarkerIcons[iconKey] = L.icon({
+                    iconUrl: '/static/images/pushpin-red.svg',
+                    iconRetinaUrl: '/static/images/pushpin-red.svg',
+                    iconSize: [28, 32],
+                    iconAnchor: [12, 30],
+                    popupAnchor: [0, -26],
                     className: 'review-marker-icon',
-                    html: `<div style="background:${color};width:16px;height:16px;border-radius:50%;border:2px solid white;box-shadow:0 0 0 3px rgba(0,0,0,0.2);"></div>`,
-                    iconSize: [16, 16],
-                    iconAnchor: [8, 8],
                 });
             }
-            return reviewMarkerIcons[type];
+            return reviewMarkerIcons[iconKey];
         }
 
         function initializeMarkerControls() {
@@ -3470,7 +3324,10 @@
             lngField.value = targetLng ?? '';
             timestampField.value = timestampIso ?? '';
             labelField.value = marker?.label || '';
-            typeField.value = marker?.type || 'general';
+            const markerTypeValue = marker?.type && MARKER_TYPE_OPTIONS.has(marker.type)
+                ? marker.type
+                : 'general';
+            typeField.value = markerTypeValue;
             tagsField.value = marker?.tags?.join(', ') || '';
             descriptionField.value = marker?.description || '';
 
@@ -3653,69 +3510,6 @@
             }
         }
 
-        function noteMatchesFilter(note) {
-            if (!note) return false;
-            const searchTerm = (voiceNoteFilters.search || '').toLowerCase();
-            const tagFilter = (voiceNoteFilters.tag || '').toLowerCase();
-            const tags = (note.tags || []).map(tag => tag.toLowerCase());
-
-            const matchesTag = !tagFilter || tags.includes(tagFilter);
-            if (!matchesTag) return false;
-
-            if (!searchTerm) return true;
-
-            const labelText = note.label ? String(note.label).toLowerCase() : '';
-            const transcriptText = note.transcript ? String(note.transcript).toLowerCase() : '';
-            const locationText = note.location
-                ? `${note.location.lat.toFixed(5)},${note.location.lng.toFixed(5)}`
-                : '';
-
-            return (
-                labelText.includes(searchTerm) ||
-                transcriptText.includes(searchTerm) ||
-                tags.some(tag => tag.includes(searchTerm)) ||
-                locationText.includes(searchTerm)
-            );
-        }
-
-        function initializeVoiceNoteFilters() {
-            const searchInput = document.getElementById('voiceSearchInput');
-            const tagSelect = document.getElementById('voiceTagFilter');
-
-            if (!searchInput || !tagSelect) return;
-
-            const uniqueTags = new Set(VOICE_TAG_SUGGESTIONS);
-            (routeData.voiceNotes || []).forEach(note => {
-                (note.tags || []).forEach(tag => uniqueTags.add(tag));
-            });
-
-            const previousValue = tagSelect.value;
-            const options = ['<option value=\"\">All tags</option>']
-                .concat([...uniqueTags].sort().map(tag => `<option value=\"${tag}\">${tag}</option>`));
-            tagSelect.innerHTML = options.join('');
-            if (previousValue && uniqueTags.has(previousValue)) {
-                tagSelect.value = previousValue;
-            } else {
-                tagSelect.value = '';
-                voiceNoteFilters.tag = '';
-            }
-
-        if (!voiceFiltersInitialized) {
-            searchInput.addEventListener('input', (event) => {
-                voiceNoteFilters.search = event.target.value.toLowerCase();
-                displayVoiceNotes();
-                renderTimelineEvents();
-            });
-
-                tagSelect.addEventListener('change', (event) => {
-                    voiceNoteFilters.tag = event.target.value;
-                    displayVoiceNotes();
-                    renderTimelineEvents();
-                });
-                voiceFiltersInitialized = true;
-            }
-        }
-
         function getVoiceTagOptionsHtml(selectedTags = []) {
             const unique = new Set(VOICE_TAG_SUGGESTIONS);
             (routeData.voiceNotes || []).forEach(note => {
@@ -3832,16 +3626,12 @@
             const allNotes = routeData.voiceNotes || [];
             const container = document.getElementById('voiceNoteList');
             const totalNotes = allNotes.length;
-            const visibleEntries = allNotes
-                .map((note, index) => ({ note, index }))
-                .filter(({ note }) => noteMatchesFilter(note));
+            const visibleEntries = allNotes.map((note, index) => ({ note, index }));
 
             const visibleCount = visibleEntries.length;
             const noteCountLabel = document.getElementById('noteCount');
             if (noteCountLabel) {
-                noteCountLabel.textContent = visibleCount === totalNotes
-                    ? `(${totalNotes})`
-                    : `(${visibleCount}/${totalNotes})`;
+                noteCountLabel.textContent = `(${totalNotes})`;
             }
 
             voiceMarkers.forEach(marker => map.removeLayer(marker));
@@ -3851,7 +3641,7 @@
                 container.innerHTML = `
                     <div class="empty-notes">
                         <div class="empty-notes-icon">🎵</div>
-                        <p>No voice notes match the current filter</p>
+                        <p>No voice notes in this route</p>
                     </div>
                 `;
                 return;

@@ -719,6 +719,17 @@ def _build_route_note(session: Dict[str, Any]) -> Dict[str, Any]:
             f"70–120% of your median speed ({median_speed:.0f} km/h)."
         )
 
+    speed_segments = [
+        {
+            "start": segment["start"],
+            "end": segment["end"],
+            "duration_s": round(segment["duration_s"], 2),
+            "distance_km": round(segment["distance_km"], 4),
+            "speed_kmh": round(segment["speed_kmh"], 1),
+        }
+        for segment in segments
+    ]
+
     # Context mix derived from speed buckets
     context_totals = {"urban": 0.0, "rural": 0.0, "highway": 0.0}
     total_distance = sum(segment["distance_km"] for segment in segments)
@@ -790,6 +801,7 @@ def _build_route_note(session: Dict[str, Any]) -> Dict[str, Any]:
             "duration_min": duration_min,
             "distance_km": distance_km,
             "device_id": device_id,
+            "preview_url": session.get("preview_url"),
         },
         "stability": {
             "score": round(stability_score, 1),
@@ -806,6 +818,7 @@ def _build_route_note(session: Dict[str, Any]) -> Dict[str, Any]:
             "limit_checks": limit_checks,
             "max_over_kmh": round(max_over_kmh, 1) if max_over_kmh is not None else None,
         },
+        "speed_segments": speed_segments,
         "context_mix": context_mix,
         "voice_tags": top_tags,
         "notable_events": notable_events[:6],

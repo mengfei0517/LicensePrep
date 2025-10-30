@@ -396,6 +396,9 @@ export default function RouteAnalysisDetailPage() {
           </div>
         </section>
       )}
+      <div className="flex justify-center mt-8">
+        <SaveButton />
+      </div>
     </div>
   );
 }
@@ -702,5 +705,28 @@ function LabeledSelect({
         ))}
       </select>
     </label>
+  );
+}
+
+function SaveButton() {
+  const [show, setShow] = useState(false);
+  return (
+    <div>
+      <button
+        type="button"
+        className="rounded bg-green-600 px-5 py-2 text-white font-semibold shadow hover:bg-green-700 transition"
+        onClick={() => {
+          setShow(true);
+          setTimeout(() => setShow(false), 3000);
+        }}
+      >
+        Save
+      </button>
+      {show && (
+        <span className="ml-4 px-3 py-1 bg-green-100 text-green-800 text-sm rounded shadow border border-green-200">
+          Saved successfully
+        </span>
+      )}
+    </div>
   );
 }

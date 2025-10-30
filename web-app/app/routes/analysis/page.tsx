@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import type { SVGProps } from 'react';
 import Link from 'next/link';
 import {
@@ -13,6 +13,10 @@ import {
   ClockIcon,
 } from '@heroicons/react/24/outline';
 import { useAnalysisOverview } from '@/lib/hooks/use-analysis';
+import dynamic from 'next/dynamic';
+import 'leaflet/dist/leaflet.css';
+import type { PracticeTrendSession } from '@/lib/api-client';
+import type { LatLngTuple } from 'leaflet';
 
 const numberFormatter = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 1,
@@ -40,7 +44,6 @@ export default function RouteAnalysisPage() {
     if (!overview) return [];
 
     const { summary } = overview.practice_trends;
-    const topIssue = overview.top_issues?.[0];
 
     return [
       {
@@ -56,22 +59,6 @@ export default function RouteAnalysisPage() {
         subtitle: `${formatNumber(summary.average_duration_min, '0')} min avg length`,
         icon: ClockIcon,
         tone: 'bg-indigo-50 text-indigo-600',
-      },
-      {
-        title: 'Safety Index',
-        value: formatNumber(summary.safety_index, '100'),
-        subtitle: `${summary.total_harsh_events} harsh events detected`,
-        icon: ShieldSparkIcon,
-        tone: 'bg-green-50 text-green-600',
-      },
-      {
-        title: 'Top Improvement Area',
-        value: topIssue ? topIssue.label : 'No tags yet',
-        subtitle: topIssue
-          ? `${topIssue.count} mentions across ${topIssue.routes.length} routes`
-          : 'Tag voice notes or markers to surface focus areas',
-        icon: FireIcon,
-        tone: 'bg-orange-50 text-orange-600',
       },
     ];
   }, [overview]);
@@ -156,113 +143,48 @@ export default function RouteAnalysisPage() {
             ))}
           </div>
 
-          {/* Heatmap & Top issues */}
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-            <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    Hotspot Heatmap
-                  </h2>
-                  <p className="text-sm text-gray-500">
-                    Locations with recurring voice notes, markers, or harsh events.
-                  </p>
-                </div>
-                <SparklesIcon className="h-6 w-6 text-purple-500" />
-              </div>
-
-              {overview.heatmap.length === 0 ? (
-                <div className="mt-6 rounded-lg border border-dashed border-gray-200 p-6 text-sm text-gray-500">
-                  No hotspots yet. Mark locations or log voice notes during review to
-                  uncover patterns.
-                </div>
-              ) : (
-                <ul className="mt-6 space-y-4">
-                  {overview.heatmap.slice(0, 6).map((spot) => (
-                    <li
-                      key={spot.cluster_id}
-                      className="rounded-lg border border-gray-100 bg-gray-50/80 p-4"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-semibold text-gray-900">
-                            {spot.dominant_label}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {spot.count} signals •{' '}
-                            {spot.routes.length} route(s)
-                          </p>
-                        </div>
-                        <MapPinIcon className="h-5 w-5 text-rose-500" />
-                      </div>
-                      <p className="mt-2 text-xs text-gray-500">
-                        Lat {spot.latitude.toFixed(3)} · Lng{' '}
-                        {spot.longitude.toFixed(3)}
-                      </p>
-                      {spot.tags.length > 0 && (
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {spot.tags.map((tag) => (
-                            <span
-                              key={`${spot.cluster_id}-${tag.label}`}
-                              className="inline-flex items-center rounded-full bg-white px-2 py-1 text-xs font-medium text-gray-600 shadow-sm"
-                            >
-                              #{tag.label}{' '}
-                              <span className="ml-1 text-[10px] text-gray-400">
-                                ×{tag.count}
-                              </span>
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-
-            <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    Repeating Issues
-                  </h2>
-                  <p className="text-sm text-gray-500">
-                    Voice note tags and location flags ranked by frequency.
-                  </p>
-                </div>
-                <ChartBarIcon className="h-6 w-6 text-blue-500" />
-              </div>
-
-              {overview.top_issues.length === 0 ? (
-                <div className="mt-6 rounded-lg border border-dashed border-gray-200 p-6 text-sm text-gray-500">
-                  No issues recorded. Tag your notes (e.g. “observation”, “gear change”)
-                  to build a personalised improvement list.
-                </div>
-              ) : (
-                <ul className="mt-6 space-y-3">
-                  {overview.top_issues.map((issue) => (
-                    <li
-                      key={issue.label}
-                      className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50/70 px-4 py-3"
-                    >
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900">
-                          #{issue.label}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Appears in {issue.routes.length} route(s)
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                        {issue.count}
-                        <span className="text-xs text-gray-400">mentions</span>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
+          <div className="mb-10">
+            <MapDisplay sessions={overview.practice_trends.sessions} />
           </div>
+
+          {/* Scene distribution and Speed-duration charts */}
+          <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Practice Distributions</h2>
+                <p className="text-sm text-gray-500">Scene frequency and duration by speed ranges across all sessions.</p>
+              </div>
+            </div>
+
+            {overview.practice_trends.sessions.length === 0 ? (
+              <div className="mt-6 rounded-lg border border-dashed border-gray-200 p-6 text-sm text-gray-500">
+                Record at least one route to unlock distributions.
+              </div>
+            ) : (
+              <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-2">
+                {/* Chart 1: Scene histogram */}
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900">Scene counts</h3>
+                  <p className="text-xs text-gray-500">Normal, Rainy, Night, Rush hour</p>
+                  <SceneHistogram sessions={overview.practice_trends.sessions} />
+                </div>
+                {/* Chart 2: Duration by speed buckets */}
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900">Duration by speed ranges</h3>
+                  <p className="text-xs text-gray-500">Buckets: 0–30, 30–50, 50–70, &gt;70 km/h</p>
+                  <SpeedDurationBuckets sessions={overview.practice_trends.sessions} />
+                </div>
+              </div>
+            )}
+          </section>
+
+          {/* Personal summaries & todos */}
+          <section className="rounded-2xl border border-amber-100 bg-amber-50/60 p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-amber-900 mb-3">Personal Summaries &amp; Todos</h2>
+            <AggregatedPersonals sessions={overview.practice_trends.sessions} />
+          </section>
+
+          {/* Hotspot Heatmap & Repeating Issues removed by request */}
 
           {/* Practice trends */}
           <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
@@ -290,116 +212,77 @@ export default function RouteAnalysisPage() {
                       <th className="px-4 py-3 text-left">Duration</th>
                       <th className="px-4 py-3 text-left">Distance</th>
                       <th className="px-4 py-3 text-left">Voice Notes</th>
-                      <th className="px-4 py-3 text-left">Harsh Events</th>
-                      <th className="px-4 py-3 text-left">Safety Score</th>
+                      <th className="px-4 py-3 text-left">Marked Locations</th>
+                      <th className="px-4 py-3 text-left">Self Assessment</th>
+                      <th className="px-4 py-3 text-left">Coach Assessment</th>
+                      <th className="px-4 py-3 text-left">Links</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 bg-white text-gray-700">
-                    {overview.practice_trends.sessions.map((session) => (
-                      <tr key={session.route_id}>
-                        <td className="px-4 py-3">
-                          <div className="font-medium text-gray-900">
-                            {session.recorded_at
-                              ? dateFormatter.format(new Date(session.recorded_at))
-                              : session.route_id}
-                          </div>
-                          <div className="text-xs text-gray-400">
-                            Route ID: {session.route_id}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          {formatNumber(session.duration_min)} min
-                        </td>
-                        <td className="px-4 py-3">
-                          {formatNumber(session.distance_km)} km
-                        </td>
-                        <td className="px-4 py-3">
-                          {session.voice_notes} notes
-                        </td>
-                        <td className="px-4 py-3">
-                          <span
-                            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                              session.harsh_events > 0
-                                ? 'bg-rose-100 text-rose-600'
-                                : 'bg-green-100 text-green-600'
-                            }`}
-                          >
-                            {session.harsh_events}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <div className="h-2 w-24 overflow-hidden rounded-full bg-gray-100">
-                              <div
-                                className="h-full rounded-full bg-green-500"
-                                style={{
-                                  width: `${Math.max(
-                                    8,
-                                    Math.min(100, session.safety_score)
-                                  )}%`,
-                                }}
-                              ></div>
+                    {overview.practice_trends.sessions.map((session) => {
+                      const selfKey = `route:${session.route_id}:self_assessment`;
+                      const coachKey = `route:${session.route_id}:coach_assessment`;
+                      let selfValue = '-';
+                      let coachValue = '-';
+                      if (typeof window !== 'undefined') {
+                        selfValue = localStorage.getItem(selfKey) || '-';
+                        coachValue = localStorage.getItem(coachKey) || '-';
+                      }
+                      // marked locations
+                      let marked = '-';
+                      if (typeof window !== 'undefined') {
+                        try {
+                          const note = JSON.parse(localStorage.getItem(`route:${session.route_id}:note_cached`) || 'null');
+                          marked = Array.isArray(note?.notable_events) ? note.notable_events.length : '-';
+                        } catch {}
+                      }
+                      return (
+                        <tr key={session.route_id}>
+                          <td className="px-4 py-3">
+                            <div className="font-medium text-gray-900">
+                              {session.recorded_at
+                                ? dateFormatter.format(new Date(session.recorded_at))
+                                : session.route_id}
                             </div>
-                            <span className="text-xs text-gray-500">
-                              {session.safety_score}
-                            </span>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                            <div className="text-xs text-gray-400">
+                              Route ID: {session.route_id}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">{formatNumber(session.duration_min)} min</td>
+                          <td className="px-4 py-3">{formatNumber(session.distance_km)} km</td>
+                          <td className="px-4 py-3">{session.voice_notes} notes</td>
+                          <td className="px-4 py-3">{session.markers}</td>
+                          <td className="px-4 py-3">{selfValue}</td>
+                          <td className="px-4 py-3">{coachValue}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex gap-2">
+                              <a
+                                href={`/backend/route-review/${session.route_id}`}
+                                className="text-blue-500 hover:underline"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                Route Review
+                              </a>
+                              <Link
+                                href={`/routes/analysis/${session.route_id}`}
+                                className="text-blue-500 hover:underline"
+                                target="_blank"
+                              >
+                                Session Record
+                              </Link>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
             )}
           </section>
 
-          {/* Recommendations */}
-          <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Recommended Segments
-                </h2>
-                <p className="text-sm text-gray-500">
-                  AI suggests where to practice next based on recurring mistakes and
-                  exam hotspots.
-                </p>
-              </div>
-            </div>
-
-            {overview.recommended_segments.length === 0 ? (
-              <div className="mt-6 rounded-lg border border-dashed border-gray-200 p-6 text-sm text-gray-500">
-                Once hotspots are logged, targeted practice recommendations will appear
-                here.
-              </div>
-            ) : (
-              <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {overview.recommended_segments.map((segment) => (
-                  <div
-                    key={`${segment.label}-${segment.latitude}-${segment.longitude}`}
-                    className="rounded-xl border border-gray-100 bg-gradient-to-br from-white via-white to-blue-50 p-5 shadow-sm"
-                  >
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-gray-900">
-                        {segment.label}
-                      </h3>
-                      <MapPinIcon className="h-5 w-5 text-blue-500" />
-                    </div>
-                    <p className="mt-2 text-xs text-gray-500">
-                      Lat {segment.latitude.toFixed(3)} · Lng{' '}
-                      {segment.longitude.toFixed(3)}
-                    </p>
-                    <p className="mt-3 text-sm text-gray-600">{segment.reason}</p>
-                    {segment.routes.length > 0 && (
-                      <p className="mt-3 text-xs text-gray-500">
-                        Seen in {segment.routes.length} route(s).
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
+          {/* 已彻底删除 Recommendations 区块 */}
         </>
       )}
     </div>
@@ -431,3 +314,317 @@ function ShieldSparkIcon(props: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+function SceneHistogram({
+  sessions,
+}: {
+  sessions: {
+    route_id: string;
+    recorded_at?: string | null;
+  }[];
+}) {
+  const labels = ['Normal', 'Rainy', 'Night', 'Rush hour'];
+  const counts = labels.map((label) => {
+    let c = 0;
+    if (typeof window !== 'undefined') {
+      for (const s of sessions) {
+        const key = `route:${s.route_id}:scenario`;
+        const v = localStorage.getItem(key) || 'Normal';
+        if (v === label) c += 1;
+      }
+    }
+    return c;
+  });
+
+  const width = 360;
+  const height = 160;
+  const padding = { top: 16, right: 12, bottom: 28, left: 28 };
+  const innerW = width - padding.left - padding.right;
+  const innerH = height - padding.top - padding.bottom;
+  const max = Math.max(...counts, 1);
+  const barW = innerW / labels.length - 10;
+
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} className="mt-3 w-full h-44">
+      <rect x={0} y={0} width={width} height={height} fill="#ffffff" rx={12} />
+      {/* Axis */}
+      <line
+        x1={padding.left}
+        x2={width - padding.right}
+        y1={height - padding.bottom}
+        y2={height - padding.bottom}
+        stroke="#e5e7eb"
+      />
+      {counts.map((value, i) => {
+        const x = padding.left + i * (barW + 10);
+        const h = (value / max) * innerH;
+        const y = height - padding.bottom - h;
+        const color = ['#60a5fa', '#34d399', '#a78bfa', '#f59e0b'][i];
+        return (
+          <g key={labels[i]}> 
+            <rect x={x} y={y} width={barW} height={h} fill={color} rx={4} />
+            <text x={x + barW / 2} y={height - padding.bottom + 16} fontSize={10} fill="#6b7280" textAnchor="middle">
+              {labels[i]}
+            </text>
+            <text x={x + barW / 2} y={y - 4} fontSize={10} fill="#374151" textAnchor="middle">
+              {value}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+function SpeedDurationBuckets({
+  sessions,
+}: {
+  sessions: {
+    route_id: string;
+    recorded_at?: string | null;
+    duration_min: number;
+    distance_km: number;
+  }[];
+}) {
+  const buckets = [
+    { label: '0–30', min: 0, max: 30, color: '#60a5fa' },
+    { label: '30–50', min: 30, max: 50, color: '#34d399' },
+    { label: '50–70', min: 50, max: 70, color: '#f59e0b' },
+    { label: '>70', min: 70, max: Number.POSITIVE_INFINITY, color: '#ef4444' },
+  ];
+
+  const [data, setData] = useState<{
+    perBucket: { label: string; total: number; perDay: Map<string, number> }[];
+    allDays: string[];
+    loading: boolean;
+  }>({ perBucket: buckets.map((b) => ({ label: b.label, total: 0, perDay: new Map() })), allDays: [], loading: true });
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const { apiClient } = await import('@/lib/api-client');
+        const perBucket = buckets.map((b) => ({ label: b.label, total: 0, perDay: new Map<string, number>() }));
+        const allDaySet = new Set<string>();
+        for (const s of sessions) {
+          const dateStr = s.recorded_at ? new Date(s.recorded_at).toISOString().slice(0, 10) : 'Unknown';
+          allDaySet.add(dateStr);
+          try {
+            const note = await apiClient.getRouteAnalysis(s.route_id);
+            const segments = note.speed_segments || [];
+            for (const seg of segments) {
+              const speed = seg.speed_kmh || 0;
+              const minutes = (seg.duration_s || 0) / 60.0;
+              const idx = buckets.findIndex((b) => speed >= b.min && speed < b.max);
+              if (idx >= 0) {
+                const pb = perBucket[idx];
+                pb.total += minutes;
+                pb.perDay.set(dateStr, (pb.perDay.get(dateStr) || 0) + minutes);
+              }
+            }
+          } catch (e) {
+            // 回退：若无法获取segments，使用该session平均速度估算
+            const avgSpeed = s.duration_min > 0 ? s.distance_km / (s.duration_min / 60) : 0;
+            const idx = buckets.findIndex((b) => avgSpeed >= b.min && avgSpeed < b.max);
+            const minutes = Math.max(0, s.duration_min || 0);
+            if (idx >= 0) {
+              const pb = perBucket[idx];
+              pb.total += minutes;
+              pb.perDay.set(dateStr, (pb.perDay.get(dateStr) || 0) + minutes);
+            }
+          }
+        }
+        if (!cancelled) setData({ perBucket, allDays: Array.from(allDaySet), loading: false });
+      } catch {
+        if (!cancelled) setData((prev) => ({ ...prev, loading: false }));
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [JSON.stringify(sessions)]);
+
+  const { perBucket, allDays, loading } = data;
+
+  const width = 420;
+  const height = 200;
+  const padding = { top: 16, right: 16, bottom: 32, left: 40 };
+  const innerW = width - padding.left - padding.right;
+  const innerH = height - padding.top - padding.bottom;
+  const maxMinutes = Math.max(...perBucket.map((b) => b.total), 1);
+  const barW = innerW / buckets.length - 16;
+
+  const dayColor = (i: number) => `rgba(59,130,246,${0.25 + (i % 4) * 0.15})`;
+
+  if (loading) {
+    return <div className="mt-4 h-52 w-full animate-pulse rounded-lg border border-gray-100 bg-gray-50" />;
+  }
+
+  return (
+    <div>
+      <svg viewBox={`0 0 ${width} ${height}`} className="mt-3 w-full h-52">
+        <rect x={0} y={0} width={width} height={height} fill="#ffffff" rx={12} />
+        <line x1={padding.left} x2={width - padding.right} y1={height - padding.bottom} y2={height - padding.bottom} stroke="#e5e7eb" />
+        {perBucket.map((b, i) => {
+          const baseX = padding.left + i * (barW + 16);
+          let yCursor = height - padding.bottom;
+          const stacks = allDays.map((d, di) => ({ day: d, minutes: b.perDay.get(d) || 0, color: dayColor(di) }));
+          return (
+            <g key={b.label}>
+              {stacks.map((stk) => {
+                const h = (stk.minutes / maxMinutes) * innerH;
+                const y = yCursor - h;
+                yCursor = y;
+                return <rect key={`${b.label}-${stk.day}`} x={baseX} y={y} width={barW} height={h} fill={stk.color} rx={3} />;
+              })}
+              <text x={baseX + barW / 2} y={height - padding.bottom + 16} fontSize={10} fill="#6b7280" textAnchor="middle">{b.label} km/h</text>
+              <text x={baseX + barW / 2} y={yCursor - 4} fontSize={10} fill="#374151" textAnchor="middle">{Math.round(b.total)} min</text>
+            </g>
+          );
+        })}
+      </svg>
+      {allDays.length > 0 ? (
+        <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-gray-600">
+          {allDays.map((d, i) => (
+            <span key={d} className="inline-flex items-center gap-2">
+              <span className="h-2 w-4 rounded-sm" style={{ backgroundColor: dayColor(i) }} />
+              {d === 'Unknown' ? 'Unknown' : dateFormatter.format(new Date(d))}
+            </span>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function AggregatedPersonals({ sessions }: { sessions: { route_id: string; recorded_at?: string | null }[] }) {
+  const sorted = [...sessions].sort((a, b) => {
+    const ta = a.recorded_at ? new Date(a.recorded_at).getTime() : 0;
+    const tb = b.recorded_at ? new Date(b.recorded_at).getTime() : 0;
+    return tb - ta;
+  });
+
+  if (typeof window === 'undefined') return null;
+
+  return (
+    <div className="divide-y divide-amber-100">
+      {sorted.map((s) => {
+        const dateStr = s.recorded_at ? new Date(s.recorded_at).toLocaleDateString() : s.route_id;
+        const summary = localStorage.getItem(`route:${s.route_id}:personal_summary`) || '';
+        let todos: { id: string; text: string; done: boolean }[] = [];
+        try {
+          const raw = localStorage.getItem(`route:${s.route_id}:personal_todos`);
+          if (raw) todos = JSON.parse(raw);
+        } catch {}
+        if (!summary && todos.length === 0) return null;
+        return (
+          <div key={s.route_id} className="py-3">
+            <div className="text-xs mb-1 text-amber-800">Session: {dateStr} (ID: {s.route_id})</div>
+            {summary && (
+              <div className="bg-white rounded px-3 py-2 text-sm text-amber-800 mb-2 border border-amber-100">
+                <span className="font-semibold mr-2">Summary:</span>{summary}
+              </div>
+            )}
+            {todos.length > 0 && (
+              <div className="bg-white rounded px-3 py-2 border border-amber-100">
+                <span className="font-semibold mr-1">Todos:</span>
+                <ul className="list-disc ml-5 mt-1 space-y-1">
+                  {todos.map((td) => (
+                    <li key={td.id} className={td.done ? 'text-gray-400 line-through' : 'font-semibold text-red-600'}>
+                      {td.text}
+                      <span className={`ml-2 inline-block text-xs px-2 py-0.5 rounded ${td.done ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-yellow-100 text-yellow-800 border border-yellow-300'}`}>
+                        {td.done ? 'Completed' : 'Pending'}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        );
+      })}
+      {sorted.every(s => {
+        const summary = localStorage.getItem(`route:${s.route_id}:personal_summary`);
+        let todos: unknown[] = [];
+        try { const raw = localStorage.getItem(`route:${s.route_id}:personal_todos`); if (raw) todos = JSON.parse(raw); } catch {}
+        return !summary && (!todos || todos.length === 0);
+      }) && (
+        <div className="py-6 text-sm text-gray-400 text-center">No personal summaries or todos found.</div>
+      )}
+    </div>
+  );
+}
+
+const MapDisplay = dynamic(
+  async () => {
+    const { MapContainer, TileLayer, Polyline, CircleMarker, useMap } = await import('react-leaflet');
+    function FitBounds({ polylines }: { polylines: LatLngTuple[][] }) {
+      const map = useMap();
+      useEffect(() => {
+        if (polylines.length === 0) return;
+        const allPoints = polylines.flat();
+        if (allPoints.length > 1) {
+          map.fitBounds(allPoints);
+        }
+      }, [polylines, map]);
+      return null;
+    }
+    return function MapDisplayInner({ sessions }: { sessions: PracticeTrendSession[] }) {
+      const [polylines, setPolylines] = useState<LatLngTuple[][]>([]);
+      const [keyPoints, setKeyPoints] = useState<LatLngTuple[]>([]);
+      useEffect(() => {
+        let mounted = true;
+        (async () => {
+          const { apiClient } = await import('@/lib/api-client');
+          const lines: LatLngTuple[][] = [];
+          const points: LatLngTuple[] = [];
+          for (const s of sessions) {
+            try {
+              const detail = await apiClient.getRoute(s.route_id);
+              const gpsRaw = detail.session?.gps_points;
+              const gps = Array.isArray(gpsRaw) ? gpsRaw.filter(pt => pt && typeof pt.latitude === 'number' && typeof pt.longitude === 'number') : [];
+              if (gps.length > 1) {
+                const arr = gps.map(pt => [pt.latitude, pt.longitude] as LatLngTuple);
+                lines.push(arr);
+              }
+              const markersRaw = detail.session?.review_markers;
+              const markers = Array.isArray(markersRaw) ? markersRaw.filter((m: any) => m && typeof m.latitude === 'number' && typeof m.longitude === 'number').map((m: any) => [m.latitude, m.longitude] as LatLngTuple) : [];
+              points.push(...markers);
+            } catch {}
+          }
+          if (!mounted) return;
+          setPolylines(lines);
+          setKeyPoints(points);
+        })();
+        return () => { mounted = false; };
+      }, [JSON.stringify(sessions)]);
+      const fallback = [51, 10] as LatLngTuple;
+      return (
+        <div className="mb-6 w-full max-w-6xl mx-auto">
+          <h2 className="text-lg font-bold mb-2 text-blue-900">Overall Practice Map</h2>
+          <div className="w-full" style={{ aspectRatio: '5 / 3', minHeight: 300 }}>
+            <MapContainer center={fallback} zoom={7} style={{ width: '100%', height: '100%', borderRadius: 12, overflow: 'hidden', border: '1px solid #e5e7eb' }} scrollWheelZoom={true}>
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution="&copy; OpenStreetMap contributors"
+              />
+              <FitBounds polylines={polylines} />
+              {polylines.map((line, i) => (
+                <Polyline
+                  key={i}
+                  positions={line}
+                  pathOptions={{ color: '#60a5fa', weight: 10, opacity: 0.8, smoothFactor: 2 }}
+                />
+              ))}
+              {keyPoints.map((pos, j) => (
+                <CircleMarker key={j} center={pos} radius={6} fillColor="#f87171" color="#b91c1c" fillOpacity={0.8} />
+              ))}
+            </MapContainer>
+          </div>
+        </div>
+      );
+    };
+  },
+  { ssr: false }
+);

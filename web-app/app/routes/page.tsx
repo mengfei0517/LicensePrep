@@ -84,50 +84,50 @@ export default function RoutesPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
         <button
           onClick={openRecorder}
-          className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg p-6 hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+          className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg p-6 h-full flex flex-col items-start justify-between hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl"
         >
-          <div className="flex items-center justify-between mb-4">
-            <MapPinIcon className="w-12 h-12" />
+          <div className="flex items-center mb-4">
+            <MapPinIcon className="w-12 h-12 mr-3" />
             <span className="text-sm bg-white/20 px-3 py-1 rounded-full">New</span>
           </div>
-          <h3 className="text-xl font-bold mb-2">Record Route</h3>
-          <p className="text-sm opacity-90">
+          <h3 className="text-xl font-bold mb-2 text-left">Record Route</h3>
+          <p className="text-sm opacity-90 text-left mb-4">
             Start GPS tracking and record your practice drive with voice notes
           </p>
         </button>
 
         <Link
-          href="/routes/analysis"
-          className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg p-6 shadow-lg hover:shadow-xl transition-all"
+          href="/routes/review"
+          className="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg p-6 h-full flex flex-col items-start justify-between shadow-lg hover:shadow-xl transition-all"
         >
-          <div className="flex items-center justify-between mb-4">
-            <ChartBarIcon className="w-12 h-12" />
-            <span className="text-sm bg-white/20 px-3 py-1 rounded-full">Pro</span>
+          <div className="flex items-center mb-4">
+            <PlayIcon className="w-12 h-12 mr-3" />
+            <span className="text-sm bg-white/20 px-3 py-1 rounded-full">Review</span>
           </div>
-          <h3 className="text-xl font-bold mb-2">AI Analysis</h3>
-          <p className="text-sm opacity-90">
-            Get detailed feedback on your driving performance and mistakes
+          <h3 className="text-xl font-bold mb-2 text-left">Playback Routes</h3>
+          <p className="text-sm opacity-90 text-left mb-4">
+            Replay your routes with speed visualization and voice notes
           </p>
-          <span className="mt-4 inline-flex items-center text-sm font-semibold text-white/90">
-            View macro insights
+          <span className="mt-auto inline-flex items-center text-sm font-semibold text-white/90">
+            Browse all recorded routes
             <ArrowRightIcon className="ml-2 h-4 w-4" />
           </span>
         </Link>
 
         <Link
-          href="/routes/review"
-          className="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg p-6 shadow-lg hover:shadow-xl transition-all"
+          href="/routes/analysis"
+          className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg p-6 h-full flex flex-col items-start justify-between shadow-lg hover:shadow-xl transition-all"
         >
-          <div className="flex items-center justify-between mb-4">
-            <PlayIcon className="w-12 h-12" />
-            <span className="text-sm bg-white/20 px-3 py-1 rounded-full">Review</span>
+          <div className="flex items-center mb-4">
+            <ChartBarIcon className="w-12 h-12 mr-3" />
+            <span className="text-sm bg-white/20 px-3 py-1 rounded-full">Pro</span>
           </div>
-          <h3 className="text-xl font-bold mb-2">Playback Routes</h3>
-          <p className="text-sm opacity-90">
-            Replay your routes with speed visualization and voice notes
+          <h3 className="text-xl font-bold mb-2 text-left">Routes Analysis</h3>
+          <p className="text-sm opacity-90 text-left mb-4">
+            Get detailed feedback on your driving performance and mistakes
           </p>
-          <span className="mt-4 inline-flex items-center text-sm font-semibold text-white/90">
-            Browse all recorded routes
+          <span className="mt-auto inline-flex items-center text-sm font-semibold text-white/90">
+            View macro insights
             <ArrowRightIcon className="ml-2 h-4 w-4" />
           </span>
         </Link>
@@ -174,63 +174,6 @@ export default function RoutesPage() {
             <div>
               <h4 className="font-semibold text-gray-900">Route Playback</h4>
               <p className="text-sm text-gray-600">Replay routes with adjustable speed and voice note synchronization</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* AI Analysis Overview */}
-      <div className="bg-gradient-to-r from-green-50 via-blue-50 to-purple-50 border border-green-200/60 rounded-xl p-8 mb-12">
-        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8">
-          <div className="lg:w-1/3 space-y-4">
-            <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-sm font-semibold text-green-700">
-              AI Analysis Roadmap
-            </span>
-            <h3 className="text-2xl font-bold text-gray-900">
-              Macro & Micro Insights For Every Learner
-            </h3>
-            <p className="text-gray-600">
-              Our upcoming analysis suite blends all recorded drives, tags, and coach feedback into two focused dashboards:
-              a macro “General AI Overview” and drill-down “Route Playback Intelligence”.
-            </p>
-          </div>
-
-          <div className="lg:w-2/3 grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="rounded-lg border border-white/70 bg-white/80 p-5 shadow-sm">
-              <h4 className="text-lg font-semibold text-gray-900 mb-3">General AI Overview</h4>
-              <ul className="space-y-3 text-sm text-gray-700">
-                <li>
-                  <strong className="text-gray-900">Learning Heatmap:</strong> AI clustering pinpoints the locations and scenarios that trigger most mistakes or harsh events
-                  (e.g. 80% of issues in 30 km/h right turns).
-                </li>
-                <li>
-                  <strong className="text-gray-900">Top Issues Library:</strong> Summaries rank the 3–5 most frequent tags across drives—perfect for next-lesson focus.
-                </li>
-                <li>
-                  <strong className="text-gray-900">Progress Curves:</strong> Trend lines contrast braking frequency, smooth-driving index, or completion time against total practice hours to highlight improvement pace.
-                </li>
-                <li>
-                  <strong className="text-gray-900">Suggested Practice Zones:</strong> Combines exam hotspot data with your weak contexts to suggest two nearby segments worth repeating.
-                </li>
-              </ul>
-            </div>
-
-            <div className="rounded-lg border border-white/70 bg-white/80 p-5 shadow-sm">
-              <h4 className="text-lg font-semibold text-gray-900 mb-3">Route Playback Intelligence</h4>
-              <ul className="space-y-3 text-sm text-gray-700">
-                <li>
-                  <strong className="text-gray-900">Contextual Markers:</strong> During review, drop “exam focus” flags and voice tags; AI learns from these annotations to build the heatmap above.
-                </li>
-                <li>
-                  <strong className="text-gray-900">Voice Note Timeline:</strong> Every audio note syncs to the playback bar with tag filters and instant jump-to-map.
-                </li>
-                <li>
-                  <strong className="text-gray-900">Event Overlay:</strong> Harsh braking clusters, acceleration bursts, and coach notes surface directly on the timeline for quick replay.
-                </li>
-                <li>
-                  <strong className="text-gray-900">Upcoming Coach Mode:</strong> Export a shareable session brief summarising improvement wins and next-action items.
-                </li>
-              </ul>
             </div>
           </div>
         </div>

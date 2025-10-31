@@ -1,140 +1,86 @@
-# 🚗 LicensePrep Agent - Knowledge Hub
+# FahrerLab
 
-The **LicensePrep Agent** is an Agentic AI application focused on German driving test preparation. This phase ships the foundational Knowledge Hub with a clean structure to scale into multi-agent (Rule QA, Replay, Planner) and NVIDIA NIM + AWS deployments.
+AI-powered German driving test preparation and route simulation platform (Flask backend + Next.js frontend + Chrome extension).
 
-## 📁 Repository Structure
+---
 
-```
-LicensePrep/
-├── app.py                        # Web entry (Flask)
-│
-├── data/                         # Rules and practice raw data
-│   ├── rules/                    # txt/pdf/web pages
-│   ├── samples/                  # GPS tracks, screenshots, examples
-│   └── metadata/                 # rule tags, exam mapping, content.json
-│
-├── core/                         # Core logic (RAG + service facades)
-│   ├── rag_pipeline.py           # Ingestion & retrieval (Embedding + VectorStore)
-│   ├── vector_store.py           # Unified FAISS/pgvector abstraction
-│   ├── nim_client.py             # NVIDIA NIM clients (embedding + reasoning)
-│   └── utils.py                  # Shared utilities
-│
-├── agents/                       # Agents (decoupled from core)
-│   ├── rule_qa_agent.py          # Rule QA
-│   ├── replay_agent.py           # Practice replay
-│   ├── planner_agent.py          # Route planner
-│   ├── orchestrator.py           # Orchestration (LangGraph placeholder)
-│   └── prompts/                  # Prompt templates
-│
-├── web/                          # Web frontend assets
-│   ├── templates/                # Jinja2 templates
-│   └── static/                   # CSS/JS/images
-│
-├── api/                          # REST API layer
-│   ├── routes_rule_qa.py
-│   ├── routes_replay.py
-│   └── routes_planner.py
-│
-├── config/                       # Settings
-│   └── settings.py
-│
-├── scripts/                      # Build, run, deploy scripts
-│   ├── build_vectors.py
-│   ├── run_local.sh
-│   └── deploy_sagemaker.py
-│
-├── requirements.txt
-└── README.md
-```
+## Quick Start
 
-## 🛠️ Setup
+### 1) Prerequisites
+- Python 3.11+
+- Node.js 18+
+- Google Gemini API Key (Get from [Google AI Studio](https://aistudio.google.com/app/apikey))
+
+### 2) Environment Variables
+Set at least the following in your terminal:
 
 ```bash
-# (Recommended) Create environment
-conda create -n license-prep-env python=3.11 -y
-conda activate license-prep-env
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Optional: configure .env
-cat > .env <<EOF
-NIM_LLM_ENDPOINT=
-NIM_EMBEDDING_ENDPOINT=
-NIM_API_KEY=
-AWS_REGION=eu-central-1
-S3_BUCKET=
-VECTOR_STORE_BACKEND=faiss
-EOF
+export GOOGLE_GEMINI_API_KEY="your-gemini-api-key"   # or use GOOGLE_API_KEY for compatibility
+# Optional: for /route-review template (Google Maps, only needed for that page)
+export GOOGLE_MAPS_API_KEY="your-google-maps-api-key"
 ```
 
-## ▶️ Run
+### 3) One-Click Start (Recommended)
 
 ```bash
-# Build vectors (in-memory placeholder)
-python scripts/build_vectors.py
-
-# Start web app
-python app.py
-# or
-./scripts/run_local.sh
+conda activate license-prep-env  # or source venv/bin/activate
+./start-dev.sh
 ```
 
-Open http://127.0.0.1:5000/ to browse categories and subcategories.
+After running:
+- Backend API: http://localhost:5000
+- Frontend App: http://localhost:3000
 
-## 🔌 API
+**Note**: The script will automatically install `web-app` dependencies if missing and start both Flask and Next.js development servers in parallel.
 
-### Rule Q&A
-- **POST** `/api/qa/ask`
-  ```json
-  {"question": "在30区无信号灯路口需要让谁？"}
-  ```
-  Response:
-  ```json
-  {"answer": "🤖 Development Mode (NIM not configured)..."}
-  ```
+---
 
-### Practice Replay (placeholder)
-- **POST** `/api/replay/analyze`
-  ```json
-  {"gpx_path": "/path/to/track.gpx"}
-  ```
+## Project Structure
 
-### Route Planner (placeholder)
-- **POST** `/api/plan`
-  ```json
-  {"start": "Test Center", "duration_min": 45}
-  ```
-
-## 🧪 Testing
-
-```bash
-# Test API manually
-./test_qa_api.sh
-
-# Or use curl directly
-curl -X POST http://127.0.0.1:5000/api/qa/ask \
-  -H "Content-Type: application/json" \
-  -d '{"question": "What is the speed limit in 30 zone?"}'
+```
+FahrerLab/
+├── app.py                  # Flask backend entry point
+├── start-dev.sh            # One-click local development launcher (main program)
+├── requirements.txt        # Backend dependencies
+├── api/                    # Flask API routes
+├── core/                   # Backend core (Gemini client, simple retrieval, etc.)
+├── agents/                 # Planning/replay agents
+├── config/                 # Settings and environment variables
+├── data/                   # Learning content/rules/samples/mobile uploads
+├── web/                    # Flask templates & static assets (route recorder/review pages)
+├── web-app/                # Next.js frontend (independent package.json)
+└── chrome-extension/       # Chrome extension (independent package.json)
 ```
 
-## 🌩️ Next Steps
-- Replace in-memory FAISS with persisted store
-- Integrate real NVIDIA NIM endpoints for embeddings and LLM
-- Add Streamlit dashboard for hackathon demo
-- Add tests and CI
+---
 
+## Development Notes
 
-建议建立 6 种「卡片类型」，每张卡片一个独立文件，便于复用与引用：
+- Backend provides REST API via Flask (see `app.py` and `api/`).
+- Frontend provides web interface via Next.js (see `web-app/`).
+- Chrome extension uses Chrome Built-in AI (Gemini Nano) with fallback to cloud Gemini API (see `chrome-extension/`).
+- CORS allowed origins are configured via `config/settings.py` from environment variables.
 
-Rule：法规/原则（StVO 摘要、判定标准）
+---
 
-Procedure：操作步骤（如“左转步骤”“并线步骤”）
+## Documentation
 
-Scenario：情景/考点（“30 区无控路口”“环岛出口”）
+- `docs/API_SPECIFICATION.md` - API specification
+- `docs/ARCHITECTURE.md` - System architecture
+- `docs/DEPLOYMENT_GUIDE.md` - Deployment guide
+- `docs/CHROME_API_SETUP.md` - Chrome Built-in AI setup
 
-CommonError：常见错误（带扣分点/示例）
+---
 
-Checklist：检查清单（考前/上车后/换道前）
+## Troubleshooting
 
-Glossary：术语/路牌解释
+- **Backend won't start**: Ensure virtual environment is activated and run `pip install -r requirements.txt`. Check if `GOOGLE_GEMINI_API_KEY` is set.
+- **Frontend can't access backend**: Ensure Flask is running on port 5000 and check CORS configuration.
+- **Images or static assets not displaying**: Ensure Flask is running and restart Next.js.
+- **Extension not working**: Ensure backend is running. Optionally set custom API key in extension settings and reload the extension in Chrome extension management page.
+
+---
+
+## License
+
+MIT

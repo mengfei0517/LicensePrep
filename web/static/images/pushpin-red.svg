@@ -1,0 +1,20 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <linearGradient id="pinHead" x1="4" y1="6" x2="26" y2="18" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#ff7664"/>
+            <stop offset="0.5" stop-color="#ff3f2f"/>
+            <stop offset="1" stop-color="#bf1a1a"/>
+        </linearGradient>
+        <linearGradient id="pinShaft" x1="14" y1="13" x2="19" y2="25" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#ff5d4a"/>
+            <stop offset="1" stop-color="#c01c1c"/>
+        </linearGradient>
+    </defs>
+    <ellipse cx="22" cy="29" rx="8" ry="3.2" fill="#4a5568" opacity="0.25"/>
+    <g transform="rotate(-20 16 10)">
+        <path d="M16 4c-4.418 0-8 3.134-8 7v4h16v-4c0-3.866-3.582-7-8-7z" fill="url(#pinHead)"/>
+        <path d="M12 15h8v6.5c0 1.105-.895 2-2 2h-4c-1.105 0-2-.895-2-2V15z" fill="url(#pinShaft)"/>
+        <path d="M15.25 22.8l-1.4 7.2 2.15-1.8 2.15 1.8-1.4-7.2h-1.5z" fill="#718096"/>
+        <path d="M16 6.25c-2.623 0-4.75 2.003-4.75 4.472V15h9.5v-4.278C20.75 8.253 18.623 6.25 16 6.25z" fill="#ff9385" opacity="0.3"/>
+    </g>
+</svg>

@@ -1,0 +1,4013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Route Review - LicensePrep</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Chart.js for speed visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    {% if google_maps_api_key %}
+    <script>
+        window.googleMapsReady = false;
+        window.googleMapsLoadFailed = false;
+        window.initGoogleMapsLibrary = function() {
+            window.googleMapsReady = true;
+            if (typeof window.onGoogleMapsReady === 'function') {
+                window.onGoogleMapsReady();
+            }
+        };
+        window.handleGoogleMapsLoadError = function() {
+            window.googleMapsLoadFailed = true;
+            if (typeof window.onGoogleMapsFailure === 'function') {
+                window.onGoogleMapsFailure();
+            }
+        };
+    </script>
+    <script
+        async
+        defer
+        src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=initGoogleMapsLibrary&libraries=marker&v=weekly"
+        onerror="handleGoogleMapsLoadError()"
+    ></script>
+    {% endif %}
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            overflow: hidden;
+        }
+
+        .review-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Unified header styles (aligned with recorder page) */
+        .page-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 16px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .page-meta { display: flex; flex-direction: column; gap: 8px; }
+        .back-link { color: #1d4ed8; font-weight: 600; font-size: 0.95rem; text-decoration: none; }
+        .back-link:hover { text-decoration: underline; }
+        .page-title { margin: 0; font-size: 1.6rem; font-weight: 800; color: #0f172a; }
+        .page-subtitle { margin: 0; color: #475569; font-size: 0.98rem; }
+        .refresh-btn {
+            background: #ffffff;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+            border-radius: 10px;
+            padding: 8px 14px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+        .refresh-btn:hover { background: #f8fbff; }
+
+        /* Header */
+        .review-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-title h1 {
+            font-size: 1.5em;
+            margin: 0;
+        }
+
+        .route-name {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .close-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Main Content */
+        .review-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            background: #f8f9fa;
+        }
+
+        .visual-panels {
+            flex: 1;
+            display: flex;
+            gap: 1px;
+            background: #e5e7eb;
+            min-height: 0;
+        }
+
+        /* Left Panel - Map */
+        .visual-panels > .map-panel,
+        .visual-panels > .street-panel {
+            flex: 1 1 0;
+            position: relative;
+            background: white;
+            overflow: hidden;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        .speed-overlay {
+            position: absolute;
+            top: 120px;
+            left: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            background: rgba(17, 24, 39, 0.75);
+            color: #f9fafb;
+            font-size: 0.9em;
+            min-width: 150px;
+            z-index: 1100;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.35);
+            backdrop-filter: blur(6px);
+        }
+
+        .speed-overlay-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 12px;
+        }
+
+        .speed-overlay-label {
+            font-weight: 500;
+            opacity: 0.8;
+        }
+
+        .speed-overlay-value {
+            font-weight: 700;
+            font-size: 1.05em;
+            white-space: nowrap;
+        }
+
+        .speed-overlay-value.manual-source,
+        .speed-overlay-value.api-source {
+            border-radius: 6px;
+            padding: 2px 6px;
+        }
+
+        .speed-overlay-value.manual-source {
+            background: rgba(52, 211, 153, 0.18);
+        }
+
+        .speed-overlay-value.api-source {
+            background: rgba(59, 130, 246, 0.18);
+        }
+
+        .speed-overlay-value.limit-warning {
+            color: #fbbf24;
+        }
+
+        .speed-overlay-value.limit-danger {
+            color: #f87171;
+        }
+
+        .street-panel {
+            display: flex;
+            flex-direction: column;
+            transition: flex 0.25s ease;
+        }
+
+        .street-panel.collapsed {
+            flex: 0 0 260px;
+        }
+
+        .street-panel.collapsed .streetview-container,
+        .street-panel.collapsed .streetview-help {
+            display: none;
+        }
+
+        .streetview-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 16px 20px 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .streetview-title-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .streetview-header h3 {
+            margin: 0;
+            font-size: 1.05em;
+            color: #1f2937;
+        }
+
+        .streetview-status-note {
+            margin: 0;
+            font-size: 0.78em;
+            color: #6b7280;
+            line-height: 1.4;
+        }
+
+        .streetview-status-note.error {
+            color: #dc2626;
+        }
+
+        .streetview-toggle {
+            margin-left: auto;
+            align-self: flex-start;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75em;
+            border-radius: 999px;
+            border: 1px solid #d1d5db;
+            padding: 6px 12px;
+            cursor: pointer;
+            background: white;
+            color: #1f2937;
+            transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .streetview-toggle:hover {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+
+        .streetview-panel-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 16px 20px 20px;
+        }
+
+        /* Right Panel - Info & Controls */
+        .info-panel {
+            width: 380px;
+            background: white;
+            border-left: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Statistics Section */
+        .stats-section {
+            padding: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .stats-section h3 {
+            margin: 0 0 15px 0;
+            color: #495057;
+            font-size: 1.1em;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        /* Speed Analysis Section */
+        .marker-section {
+            padding: 20px;
+            border-bottom: 2px solid #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .marker-section-header {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .marker-section h3 {
+            margin: 0;
+            color: #495057;
+            font-size: 1.1em;
+        }
+
+        .marker-hint {
+            margin: 0;
+            font-size: 0.8em;
+            color: #6b7280;
+        }
+
+        .marker-action-btn {
+            background: #f59e0b;
+            border: none;
+            color: white;
+            padding: 7px 14px;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);
+        }
+
+        .marker-action-btn.active {
+            background: #d97706;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25);
+        }
+
+        .marker-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        .marker-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 12px;
+            border-left: 3px solid #f59e0b;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .marker-description {
+            font-size: 0.85em;
+            color: #4b5563;
+        }
+
+        .marker-card h4 {
+            margin: 0;
+            font-size: 0.95em;
+            color: #b45309;
+        }
+
+        .marker-meta {
+            font-size: 0.8em;
+            color: #6c757d;
+        }
+
+        .marker-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .marker-tag {
+            background: rgba(245, 158, 11, 0.12);
+            color: #b45309;
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 0.7em;
+            font-weight: 600;
+        }
+
+        .marker-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .marker-actions button {
+            flex: 1;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 0.8em;
+            cursor: pointer;
+        }
+
+        .marker-actions .focus-btn {
+            background: rgba(102, 126, 234, 0.15);
+            color: #3f51b5;
+        }
+
+        .marker-actions .delete-btn {
+            background: rgba(239, 68, 68, 0.15);
+            color: #b91c1c;
+        }
+
+        .marker-empty {
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.9em;
+            padding: 20px 10px;
+        }
+
+        .marker-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.4);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 20px;
+        }
+
+        .marker-modal {
+            background: white;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .marker-modal header {
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .marker-modal header h4 {
+            margin: 0;
+            font-size: 1.1em;
+        }
+
+        .marker-modal .close-modal {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.2em;
+            cursor: pointer;
+        }
+
+        .marker-modal form {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .marker-modal label {
+            font-size: 0.85em;
+            color: #495057;
+        }
+
+        .marker-modal input,
+        .marker-modal select,
+        .marker-modal textarea {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid #ced4da;
+            font-size: 0.9em;
+        }
+
+        .marker-modal textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .marker-modal .modal-actions {
+            display: flex;
+            gap: 10px;
+            padding: 0 20px 20px 20px;
+        }
+
+        .marker-modal .modal-actions button {
+            flex: 1;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.9em;
+            cursor: pointer;
+        }
+
+        .marker-modal textarea {
+            font-size: 1.05em;
+            line-height: 1.6;
+        }
+
+        .marker-modal .modal-actions .save-btn {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .marker-modal .modal-actions .cancel-btn {
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        /* Voice Notes Section */
+        .voice-notes-section {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow: hidden;
+        }
+
+        .voice-notes-header {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .voice-notes-section h3 {
+            margin: 0 0 15px 0;
+            color: #495057;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .note-count {
+            font-size: 0.9em;
+            color: #667eea;
+            font-weight: normal;
+        }
+
+        .voice-note-list-wrapper {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .voice-note-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .voice-note-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 3px solid #667eea;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .voice-note-card:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .voice-note-card.active {
+            background: #667eea;
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .voice-note-card.active .note-time,
+        .voice-note-card.active .note-location {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .note-time {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 0.95em;
+        }
+
+        .note-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .note-action-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.3s ease;
+        }
+
+        .note-action-btn:hover {
+            background: #5568d3;
+        }
+
+        .voice-note-card.active .note-action-btn {
+            background: white;
+            color: #667eea;
+        }
+
+        .note-location {
+            font-size: 0.85em;
+            color: #6c757d;
+        }
+
+        .note-tags {
+            margin-top: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .note-tag {
+            background: rgba(102, 126, 234, 0.12);
+            color: #4c50bf;
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 0.75em;
+            font-weight: 600;
+        }
+
+        .voice-note-card.active .note-tag {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .note-tag-empty {
+            font-size: 0.8em;
+            color: #adb5bd;
+        }
+
+        .note-tag-edit-btn {
+            background: transparent;
+            border: none;
+            color: #667eea;
+            cursor: pointer;
+            font-size: 0.85em;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .note-tag-edit-btn:hover {
+            text-decoration: underline;
+        }
+
+        .note-tag-editor {
+            margin-top: 10px;
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .note-tag-editor select {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid #ced4da;
+            font-size: 0.9em;
+            min-height: 90px;
+        }
+
+        .note-tag-editor .editor-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .note-tag-editor button {
+            flex: 1;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 10px;
+            font-size: 0.85em;
+            cursor: pointer;
+        }
+
+        .note-tag-editor .save-btn {
+            background: #667eea;
+            color: white;
+        }
+
+        .note-tag-editor .cancel-btn {
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        .note-transcript {
+            margin-top: 8px;
+            font-size: 0.8em;
+            color: #4b5563;
+            background: rgba(102, 126, 234, 0.08);
+            padding: 8px 10px;
+            border-radius: 8px;
+        }
+
+        .voice-note-card.active .note-transcript {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .empty-notes {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+
+        .empty-notes-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        /* Playback Control Panel */
+        .playback-controls {
+            background: white;
+            border-top: 2px solid #f0f0f0;
+            padding: 20px;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .control-buttons {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .control-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+            min-width: 60px;
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .control-btn.play-btn {
+            padding: 12px 30px;
+            font-size: 1.2em;
+        }
+
+        .speed-control {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .speed-btn {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            color: #495057;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .speed-btn.active {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+
+        .progress-bar-container {
+            background: #e9ecef;
+            height: 8px;
+            border-radius: 4px;
+            position: relative;
+            cursor: pointer;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            background: #667eea;
+            height: 100%;
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        .timeline-events-layer {
+            position: absolute;
+            left: 0;
+            top: -6px;
+            right: 0;
+            height: 20px;
+            pointer-events: none;
+        }
+
+        .timeline-event {
+            position: absolute;
+            top: 4px;
+            transform: translateX(-50%);
+            pointer-events: auto;
+            cursor: pointer;
+        }
+
+        .timeline-event.voice {
+            width: 12px;
+            height: 12px;
+            background: #3b82f6;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .timeline-event.voice.active {
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.4);
+        }
+
+        .timeline-event.marker {
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-bottom: 12px solid #f59e0b;
+        }
+
+        .timeline-range {
+            position: absolute;
+            top: 2px;
+            height: 16px;
+            border-radius: 8px;
+            pointer-events: auto;
+        }
+
+        .progress-marker {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #667eea;
+            border-radius: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .time-display {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+
+        .voice-marker {
+            background: #667eea;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.5);
+            animation: voice-pulse 2s infinite;
+        }
+
+        @keyframes voice-pulse {
+            0%, 100% { 
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
+            }
+            50% { 
+                box-shadow: 0 0 0 10px rgba(102, 126, 234, 0);
+            }
+        }
+
+        /* Loading State */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Speed Legend */
+        .speed-legend {
+            position: absolute;
+            bottom: 40px;
+            left: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            font-size: 0.85em;
+        }
+
+        .speed-edit-controls {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 1100;
+        }
+
+        .speed-edit-controls.offset {
+            left: 92px;
+        }
+
+        @media (max-width: 768px) {
+            .speed-edit-controls.offset {
+                left: 12px;
+            }
+        }
+
+        .speed-edit-toggle {
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 8px 14px;
+            font-size: 0.85em;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            color: #1f2937;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+            transition: all 0.2s ease;
+        }
+
+        .speed-edit-toggle.active {
+            border-color: #34d399;
+            color: #047857;
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.25);
+        }
+
+        .speed-edit-toggle span {
+            font-weight: 600;
+        }
+
+        .manual-speed-marker {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: rgba(52, 211, 153, 0.95);
+            color: #064e3b;
+            font-weight: 700;
+            border: 2px solid white;
+            box-shadow: 0 3px 8px rgba(4, 120, 87, 0.3);
+            font-size: 0.85em;
+        }
+
+        .speed-limit-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .speed-limit-modal-backdrop.active {
+            display: flex;
+        }
+
+        .speed-limit-modal {
+            width: 360px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.35);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .speed-limit-modal header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .speed-limit-modal header h4 {
+            margin: 0;
+            font-size: 1.05em;
+            color: #0f172a;
+        }
+
+        .speed-limit-modal .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.2em;
+            cursor: pointer;
+            color: #6b7280;
+        }
+
+        .speed-limit-modal form {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .speed-limit-modal label {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 0.85em;
+            color: #4b5563;
+        }
+
+        .speed-limit-modal input,
+        .speed-limit-modal select,
+        .speed-limit-modal textarea {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 0.95em;
+            background: white;
+        }
+
+        .speed-limit-modal textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .speed-limit-meta {
+            font-size: 0.8em;
+            color: #6b7280;
+        }
+
+        .speed-limit-modal .modal-actions {
+            display: flex;
+            gap: 10px;
+            padding: 0 20px 20px 20px;
+        }
+
+        .speed-limit-modal .modal-actions button {
+            flex: 1;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.9em;
+            cursor: pointer;
+        }
+
+        .speed-limit-modal .save-btn {
+            background: #34d399;
+            color: #065f46;
+            font-weight: 600;
+        }
+
+        .speed-limit-modal .delete-btn {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .speed-limit-modal .cancel-btn {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .streetview-section {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .gps-marker-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gps-marker-icon svg {
+            width: 36px;
+            height: 36px;
+            pointer-events: none;
+        }
+
+        .streetview-status {
+            font-size: 0.8em;
+            font-weight: 500;
+            color: #6b7280;
+        }
+
+        .streetview-status.error {
+            color: #dc2626;
+        }
+
+        .streetview-container {
+            width: 100%;
+            min-height: 260px;
+            flex: 1;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+            background: linear-gradient(135deg, #eef2ff 0%, #f8fafc 100%);
+            position: relative;
+            display: flex;
+            align-items: stretch;
+            justify-content: stretch;
+        }
+
+        .streetview-player {
+            flex: 1;
+            min-height: 100%;
+        }
+
+        .streetview-container::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+        }
+
+        .streetview-fallback {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: #111827;
+            color: #f9fafb;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            text-align: center;
+            gap: 12px;
+            flex-direction: column;
+        }
+
+        .streetview-fallback.active {
+            display: flex;
+        }
+
+        .streetview-fallback img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 8px;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.45);
+            background: #0f172a;
+        }
+
+        .streetview-fallback-meta {
+            font-size: 0.75em;
+            color: rgba(229, 231, 235, 0.8);
+        }
+
+        .streetview-help {
+            font-size: 0.75em;
+            color: #6b7280;
+            line-height: 1.4;
+        }
+
+        .street-panel.disabled .streetview-container,
+        .street-panel.disabled .streetview-help {
+            display: none;
+        }
+
+        .street-panel.disabled .streetview-status {
+            color: #dc2626;
+        }
+
+        .speed-legend h4 {
+            margin: 0 0 10px 0;
+            font-size: 0.9em;
+            color: #495057;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 4px;
+            border-radius: 2px;
+        }
+
+        .legend-label {
+            color: #6c757d;
+        }
+
+        /* Responsive */
+        @media (max-width: 1280px) {
+            .info-panel {
+                width: 320px;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .review-content {
+                flex-direction: column;
+            }
+
+            .visual-panels {
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .map-panel,
+            .street-panel {
+                height: 45vh;
+            }
+
+            .info-panel {
+                width: 100%;
+                border-left: none;
+                border-top: 1px solid #e5e7eb;
+                height: auto;
+                max-height: 55vh;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .map-panel,
+            .street-panel {
+                height: 40vh;
+            }
+        }
+    </style>
+</head>
+<body data-google-maps-key="{{ google_maps_api_key }}">
+    <div class="review-container">
+        <!-- Header (unified layout) -->
+        <div class="page-header">
+            <div class="page-meta">
+                <a href="#" class="back-link" onclick="window.close(); return false;">✕ Close Window</a>
+                <h1 class="page-title">📍 Route Review</h1>
+            </div>
+            <button class="refresh-btn" onclick="refreshRouteData('Refreshing…')">⟳ Refresh</button>
+        </div>
+
+        <!-- Main Content -->
+        <div class="review-content">
+            <div class="visual-panels">
+                <!-- Map Panel -->
+                <div class="map-panel">
+                    <div id="map"></div>
+                    <div class="speed-edit-controls" id="speedEditControls">
+                        <button class="speed-edit-toggle" id="toggleSpeedLimitModeBtn">
+                            ✏️ <span>Edit Speed Limits</span>
+                        </button>
+                        <button class="marker-action-btn" id="addMarkerBtnFloating" title="Add review location">📌 Add Key Location</button>
+                        <div class="speed-limit-meta" id="speedLimitModeHint" style="display:none;">
+                            Click the route to add a custom limit segment.
+                        </div>
+                    </div>
+                    <div class="speed-overlay" id="speedOverlay">
+                        <div class="speed-overlay-row">
+                            <span class="speed-overlay-label">Speed</span>
+                            <span class="speed-overlay-value" id="currentSpeedValue">-- km/h</span>
+                        </div>
+                        <div class="speed-overlay-row">
+                            <span class="speed-overlay-label">Limit</span>
+                            <span class="speed-overlay-value" id="currentSpeedLimitValue">-- km/h</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Speed Legend -->
+                    <div class="speed-legend">
+                        <h4>🌡️ Speed</h4>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #38ef7d;"></div>
+                            <span class="legend-label">0-30 km/h</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #ffd700;"></div>
+                            <span class="legend-label">30-50 km/h</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #ff9500;"></div>
+                            <span class="legend-label">50-80 km/h</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #ee0979;"></div>
+                            <span class="legend-label">80+ km/h</span>
+                        </div>
+                    </div>
+                    
+                    <div class="loading-overlay" id="loadingOverlay">
+                        <div class="loading-spinner"></div>
+                        <p style="margin-top: 20px; color: #667eea; font-weight: 600;">Loading route data...</p>
+                    </div>
+                </div>
+
+                <!-- Street View Panel -->
+                <div class="street-panel streetview-section collapsed{% if not google_maps_api_key %} disabled{% endif %}" id="streetViewWrapper">
+                    <div class="streetview-header">
+                        <div class="streetview-title-group">
+                            <h3>🌍 Street Review</h3>
+                            <p class="streetview-status-note" id="streetViewStatus">
+                                {% if not google_maps_api_key %}
+                                Add a Google Maps API key to enable
+                                {% else %}
+                                Street View disabled to save API usage.
+                                {% endif %}
+                            </p>
+                        </div>
+                        <button class="streetview-toggle" id="toggleStreetViewBtn"{% if not google_maps_api_key %} disabled{% endif %}>
+                            Enable
+                        </button>
+                    </div>
+                    <div class="streetview-panel-body">
+                        <div class="streetview-container" id="streetView">
+                            <div class="streetview-player" id="streetViewPlayer"></div>
+                            <div class="streetview-fallback" id="streetViewFallback">
+                                <img id="streetViewFallbackImage" alt="Street view fallback" />
+                                <div class="streetview-fallback-meta" id="streetViewFallbackMeta">
+                                    Street imagery preview will appear here.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="streetview-help">
+                            Use the playback controls or click the route to sync both views. Markers appear here when available.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Panel -->
+            <div class="info-panel">
+                <!-- Statistics -->
+                <div class="stats-section">
+                    <h3>📊 Route Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Duration</div>
+                            <div class="stat-value" id="statDuration">--:--:--</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Distance</div>
+                            <div class="stat-value" id="statDistance">-- km</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">GPS Points</div>
+                            <div class="stat-value" id="statPoints">--</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Voice Notes</div>
+                            <div class="stat-value" id="statNotes">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Key Locations Section -->
+                <div class="marker-section">
+                    <div class="marker-section-header">
+                        <h3>📌 Key Review Locations</h3>
+                        <p class="marker-hint">Suggestions: on-ramp to highway • coaching tip • tricky intersection notes</p>
+                    </div>
+                    <div id="markerList" class="marker-list">
+                        <div class="marker-empty">Click “Add Key Location” and then tap on the map to drop a flag.</div>
+                    </div>
+                </div>
+
+                <!-- Voice Notes List -->
+                <div class="voice-notes-section">
+                    <div class="voice-notes-header">
+                        <h3>
+                            🎙️ Voice Notes
+                            <span class="note-count" id="noteCount">(0)</span>
+                        </h3>
+                    </div>
+                    <div class="voice-note-list-wrapper">
+                        <div class="voice-note-list" id="voiceNoteList">
+                        <div class="empty-notes">
+                            <div class="empty-notes-icon">🎵</div>
+                            <p>No voice notes in this route</p>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Playback Controls -->
+        <div class="playback-controls">
+            <div class="control-buttons">
+                <button class="control-btn" id="skipBackBtn" title="Previous Note">⏮️</button>
+                <button class="control-btn" id="rewindBtn" title="Rewind">⏪</button>
+                <button class="control-btn play-btn" id="playPauseBtn">▶️</button>
+                <button class="control-btn" id="forwardBtn" title="Fast Forward">⏩</button>
+                <button class="control-btn" id="skipForwardBtn" title="Next Note">⏭️</button>
+            </div>
+
+            <div class="speed-control">
+                <button class="speed-btn" data-speed="0.5">0.5x</button>
+                <button class="speed-btn active" data-speed="1">1x</button>
+                <button class="speed-btn" data-speed="2">2x</button>
+                <button class="speed-btn" data-speed="4">4x</button>
+            </div>
+
+            <div class="progress-bar-container" id="progressContainer">
+                <div class="timeline-events-layer" id="timelineEvents"></div>
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+
+        <div class="time-display">
+            <span id="currentTime">00:00:00</span>
+            <span id="totalTime">00:00:00</span>
+        </div>
+    </div>
+
+    <!-- Marker Modal -->
+    <div class="marker-modal-backdrop" id="markerModal">
+        <div class="marker-modal">
+            <header>
+                <h4 id="markerModalTitle">Add key location</h4>
+                <button class="close-modal" type="button" onclick="closeMarkerModal()">✕</button>
+            </header>
+            <form id="markerForm">
+                <input type="hidden" id="markerIdField" />
+                <input type="hidden" id="markerLatField" />
+                <input type="hidden" id="markerLngField" />
+                <input type="hidden" id="markerTimestampField" />
+                <label>
+                    Title / label
+                    <input type="text" id="markerLabelField" placeholder="e.g. Prüfung Startpunkt" required />
+                </label>
+                <label>
+                    Marker type
+                    <select id="markerTypeField">
+                        <option value="exam">🚩 Driving exam focus</option>
+                        <option value="lane-change">↔️ Lane change, merging and leaving lanes</option>
+                        <option value="turning">↩️ Turning and cornering</option>
+                        <option value="overtaking">⏭️ Overtaking and being overtaken</option>
+                        <option value="crossing">🚦 Crossing, merging and entering traffic flow</option>
+                        <option value="roundabout">⭕ Roundabout driving</option>
+                        <option value="railway">🚆 Railway crossing situations</option>
+                        <option value="parking">🅿️ Parking and pedestrian crossing situations</option>
+                        <option value="straight-driving">➡️ Straight driving and section driving</option>
+                        <option value="general">📍 Custom</option>
+                    </select>
+                </label>
+                <label>
+                    Tags (comma separated)
+                    <input type="text" id="markerTagsField" placeholder="exam, hazard" />
+                </label>
+                <label>
+                    Notes / description
+                    <textarea id="markerDescriptionField" placeholder="What should learners remember at this location?"></textarea>
+                </label>
+                <div class="marker-modal-meta" id="markerMetaInfo" style="font-size:0.8em; color:#6c757d;"></div>
+                <div class="modal-actions">
+                    <button type="button" class="cancel-btn" onclick="closeMarkerModal()">Cancel</button>
+                    <button type="submit" class="save-btn">Save marker</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Speed Limit Modal -->
+    <div class="speed-limit-modal-backdrop" id="speedLimitModal">
+        <div class="speed-limit-modal">
+            <header>
+                <h4 id="speedLimitModalTitle">Add speed limit</h4>
+                <button class="close-modal" type="button" onclick="closeSpeedLimitModal()">✕</button>
+            </header>
+            <form id="speedLimitForm">
+                <input type="hidden" id="speedLimitIdField" />
+                <input type="hidden" id="speedLimitStartIndexField" />
+                <label>
+                    Limit (km/h)
+                    <input type="number" id="speedLimitValueField" min="10" max="130" step="5" required />
+                </label>
+                <label>
+                    Applies for
+                    <select id="speedLimitLengthField" required>
+                        <option value="200">200 m</option>
+                        <option value="500">500 m</option>
+                        <option value="1000">1 km</option>
+                        <option value="2000">2 km</option>
+                        <option value="5000">5 km</option>
+                    </select>
+                </label>
+                <label>
+                    Note (optional)
+                    <textarea id="speedLimitNoteField" placeholder="e.g. School zone during weekdays"></textarea>
+                </label>
+                <div class="speed-limit-meta" id="speedLimitMetaInfo"></div>
+                <div class="modal-actions">
+                    <button type="button" class="delete-btn" id="speedLimitDeleteBtn" style="display:none;">Delete</button>
+                    <button type="button" class="cancel-btn" onclick="closeSpeedLimitModal()">Cancel</button>
+                    <button type="submit" class="save-btn">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        // Route ID from Flask template
+        const ROUTE_ID = "{{ route_id }}";
+        
+        // Global variables
+        let map;
+        let routeData = null;
+        let startTimestampMs = null;
+        let totalDurationSeconds = 0;
+        let routePath = null;
+        let voiceMarkers = [];
+        let reviewMarkersLayer = null;
+        let reviewMarkerIcons = {};
+        let reviewMarkers = [];
+        let markerControlsInitialized = false;
+        let playbackControlsInitialized = false;
+        let routeLayerGroup = null;
+        let playbackLayerGroup = null;
+        let routeSegments = [];
+        const BASE_ROUTE_LINE_WEIGHT = 10;
+
+        const escapeHtml = (input) => {
+            if (input === undefined || input === null) return '';
+            return String(input)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        };
+        const toNumberOrNull = (value) => {
+            if (value === null || value === undefined) {
+                return null;
+            }
+            const num = Number(value);
+            return Number.isFinite(num) ? num : null;
+        };
+        let isAddingMarker = false;
+        let pendingMarkerLatLng = null;
+        let isPlaying = false;
+        let currentTime = 0;
+        let playbackSpeed = 1;
+        let animationFrame = null;
+        let startTimestamp = null;
+        let playbackPointIndex = 0;
+        const VOICE_TAG_SUGGESTIONS = [
+            'Traffic Observation',
+            'Vehicle Positioning',
+            'Speed Adaptation',
+            'Communication',
+            'Vehicle Operation',
+            'Environmentally-conscious driving',
+        ];
+        const MARKER_TYPE_OPTIONS = new Set([
+            'exam',
+            'lane-change',
+            'turning',
+            'overtaking',
+            'crossing',
+            'roundabout',
+            'railway',
+            'parking',
+            'straight-driving',
+            'general',
+        ]);
+
+        const googleMapsKey = document.body.dataset.googleMapsKey || '';
+        let googleMapsReady = Boolean(window.googleMapsReady);
+        let googleMapsLoadFailed = Boolean(window.googleMapsLoadFailed);
+        let pendingStreetViewInit = false;
+        let streetViewEnabled = false;
+        let streetViewPanorama = null;
+        let streetViewService = null;
+        let streetViewMarkers = [];
+        let streetViewReady = false;
+        let streetViewFrames = [];
+        let streetViewLoading = false;
+        let lastStreetViewImageId = null;
+        const streetViewCache = new Map();
+        let streetViewFallbackActive = false;
+        let manualSpeedLimits = [];
+        let manualSpeedLimitLayer = null;
+        let manualSpeedLimitMarkerLayer = null;
+        let speedLimitModeEnabled = false;
+        let pendingSpeedLimitStart = null;
+        let activeSpeedLimit = null;
+        const streetViewWrapper = document.getElementById('streetViewWrapper');
+        const streetViewStatus = document.getElementById('streetViewStatus');
+        const streetViewToggleBtn = document.getElementById('toggleStreetViewBtn');
+        const streetViewPlayerEl = document.getElementById('streetViewPlayer');
+        const streetViewFallbackContainer = document.getElementById('streetViewFallback');
+        const streetViewFallbackImage = document.getElementById('streetViewFallbackImage');
+        const streetViewFallbackMeta = document.getElementById('streetViewFallbackMeta');
+        const speedOverlayEl = document.getElementById('speedOverlay');
+        const speedOverlayCurrentEl = document.getElementById('currentSpeedValue');
+        const speedOverlayLimitEl = document.getElementById('currentSpeedLimitValue');
+        const speedLimitToggleBtn = document.getElementById('toggleSpeedLimitModeBtn');
+        const speedLimitModeHint = document.getElementById('speedLimitModeHint');
+        const speedEditControlsEl = document.getElementById('speedEditControls');
+        const speedLimitModal = document.getElementById('speedLimitModal');
+        const speedLimitForm = document.getElementById('speedLimitForm');
+        const speedLimitIdField = document.getElementById('speedLimitIdField');
+        const speedLimitStartIndexField = document.getElementById('speedLimitStartIndexField');
+        const speedLimitValueField = document.getElementById('speedLimitValueField');
+        const speedLimitLengthField = document.getElementById('speedLimitLengthField');
+        const speedLimitNoteField = document.getElementById('speedLimitNoteField');
+        const speedLimitMetaInfo = document.getElementById('speedLimitMetaInfo');
+        const speedLimitDeleteBtn = document.getElementById('speedLimitDeleteBtn');
+        const speedLimitModalTitle = document.getElementById('speedLimitModalTitle');
+
+        const setStreetViewStatus = (message, isError = false) => {
+            if (!streetViewStatus) return;
+            streetViewStatus.textContent = message;
+            streetViewStatus.classList.toggle('error', Boolean(isError));
+        };
+
+        function onGoogleMapsLibraryReady() {
+            googleMapsReady = true;
+            googleMapsLoadFailed = false;
+            if (pendingStreetViewInit) {
+                pendingStreetViewInit = false;
+                initStreetViewContainer().catch((error) =>
+                    console.warn('Street view init after Maps ready failed', error)
+                );
+            }
+        }
+
+        if (googleMapsReady) {
+            onGoogleMapsLibraryReady();
+        } else {
+            window.onGoogleMapsReady = onGoogleMapsLibraryReady;
+        }
+
+        if (streetViewToggleBtn) {
+            streetViewToggleBtn.addEventListener('click', () => {
+                if (!streetViewEnabled) {
+                    enableStreetView();
+                } else {
+                    disableStreetView();
+                }
+            });
+        }
+
+        if (speedLimitToggleBtn) {
+            speedLimitToggleBtn.addEventListener('click', () => {
+                setSpeedLimitMode(!speedLimitModeEnabled);
+            });
+        } else {
+            const controls = document.getElementById('speedEditControls');
+            if (controls) {
+                controls.style.display = 'none';
+            }
+            console.warn('Speed limit editing disabled (toggle button not rendered)');
+        }
+
+        if (speedLimitForm) {
+            speedLimitForm.addEventListener('submit', submitSpeedLimitForm);
+        }
+
+        if (speedLimitDeleteBtn) {
+            speedLimitDeleteBtn.addEventListener('click', () => {
+                if (activeSpeedLimit) {
+                    deleteSpeedLimit(activeSpeedLimit.id);
+                    closeSpeedLimitModal();
+                }
+            });
+        }
+
+        function setSpeedLimitMode(enabled) {
+            speedLimitModeEnabled = Boolean(enabled);
+            if (speedLimitToggleBtn) {
+                speedLimitToggleBtn.classList.toggle('active', speedLimitModeEnabled);
+                speedLimitToggleBtn.innerHTML = speedLimitModeEnabled
+                    ? '✅ <span>Speed Limit Mode</span>'
+                    : '✏️ <span>Edit Speed Limits</span>';
+            }
+            if (speedLimitModeHint) {
+                speedLimitModeHint.style.display = speedLimitModeEnabled ? 'block' : 'none';
+            }
+            if (map) {
+                map.getContainer().style.cursor = speedLimitModeEnabled ? 'crosshair' : '';
+            }
+            pendingSpeedLimitStart = null;
+        }
+
+        function openSpeedLimitModal({ limit = null, startIndex = null } = {}) {
+            activeSpeedLimit = limit;
+            const isEdit = Boolean(limit);
+            const title = isEdit ? 'Edit speed limit' : 'Add speed limit';
+            if (speedLimitModalTitle) {
+                speedLimitModalTitle.textContent = title;
+            }
+            if (speedLimitIdField) {
+                speedLimitIdField.value = isEdit ? limit.id : '';
+            }
+            if (speedLimitStartIndexField) {
+                speedLimitStartIndexField.value = isEdit
+                    ? String(limit.startIndex)
+                    : (startIndex !== null ? String(startIndex) : '');
+            }
+            if (speedLimitValueField) {
+                speedLimitValueField.value = isEdit ? limit.limitKmh : 50;
+            }
+            if (speedLimitLengthField) {
+                const lengthChoices = [200, 500, 1000, 2000, 5000];
+                if (isEdit) {
+                    const measuredLength = Math.max(20, Math.round(calculateLimitLength(limit)));
+                    const nearest = lengthChoices.reduce((prev, curr) =>
+                        Math.abs(curr - measuredLength) < Math.abs(prev - measuredLength) ? curr : prev
+                    , lengthChoices[0]);
+                    speedLimitLengthField.value = String(nearest);
+                } else {
+                    speedLimitLengthField.value = '200';
+                }
+            }
+            if (speedLimitNoteField) {
+                speedLimitNoteField.value = isEdit ? (limit.note || '') : '';
+            }
+            if (speedLimitMetaInfo) {
+                if (isEdit) {
+                    speedLimitMetaInfo.textContent = `Covers GPS points ${limit.startIndex + 1} to ${limit.endIndex + 1}.`;
+                } else if (startIndex !== null) {
+                    speedLimitMetaInfo.textContent = `Starting near GPS point ${startIndex + 1}.`;
+                } else {
+                    speedLimitMetaInfo.textContent = '';
+                }
+            }
+            if (speedLimitDeleteBtn) {
+                speedLimitDeleteBtn.style.display = isEdit ? 'inline-flex' : 'none';
+            }
+            if (speedLimitModal) {
+                speedLimitModal.classList.add('active');
+            }
+        }
+
+        function closeSpeedLimitModal() {
+            activeSpeedLimit = null;
+            if (speedLimitModal) {
+                speedLimitModal.classList.remove('active');
+            }
+        }
+
+        function submitSpeedLimitForm(event) {
+            event.preventDefault();
+            if (!routeData || !Array.isArray(routeData.points) || !routeData.points.length) {
+                alert('Route data unavailable. Reload and try again.');
+                return;
+            }
+            const limitValue = Number(speedLimitValueField?.value || 0);
+            const lengthValue = Number(speedLimitLengthField?.value || 0);
+            const startIndex = Number(speedLimitStartIndexField?.value || -1);
+            const note = speedLimitNoteField?.value?.trim() || '';
+
+            if (!Number.isFinite(limitValue) || limitValue <= 0) {
+                alert('Please enter a valid speed limit.');
+                return;
+            }
+            if (!Number.isFinite(lengthValue) || lengthValue <= 0) {
+                alert('Please enter a valid segment length.');
+                return;
+            }
+            if (!Number.isInteger(startIndex) || startIndex < 0 || startIndex >= routeData.points.length) {
+                alert('Invalid start position.');
+                return;
+            }
+
+            const endIndex = computeEndIndexFromLength(startIndex, lengthValue);
+            const segmentLength = calculateSegmentDistance(startIndex, endIndex);
+
+            if (activeSpeedLimit) {
+                activeSpeedLimit.limitKmh = Math.round(limitValue);
+                activeSpeedLimit.startIndex = startIndex;
+                activeSpeedLimit.endIndex = endIndex;
+                activeSpeedLimit.note = note;
+                activeSpeedLimit.updatedAt = new Date().toISOString();
+                activeSpeedLimit.lengthMeters = Math.round(segmentLength);
+            } else {
+                const newLimit = {
+                    id: `limit_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+                    limitKmh: Math.round(limitValue),
+                    startIndex,
+                    endIndex,
+                    lengthMeters: Math.round(segmentLength),
+                    note,
+                    createdAt: new Date().toISOString(),
+                };
+                manualSpeedLimits.push(newLimit);
+            }
+
+            applyManualSpeedLimitsToPoints();
+            renderManualSpeedLimits();
+            updatePlayback();
+            closeSpeedLimitModal();
+            persistManualSpeedLimitChanges();
+        }
+
+        function deleteSpeedLimit(limitId) {
+            manualSpeedLimits = manualSpeedLimits.filter((limit) => limit.id !== limitId);
+            applyManualSpeedLimitsToPoints();
+            renderManualSpeedLimits();
+            updatePlayback();
+            persistManualSpeedLimitChanges();
+        }
+
+        function computeEndIndexFromLength(startIndex, lengthMeters) {
+            const points = routeData.points || [];
+            if (!points.length) return startIndex;
+            let remaining = Number.isFinite(lengthMeters) ? lengthMeters : 0;
+            let endIndex = startIndex;
+            for (let i = startIndex; i < points.length - 1; i++) {
+                const segmentDistance = calculateDistanceBetweenPoints(points[i], points[i + 1]);
+                remaining -= segmentDistance;
+                endIndex = i + 1;
+                if (remaining <= 0) {
+                    break;
+                }
+            }
+            return Math.min(points.length - 1, endIndex);
+        }
+
+        function calculateLimitLength(limit) {
+            if (!limit) return 0;
+            return calculateSegmentDistance(limit.startIndex, limit.endIndex);
+        }
+
+        function calculateSegmentDistance(startIndex, endIndex) {
+            const points = routeData.points || [];
+            if (!points.length) return 0;
+            const start = Math.max(0, startIndex);
+            const end = Math.max(start, Math.min(points.length - 1, endIndex));
+            let distance = 0;
+            for (let i = start; i < end; i++) {
+                distance += calculateDistanceBetweenPoints(points[i], points[i + 1]);
+            }
+            return distance;
+        }
+
+        function calculateDistanceBetweenPoints(pointA, pointB) {
+            if (!pointA || !pointB) return 0;
+            const toRad = (deg) => (deg * Math.PI) / 180;
+            const lat1 = pointA.lat;
+            const lng1 = pointA.lng;
+            const lat2 = pointB.lat;
+            const lng2 = pointB.lng;
+            const R = 6371000;
+            const dLat = toRad(lat2 - lat1);
+            const dLng = toRad(lng2 - lng1);
+            const a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        function applyManualSpeedLimitsToPoints() {
+            if (!routeData || !Array.isArray(routeData.points)) {
+                return;
+            }
+            routeData.points.forEach((point) => {
+                point.speedLimitKmh = point.originalSpeedLimitKmh ?? null;
+                point.speedLimitSource = point.originalSpeedLimitKmh ? 'api' : null;
+            });
+            manualSpeedLimits.forEach((limit) => {
+                if (!limit.lengthMeters || limit.lengthMeters <= 0) {
+                    limit.lengthMeters = Math.round(calculateSegmentDistance(limit.startIndex, limit.endIndex));
+                }
+                for (let idx = limit.startIndex; idx <= limit.endIndex && idx < routeData.points.length; idx++) {
+                    const point = routeData.points[idx];
+                    point.speedLimitKmh = limit.limitKmh;
+                    point.speedLimitSource = 'manual';
+                }
+            });
+        }
+
+        function renderManualSpeedLimits() {
+            if (!manualSpeedLimitLayer || !manualSpeedLimitMarkerLayer || !map || !routeData?.points?.length) {
+                return;
+            }
+            manualSpeedLimitLayer.clearLayers();
+            manualSpeedLimitMarkerLayer.clearLayers();
+
+            manualSpeedLimits.forEach((limit) => {
+                const startIndex = Math.max(0, Math.min(routeData.points.length - 1, limit.startIndex));
+                const endIndex = Math.max(startIndex, Math.min(routeData.points.length - 1, limit.endIndex));
+                limit.startIndex = startIndex;
+                limit.endIndex = endIndex;
+                const slice = routeData.points.slice(startIndex, endIndex + 1);
+                if (slice.length < 2) {
+                    return;
+                }
+                const polyline = L.polyline(
+                    slice.map((pt) => [pt.lat, pt.lng]),
+                    {
+                        color: '#34d399',
+                        weight: 4,
+                        opacity: 0.8,
+                        dashArray: '6 6',
+                        lineCap: 'butt',
+                    }
+                );
+                polyline.addTo(manualSpeedLimitLayer);
+                if (polyline.bringToFront) {
+                    polyline.bringToFront();
+                }
+
+                const midpoint = slice[Math.floor(slice.length / 2)];
+                const marker = L.marker([midpoint.lat, midpoint.lng], {
+                    icon: L.divIcon({
+                        className: 'manual-speed-marker',
+                        html: `${limit.limitKmh}`,
+                        iconSize: [34, 34],
+                        iconAnchor: [17, 17],
+                    }),
+                });
+                marker.addTo(manualSpeedLimitMarkerLayer);
+                if (marker.bringToFront) {
+                    marker.bringToFront();
+                }
+                marker.on('click', () => {
+                    openSpeedLimitModal({ limit });
+                });
+                marker.bindTooltip(
+                    `${limit.limitKmh} km/h${limit.note ? ` • ${limit.note}` : ''}`,
+                    { direction: 'top' }
+                );
+            });
+        }
+
+        function beginManualSpeedLimit(latlng) {
+            if (!routeData || !routeData.points?.length || !routeData.findNearestPointByLocation) {
+                return;
+            }
+            const nearest = routeData.findNearestPointByLocation(latlng.lat, latlng.lng);
+            if (!nearest || !nearest.point) {
+                alert('Please click closer to the recorded route to set a limit.');
+                return;
+            }
+            const startIndex = routeData.points.indexOf(nearest.point);
+            if (startIndex < 0) {
+                alert('Unable to determine the nearest route segment.');
+                return;
+            }
+            openSpeedLimitModal({ startIndex });
+        }
+
+        async function persistManualSpeedLimitChanges() {
+            if (!routeData || !routeData.id) {
+                return;
+            }
+            const payload = {
+                limits: manualSpeedLimits.map((limit) => ({
+                    id: limit.id,
+                    limit_kmh: limit.limitKmh,
+                    start_index: limit.startIndex,
+                    end_index: limit.endIndex,
+                    length_meters: Math.round(limit.lengthMeters || calculateSegmentDistance(limit.startIndex, limit.endIndex)),
+                    note: limit.note || null,
+                    created_at: limit.createdAt,
+                    updated_at: limit.updatedAt || limit.createdAt,
+                })),
+            };
+            try {
+                await fetch(`/backend/api/mobile/routes/${routeData.id}/speed-limits`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+            } catch (error) {
+                console.warn('Speed limit sync failed', error);
+            }
+        }
+        function enableStreetView() {
+            if (!googleMapsKey) {
+                setStreetViewStatus('Add a Google Maps API key to enable Street View.', true);
+                return;
+            }
+            streetViewEnabled = true;
+            if (streetViewWrapper) {
+                streetViewWrapper.classList.remove('collapsed');
+            }
+            if (streetViewToggleBtn) {
+                streetViewToggleBtn.textContent = 'Disable';
+                streetViewToggleBtn.disabled = false;
+            }
+            setStreetViewStatus('Loading Google Street View…');
+            activateStreetViewFallback('Loading Google Street View…');
+            streetViewCache.clear();
+            streetViewFrames = [];
+            lastStreetViewImageId = null;
+            streetViewReady = false;
+            initStreetViewContainer().catch((error) =>
+                console.warn('Street view initialization failed', error)
+            );
+        }
+
+        function disableStreetView() {
+            streetViewEnabled = false;
+            pendingStreetViewInit = false;
+            streetViewCache.clear();
+            streetViewFrames = [];
+            lastStreetViewImageId = null;
+            streetViewReady = false;
+            if (streetViewPanorama) {
+                streetViewPanorama.setVisible(false);
+            }
+            if (googleMapsKey) {
+                activateStreetViewFallback('Street View disabled. Enable to load imagery.');
+            } else {
+                activateStreetViewFallback('Add a Google Maps API key to enable Street View.');
+            }
+            if (streetViewWrapper) {
+                streetViewWrapper.classList.add('collapsed');
+            }
+            if (streetViewToggleBtn) {
+                streetViewToggleBtn.textContent = 'Enable';
+                streetViewToggleBtn.disabled = !googleMapsKey || googleMapsLoadFailed;
+            }
+            if (googleMapsKey) {
+                setStreetViewStatus('Street View disabled to save API usage.');
+            } else {
+                setStreetViewStatus('Add a Google Maps API key to enable Street View.', true);
+            }
+        }
+
+        function activateStreetViewFallback(message) {
+            streetViewFallbackActive = true;
+            if (streetViewPanorama) {
+                streetViewPanorama.setVisible(false);
+            }
+            if (streetViewFallbackContainer) {
+                streetViewFallbackContainer.classList.add('active');
+            }
+            if (streetViewFallbackMeta && message) {
+                streetViewFallbackMeta.textContent = message;
+            }
+        }
+
+        function deactivateStreetViewFallback() {
+            streetViewFallbackActive = false;
+            if (streetViewPanorama) {
+                streetViewPanorama.setVisible(true);
+            }
+            if (streetViewFallbackContainer) {
+                streetViewFallbackContainer.classList.remove('active');
+            }
+        }
+
+        if (googleMapsLoadFailed && googleMapsKey) {
+            setStreetViewStatus('Google Maps library failed to load. Showing static previews.', true);
+            activateStreetViewFallback('Google Maps library unavailable. Showing static previews.');
+        }
+
+        if (!googleMapsKey) {
+            setStreetViewStatus('Add a Google Maps API key to enable Street View.', true);
+            if (streetViewToggleBtn) {
+                streetViewToggleBtn.disabled = true;
+            }
+        }
+
+        window.onGoogleMapsFailure = function() {
+            googleMapsLoadFailed = true;
+            disableStreetView();
+            if (streetViewToggleBtn) {
+                streetViewToggleBtn.disabled = true;
+            }
+            setStreetViewStatus('Google Maps library failed to load. Showing static previews.', true);
+        };
+
+
+        // Initialize on load
+        window.onload = function() {
+            initMap();
+            loadRouteData();
+        };
+
+        // Initialize map
+        function initMap() {
+            const defaultLocation = [51.1657, 10.4515]; // Germany center
+            
+            map = L.map('map').setView(defaultLocation, 6);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(map);
+
+            manualSpeedLimitLayer = L.layerGroup().addTo(map);
+            manualSpeedLimitMarkerLayer = L.layerGroup().addTo(map);
+            reviewMarkersLayer = L.layerGroup().addTo(map);
+            map.on('click', handleMapClick);
+
+            if (speedEditControlsEl) {
+                speedEditControlsEl.classList.add('offset');
+            }
+        }
+
+        // Load route data from backend API
+        async function loadRouteData() {
+            try {
+                const response = await fetch(`/backend/api/mobile/routes/${ROUTE_ID}`);
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({}));
+                    throw new Error(error.error || `HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                if (!data || !data.session) {
+                    throw new Error('Route session payload missing');
+                }
+
+                const summary = data.route || {};
+                const session = data.session;
+                const points = (session.gps_points || [])
+                    .filter(p => p && p.latitude !== undefined && p.longitude !== undefined)
+                    .sort((a, b) => {
+                        const ta = a.timestamp ? Date.parse(a.timestamp) : 0;
+                        const tb = b.timestamp ? Date.parse(b.timestamp) : 0;
+                        return ta - tb;
+                    });
+                startTimestampMs = points.length && points[0].timestamp ? Date.parse(points[0].timestamp) : Date.now();
+                totalDurationSeconds = points.length && points[points.length - 1].timestamp
+                    ? Math.max(0, Math.floor((Date.parse(points[points.length - 1].timestamp) - startTimestampMs) / 1000))
+                    : Math.floor((summary.duration_min || 0) * 60);
+
+                const normalizedPoints = points.map((p, index) => {
+                    const timeMs = p.timestamp ? Date.parse(p.timestamp) - startTimestampMs : index * 1000;
+                    const rawSpeed = p.speed !== undefined && p.speed !== null ? Number(p.speed) : null;
+                    const rawSpeedLimit =
+                        p.speed_limit_kmh ??
+                        p.speedLimitKmh ??
+                        p.speedLimit ??
+                        p.speed_limit ??
+                        null;
+                    const speedLimitValue = toNumberOrNull(rawSpeedLimit);
+                    return {
+                        index,
+                        lat: p.latitude,
+                        lng: p.longitude,
+                        speed: Number.isFinite(rawSpeed) ? rawSpeed : null,
+                        accuracy: p.accuracy ?? null,
+                        timestamp: p.timestamp,
+                        timeMs: Math.max(0, timeMs),
+                        speedLimitKmh: speedLimitValue,
+                        originalSpeedLimitKmh: speedLimitValue,
+                        speedLimitSource: speedLimitValue ? 'api' : null,
+                        distanceFromPrev: 0,
+                        distanceFromStart: 0,
+                    };
+                });
+
+                const toBackendUrl = (path) => path ? `/backend${path}` : null;
+
+                const audioNotes = (session.audio_notes || []).map((note, idx) => {
+                    const tsMs = note.timestamp ? Date.parse(note.timestamp) : startTimestampMs;
+                    const relativeMs = Math.max(0, tsMs - startTimestampMs);
+                    const durationMs = note.duration_ms ? Number(note.duration_ms) : null;
+                    const tags = Array.isArray(note.tags)
+                        ? note.tags.filter(Boolean).map(String)
+                        : (typeof note.tags === 'string' && note.tags.length
+                            ? note.tags.split(',').map(tag => tag.trim()).filter(Boolean)
+                            : []);
+
+                    return {
+                        id: note.filename || `note_${idx}`,
+                        timestamp: note.timestamp,
+                        relativeMs,
+                        location: (note.latitude !== null && note.latitude !== undefined && note.longitude !== null && note.longitude !== undefined)
+                            ? { lat: note.latitude, lng: note.longitude }
+                            : null,
+                        audioUrl: toBackendUrl(note.file_url),
+                        durationMs,
+                        tags,
+                        label: note.label || null,
+                        transcript: note.transcript || null,
+                    };
+                }).sort((a, b) => (a.relativeMs || 0) - (b.relativeMs || 0));
+
+                const toRelativeMs = (isoTs) => {
+                    if (!isoTs) return null;
+                    const parsed = Date.parse(isoTs);
+                    if (Number.isNaN(parsed) || startTimestampMs === null) return null;
+                    return Math.max(0, parsed - startTimestampMs);
+                };
+
+                const haversine = (a, b) => {
+                    if (!a || !b) return 0;
+                    const toRad = (deg) => (deg * Math.PI) / 180;
+                    const R = 6371000; // metres
+                    const dLat = toRad(b.lat - a.lat);
+                    const dLon = toRad(b.lng - a.lng);
+                    const lat1 = toRad(a.lat);
+                    const lat2 = toRad(b.lat);
+                    const sinLat = Math.sin(dLat / 2);
+                    const sinLon = Math.sin(dLon / 2);
+                    const c = 2 * Math.atan2(
+                        Math.sqrt(sinLat * sinLat + Math.cos(lat1) * Math.cos(lat2) * sinLon * sinLon),
+                        Math.sqrt(1 - (sinLat * sinLat + Math.cos(lat1) * Math.cos(lat2) * sinLon * sinLon))
+                    );
+                    return R * c;
+                };
+
+                const toSpeedMs = (speedKmh) =>
+                    speedKmh !== null && speedKmh !== undefined && !Number.isNaN(speedKmh)
+                        ? speedKmh / 3.6
+                        : null;
+
+                normalizedPoints.forEach((point, idx) => {
+                    if (idx === 0) {
+                        const initialSpeedMs = toSpeedMs(point.speed);
+                        point.speedMs = initialSpeedMs !== null ? initialSpeedMs : 0;
+                        point.deltaSpeed = 0;
+                        point.deltaTime = 0;
+                        point.speedKmh = Math.max(0, point.speedMs * 3.6);
+                        point.distanceFromPrev = 0;
+                        point.distanceFromStart = 0;
+                        return;
+                    }
+                    const prev = normalizedPoints[idx - 1];
+                    const deltaTime = Math.max(0, (point.timeMs - prev.timeMs) / 1000);
+                    const travelled = haversine(prev, point);
+                    point.distanceFromPrev = travelled;
+                    point.distanceFromStart = (prev.distanceFromStart || 0) + travelled;
+                    const computedSpeed = deltaTime > 0 ? travelled / deltaTime : 0;
+                    const sensorSpeed = toSpeedMs(point.speed);
+                    point.speedMs = sensorSpeed && sensorSpeed > 0 ? sensorSpeed : computedSpeed;
+                    const prevSpeed = prev.speedMs ?? computedSpeed;
+                    point.deltaSpeed = point.speedMs - prevSpeed;
+                    point.deltaTime = deltaTime;
+                    point.speedKmh = Math.max(0, point.speedMs * 3.6);
+                });
+
+                const findNearestPointByLocation = (lat, lng) => {
+                    if (!normalizedPoints.length) return null;
+                    let closest = normalizedPoints[0];
+                    let minDistance = Number.POSITIVE_INFINITY;
+                    normalizedPoints.forEach((point) => {
+                        const dist = haversine(point, { lat, lng });
+                        if (dist < minDistance) {
+                            minDistance = dist;
+                            closest = point;
+                        }
+                    });
+                    return { point: closest, distance: minDistance };
+                };
+
+                const rawMarkers = Array.isArray(session.review_markers) ? session.review_markers : [];
+                const markers = rawMarkers.map((marker, idx) => {
+                    const relativeFromTimestamp = toRelativeMs(marker.timestamp);
+                    let relativeMs = relativeFromTimestamp;
+                    let nearestPoint;
+
+                    if ((relativeMs === null || Number.isNaN(relativeMs)) && marker.latitude !== null && marker.latitude !== undefined && marker.longitude !== null && marker.longitude !== undefined) {
+                        const nearest = findNearestPointByLocation(marker.latitude, marker.longitude);
+                        if (nearest) {
+                            nearestPoint = nearest.point;
+                            relativeMs = nearest.point.timeMs;
+                        }
+                    } else if (relativeMs !== null) {
+                        nearestPoint = normalizedPoints.find(p => Math.abs(p.timeMs - relativeMs) < 2000) || null;
+                    }
+
+                    const timestampIso = marker.timestamp || (nearestPoint ? new Date(startTimestampMs + nearestPoint.timeMs).toISOString() : null);
+                    const tags = Array.isArray(marker.tags)
+                        ? marker.tags.filter(Boolean).map(String)
+                        : (typeof marker.tags === 'string' && marker.tags.length
+                            ? marker.tags.split(',').map(t => t.trim()).filter(Boolean)
+                            : []);
+
+                    return {
+                        id: marker.marker_id || `marker_${idx}`,
+                        label: marker.label || 'Key location',
+                        type: marker.type || 'general',
+                        description: marker.description || '',
+                        latitude: marker.latitude,
+                        longitude: marker.longitude,
+                        timestamp: timestampIso,
+                        relativeMs: typeof relativeMs === 'number' && !Number.isNaN(relativeMs) ? relativeMs : 0,
+                        tags,
+                        createdAt: marker.created_at || null,
+                        updatedAt: marker.updated_at || null,
+                        source: marker.source || 'coach',
+                        nearestPoint,
+                    };
+                }).sort((a, b) => (a.relativeMs || 0) - (b.relativeMs || 0));
+
+                routeData = {
+                    id: summary.route_id || ROUTE_ID,
+                    duration: formatDurationFromMinutes(summary.duration_min),
+                    distance: (summary.distance_km ?? 0).toFixed(2),
+                    points: normalizedPoints,
+                    voiceNotes: audioNotes,
+                    markers,
+                    totalDurationMs: totalDurationSeconds * 1000,
+                    previewUrl: toBackendUrl(summary.preview_url),
+                    summary,
+                    session,
+                };
+
+                reviewMarkers = markers;
+                routeData.findNearestPointByLocation = (lat, lng) => findNearestPointByLocation(lat, lng);
+                routeData.toRelativeMs = toRelativeMs;
+                manualSpeedLimits = Array.isArray(session.manual_speed_limits)
+                    ? session.manual_speed_limits
+                          .map((limit) => {
+                              const limitValue =
+                                  Number(limit.limit_kmh ?? limit.limitKmh ?? limit.speed_limit_kmh ?? limit.speedLimitKmh);
+                              const startIndex = Number(limit.start_index ?? limit.startIndex ?? 0);
+                              const endIndex = Number(limit.end_index ?? limit.endIndex ?? startIndex);
+                              if (
+                                  !Number.isFinite(limitValue) ||
+                                  !Number.isInteger(startIndex) ||
+                                  !Number.isInteger(endIndex)
+                              ) {
+                                  return null;
+                              }
+                              return {
+                                  id: limit.id || limit.limit_id || `limit_${startIndex}_${endIndex}`,
+                                  limitKmh: Math.round(limitValue),
+                                  startIndex: Math.max(0, startIndex),
+                                  endIndex: Math.max(startIndex, endIndex),
+                                  lengthMeters: Number(limit.length_meters ?? limit.lengthMeters ?? 0) || null,
+                                  note: limit.note || '',
+                                  createdAt: limit.created_at || limit.createdAt || null,
+                                  updatedAt: limit.updated_at || limit.updatedAt || null,
+                              };
+                          })
+                          .filter(Boolean)
+                    : [];
+
+                console.log('Route data loaded:', routeData);
+
+                initializeRoute();
+                hideLoading();
+            } catch (error) {
+                console.error('Error loading route:', error);
+                alert('Failed to load route data: ' + error.message);
+                window.close();
+            }
+        }
+
+        async function refreshRouteData(statusMessage = 'Syncing changes...') {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                overlay.style.display = 'flex';
+                const label = overlay.querySelector('p');
+                if (label) {
+                    label.textContent = statusMessage;
+                }
+            }
+            await loadRouteData();
+        }
+
+        // Initialize route visualization
+        function initializeRoute() {
+            // Header subtitle removed per design; no route name displayed
+
+            streetViewCache.clear();
+            streetViewFrames = [];
+            lastStreetViewImageId = null;
+
+            if (!streetViewEnabled) {
+                disableStreetView();
+            } else {
+                setStreetViewStatus('Loading Google Street View…');
+                initStreetViewContainer().catch((error) =>
+                    console.warn('Street view initialization failed', error)
+                );
+            }
+
+            // Update statistics
+            document.getElementById('statDuration').textContent = routeData.duration;
+            document.getElementById('statDistance').textContent = routeData.distance + ' km';
+            document.getElementById('statPoints').textContent = routeData.points.length;
+            document.getElementById('statNotes').textContent = (routeData.voiceNotes || []).length;
+            document.getElementById('totalTime').textContent = formatTimestamp(totalDurationSeconds * 1000);
+
+            // Draw route on map
+            playbackPointIndex = 0;
+            drawRoute();
+            applyManualSpeedLimitsToPoints();
+            renderManualSpeedLimits();
+            setSpeedLimitMode(false);
+            updateSpeedOverlay(0);
+
+            // Render markers on map + list
+            renderReviewMarkersOnMap();
+            renderMarkerList();
+            updateStreetViewMarkers();
+
+            // Add voice notes
+            displayVoiceNotes();
+
+            // Timeline markers
+            renderTimelineEvents();
+
+            // Initialize playback
+            initializePlayback();
+        }
+
+        // Get color based on speed (heatmap)
+        function getSpeedColor(speed) {
+            // Speed ranges: 0-30 (green), 30-50 (yellow), 50-80 (orange), 80+ (red)
+            if (speed < 30) {
+                return '#38ef7d'; // Green - slow
+            } else if (speed < 50) {
+                return '#ffd700'; // Yellow - moderate
+            } else if (speed < 80) {
+                return '#ff9500'; // Orange - fast
+            } else {
+                return '#ee0979'; // Red - very fast
+            }
+        }
+
+        function getSpeedWidth(speed) {
+            return BASE_ROUTE_LINE_WEIGHT; // keep line thickness consistent while color reflects speed
+        }
+
+        // Draw route on map with speed heatmap
+        function drawRoute() {
+            const points = routeData.points;
+
+            if (!points.length) {
+                console.warn('No GPS points to render');
+                return;
+            }
+            
+            if (!routeLayerGroup) {
+                routeLayerGroup = L.layerGroup().addTo(map);
+            } else {
+                routeLayerGroup.clearLayers();
+            }
+            if (!playbackLayerGroup) {
+                playbackLayerGroup = L.layerGroup().addTo(map);
+            } else {
+                playbackLayerGroup.clearLayers();
+            }
+            routeSegments = [];
+
+            // Draw route segments with speed-based colors
+            for (let i = 0; i < points.length - 1; i++) {
+                const p1 = points[i];
+                const p2 = points[i + 1];
+                let speedKmh = 0;
+                if (typeof p1.speedMs === 'number' && !Number.isNaN(p1.speedMs)) {
+                    speedKmh = p1.speedMs * 3.6;
+                } else if (p1.speed !== null && p1.speed !== undefined) {
+                    const numericSpeed = Number(p1.speed);
+                    speedKmh = Number.isFinite(numericSpeed) ? numericSpeed : 0;
+                }
+
+                // Get color based on speed
+                const color = getSpeedColor(speedKmh);
+                const weight = getSpeedWidth(speedKmh);
+
+                // Base route line (always visible for context)
+                L.polyline(
+                    [[p1.lat, p1.lng], [p2.lat, p2.lng]],
+                    {
+                        color: '#d9d9d9',
+                        weight,
+                        opacity: 0.2,
+                        interactive: false
+                    }
+                ).addTo(routeLayerGroup);
+
+                // Playback-highlighted line (revealed during replay)
+                const playbackLine = L.polyline(
+                    [[p1.lat, p1.lng], [p1.lat, p1.lng]],
+                    {
+                        color: color,
+                        weight,
+                        opacity: 0,
+                        interactive: false
+                    }
+                ).addTo(playbackLayerGroup);
+
+                const startMs = Math.min(p1.timeMs || 0, p2.timeMs || 0);
+                const endMs = Math.max(p1.timeMs || 0, p2.timeMs || 0);
+                const bearing = computeBearing(p1.lat, p1.lng, p2.lat, p2.lng);
+                routeSegments.push({
+                    line: playbackLine,
+                    startMs,
+                    endMs,
+                    startLatLng: [p1.lat, p1.lng],
+                    endLatLng: [p2.lat, p2.lng],
+                    weight,
+                    bearing,
+                });
+            }
+            routeSegments.sort((a, b) => a.startMs - b.startMs);
+            playbackLayerGroup.eachLayer(layer => {
+                if (layer.bringToFront) {
+                    layer.bringToFront();
+                }
+            });
+
+            // Create a reference polyline for bounds (invisible)
+            const coordinates = points.map(p => [p.lat, p.lng]);
+            const boundsLine = L.polyline(coordinates, { opacity: 0 }).addTo(routeLayerGroup);
+            
+            // Fit map to route bounds
+            map.fitBounds(boundsLine.getBounds(), { padding: [50, 50] });
+
+            // Add start marker
+            L.marker(coordinates[0], {
+                icon: L.divIcon({
+                    className: 'gps-marker-icon start-marker',
+                    html: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" fill="#2563eb"/></svg>',
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 36]
+                })
+            }).addTo(routeLayerGroup).bindPopup('Start');
+
+            // Add end marker
+            L.marker(coordinates[coordinates.length - 1], {
+                icon: L.divIcon({
+                    className: 'gps-marker-icon end-marker',
+                    html: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" fill="#f97316"/></svg>',
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 36]
+                })
+            }).addTo(routeLayerGroup).bindPopup('End');
+
+            updateRoutePlayback(0);
+
+            if (streetViewEnabled && googleMapsKey) {
+                if (googleMapsReady && !googleMapsLoadFailed) {
+                    initStreetViewContainer().catch((error) =>
+                        console.warn('Street view initialization failed', error)
+                    );
+                } else if (googleMapsLoadFailed) {
+                    activateStreetViewFallback('Google Maps library unavailable. Showing static previews.');
+                    streetViewReady = true;
+                    pendingStreetViewInit = false;
+                    prefetchStreetViewImages().catch((error) =>
+                        console.warn('Street view prefetch failed', error)
+                    );
+                } else {
+                    pendingStreetViewInit = true;
+                }
+            }
+        }
+
+        function updateRoutePlayback(currentMs) {
+            if (!routeSegments.length) {
+                return;
+            }
+
+            for (const segment of routeSegments) {
+                const { line, startMs, endMs, startLatLng, endLatLng } = segment;
+                if (!line) {
+                    continue;
+                }
+
+                if (currentMs <= startMs) {
+                    line.setStyle({ opacity: 0 });
+                    line.setLatLngs([startLatLng, startLatLng]);
+                    continue;
+                }
+
+                if (currentMs >= endMs) {
+                    line.setStyle({ opacity: 0.85 });
+                    line.setLatLngs([startLatLng, endLatLng]);
+                    continue;
+                }
+
+                const [lat, lng] = interpolateSegment(currentMs, segment);
+
+                line.setStyle({ opacity: 0.85 });
+                line.setLatLngs([
+                    startLatLng,
+                    [lat, lng],
+                ]);
+            }
+        }
+
+        function interpolateSegment(currentMs, segment) {
+            const { startMs, endMs, startLatLng, endLatLng } = segment;
+            const duration = Math.max(1, endMs - startMs);
+            const ratio = Math.max(0, Math.min(1, (currentMs - startMs) / duration));
+            const lat = startLatLng[0] + (endLatLng[0] - startLatLng[0]) * ratio;
+            const lng = startLatLng[1] + (endLatLng[1] - startLatLng[1]) * ratio;
+            return [lat, lng];
+        }
+
+        function getSpeedSampleForTime(currentMs) {
+            if (!routeData || !Array.isArray(routeData.points) || !routeData.points.length) {
+                return null;
+            }
+            const points = routeData.points;
+            const lastIndex = points.length - 1;
+            const targetMs = Math.max(0, Number(currentMs) || 0);
+
+            playbackPointIndex = Math.max(0, Math.min(playbackPointIndex, lastIndex));
+
+            const currentIndexTime = points[playbackPointIndex].timeMs ?? 0;
+            if (targetMs >= currentIndexTime) {
+                while (
+                    playbackPointIndex < lastIndex &&
+                    targetMs >= (points[playbackPointIndex + 1].timeMs ?? Number.POSITIVE_INFINITY)
+                ) {
+                    playbackPointIndex += 1;
+                }
+            } else {
+                while (
+                    playbackPointIndex > 0 &&
+                    targetMs < (points[playbackPointIndex].timeMs ?? 0)
+                ) {
+                    playbackPointIndex -= 1;
+                }
+            }
+
+            const baseIndex = playbackPointIndex;
+            const basePoint = points[baseIndex];
+            const baseTime = basePoint.timeMs ?? 0;
+
+            if (baseIndex === lastIndex || targetMs <= baseTime) {
+                return {
+                    lat: basePoint.lat,
+                    lng: basePoint.lng,
+                    speedKmh: Number.isFinite(basePoint.speedKmh) ? basePoint.speedKmh : (basePoint.speedMs ?? 0) * 3.6,
+                    speedLimitKmh: basePoint.speedLimitKmh ?? null,
+                };
+            }
+
+            const nextPoint = points[baseIndex + 1];
+            if (!nextPoint) {
+                return {
+                    lat: basePoint.lat,
+                    lng: basePoint.lng,
+                    speedKmh: Number.isFinite(basePoint.speedKmh) ? basePoint.speedKmh : (basePoint.speedMs ?? 0) * 3.6,
+                    speedLimitKmh: basePoint.speedLimitKmh ?? null,
+                    speedLimitSource: basePoint.speedLimitSource ?? null,
+                };
+            }
+            const nextTime = nextPoint.timeMs ?? baseTime;
+            if (nextTime <= baseTime) {
+                return {
+                    lat: basePoint.lat,
+                    lng: basePoint.lng,
+                    speedKmh: Number.isFinite(basePoint.speedKmh) ? basePoint.speedKmh : (basePoint.speedMs ?? 0) * 3.6,
+                    speedLimitKmh: basePoint.speedLimitKmh ?? null,
+                    speedLimitSource: basePoint.speedLimitSource ?? null,
+                };
+            }
+
+            const span = nextTime - baseTime;
+            const ratio = Math.max(0, Math.min(1, (targetMs - baseTime) / span));
+            const startSpeedMs = basePoint.speedMs ?? 0;
+            const endSpeedMs = nextPoint.speedMs ?? startSpeedMs;
+            const interpolatedSpeedMs = startSpeedMs + (endSpeedMs - startSpeedMs) * ratio;
+
+            let speedLimit = basePoint.speedLimitKmh ?? null;
+            let speedLimitSource = basePoint.speedLimitSource ?? null;
+            const nextSpeedLimit = nextPoint.speedLimitKmh ?? null;
+            const nextSpeedLimitSource = nextPoint.speedLimitSource ?? null;
+            if (nextSpeedLimit !== null) {
+                if (speedLimit === null || ratio > 0.5) {
+                    speedLimit = nextSpeedLimit;
+                    speedLimitSource = nextSpeedLimitSource ?? speedLimitSource;
+                }
+            }
+
+            return {
+                lat: basePoint.lat + (nextPoint.lat - basePoint.lat) * ratio,
+                lng: basePoint.lng + (nextPoint.lng - basePoint.lng) * ratio,
+                speedKmh: Math.max(0, interpolatedSpeedMs * 3.6),
+                speedLimitKmh: speedLimit,
+                speedLimitSource,
+            };
+        }
+
+        function updateSpeedOverlay(currentMs) {
+            if (!speedOverlayEl || !speedOverlayCurrentEl || !speedOverlayLimitEl) {
+                return;
+            }
+            const sample = getSpeedSampleForTime(currentMs);
+            const speedValue = sample && Number.isFinite(sample.speedKmh) ? sample.speedKmh : null;
+            const limitValue = sample && Number.isFinite(sample.speedLimitKmh) ? sample.speedLimitKmh : null;
+            const limitSource = sample?.speedLimitSource ?? null;
+
+            speedOverlayCurrentEl.textContent = speedValue !== null
+                ? `${speedValue.toFixed(1)} km/h`
+                : '-- km/h';
+
+            speedOverlayLimitEl.classList.remove('limit-warning', 'limit-danger', 'manual-source', 'api-source');
+            if (limitValue !== null) {
+                speedOverlayLimitEl.textContent = `${Math.round(limitValue)} km/h`;
+                if (limitSource === 'manual') {
+                    speedOverlayLimitEl.classList.add('manual-source');
+                } else if (limitSource === 'api') {
+                    speedOverlayLimitEl.classList.add('api-source');
+                }
+                if (speedValue !== null) {
+                    const delta = speedValue - limitValue;
+                    if (delta >= 10) {
+                        speedOverlayLimitEl.classList.add('limit-danger');
+                    } else if (delta >= 3) {
+                        speedOverlayLimitEl.classList.add('limit-warning');
+                    }
+                }
+            } else {
+                speedOverlayLimitEl.textContent = '-- km/h';
+            }
+        }
+
+        function computeBearing(lat1, lng1, lat2, lng2) {
+            const toRad = (deg) => (deg * Math.PI) / 180;
+            const toDeg = (rad) => (rad * 180) / Math.PI;
+            const φ1 = toRad(lat1);
+            const φ2 = toRad(lat2);
+            const Δλ = toRad(lng2 - lng1);
+            const y = Math.sin(Δλ) * Math.cos(φ2);
+            const x =
+                Math.cos(φ1) * Math.sin(φ2) -
+                Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+            const θ = Math.atan2(y, x);
+            return (toDeg(θ) + 360) % 360;
+        }
+
+        function updateStreetViewMarkers() {
+            if (!streetViewEnabled || !googleMapsReady || !streetViewPanorama) {
+                return;
+            }
+
+            streetViewMarkers.forEach((marker) => {
+                if (!marker) return;
+                if (typeof marker.setMap === 'function') {
+                    marker.setMap(null);
+                }
+            });
+            streetViewMarkers = [];
+
+            const markersWithLocation = (reviewMarkers || []).filter(
+                (marker) =>
+                    marker &&
+                    marker.latitude !== undefined &&
+                    marker.longitude !== undefined &&
+                    !Number.isNaN(Number(marker.latitude)) &&
+                    !Number.isNaN(Number(marker.longitude))
+            );
+
+            if (!markersWithLocation.length) {
+                return;
+            }
+
+            markersWithLocation.forEach((markerData) => {
+                const position = {
+                    lat: Number(markerData.latitude),
+                    lng: Number(markerData.longitude),
+                };
+
+                const markerInstance = new google.maps.Marker({
+                    position,
+                    title: markerData.label || 'Key location',
+                    map: streetViewPanorama,
+                });
+                markerInstance.addListener('click', () => focusMarkerOnMap(markerData));
+                streetViewMarkers.push(markerInstance);
+            });
+        }
+
+        async function initStreetViewContainer() {
+            if (!streetViewEnabled) {
+                return;
+            }
+            const wrapper = document.getElementById('streetViewWrapper');
+            if (!wrapper) {
+                return;
+            }
+
+            if (!googleMapsKey) {
+                wrapper.classList.add('disabled');
+                return;
+            }
+
+            wrapper.classList.remove('disabled');
+
+            if (!googleMapsReady || typeof google === 'undefined' || !google.maps || !google.maps.StreetViewPanorama) {
+                pendingStreetViewInit = true;
+                const statusEl = document.getElementById('streetViewStatus');
+                if (statusEl) {
+                    statusEl.classList.toggle('error', googleMapsLoadFailed);
+                    statusEl.textContent = googleMapsLoadFailed
+                        ? 'Google Maps library failed to load. Showing static previews.'
+                        : 'Loading Google Maps Street View…';
+                }
+                if (googleMapsLoadFailed) {
+                    activateStreetViewFallback('Google Maps library unavailable. Showing static previews.');
+                    streetViewReady = true;
+                    await prefetchStreetViewImages();
+                } else {
+                    activateStreetViewFallback('Loading Google Maps Street View…');
+                    streetViewReady = true;
+                    await prefetchStreetViewImages();
+                }
+                return;
+            }
+            deactivateStreetViewFallback();
+
+            if (!streetViewService) {
+                streetViewService = new google.maps.StreetViewService();
+            }
+
+            if (!streetViewPanorama) {
+                const player = document.getElementById('streetViewPlayer');
+                if (!player) {
+                    return;
+                }
+                streetViewPanorama = new google.maps.StreetViewPanorama(player, {
+                    addressControl: false,
+                    zoomControl: true,
+                    linksControl: false,
+                    panControl: false,
+                    fullscreenControl: false,
+                    motionTracking: false,
+                    showRoadLabels: false,
+                });
+            }
+
+            streetViewPanorama.setVisible(true);
+
+            streetViewReady = true;
+            updateStreetViewMarkers();
+            await prefetchStreetViewImages();
+        }
+
+        async function prefetchStreetViewImages() {
+            if (!streetViewEnabled) {
+                streetViewLoading = false;
+                return;
+            }
+            if (!routeSegments.length) {
+                return;
+            }
+            if (streetViewLoading) {
+                return;
+            }
+
+            streetViewLoading = true;
+            streetViewFrames = [];
+            lastStreetViewImageId = null;
+
+            setStreetViewStatus(
+                googleMapsReady
+                    ? 'Fetching Google Street View imagery…'
+                    : 'Preparing static Street View previews…'
+            );
+
+            const sampledSegments = [...routeSegments];
+            const interval = Math.max(1, Math.floor(sampledSegments.length / 25));
+            const frameIndices = new Set();
+            for (let i = 0; i < sampledSegments.length; i += interval) {
+                frameIndices.add(i);
+            }
+            if (sampledSegments.length) {
+                frameIndices.add(sampledSegments.length - 1);
+            }
+
+            const frames = [];
+
+            for (const index of Array.from(frameIndices).sort((a, b) => a - b)) {
+                const segment = sampledSegments[index];
+                if (!segment) continue;
+                const midLat = (segment.startLatLng[0] + segment.endLatLng[0]) / 2;
+                const midLng = (segment.startLatLng[1] + segment.endLatLng[1]) / 2;
+                const fallbackHeading = segment.bearing ?? computeBearing(
+                    segment.startLatLng[0],
+                    segment.startLatLng[1],
+                    segment.endLatLng[0],
+                    segment.endLatLng[1]
+                );
+
+                let frame = null;
+                const midMs = Number.isFinite(segment.startMs) && Number.isFinite(segment.endMs)
+                    ? segment.startMs + (segment.endMs - segment.startMs) / 2
+                    : (Number.isFinite(segment.startMs)
+                        ? segment.startMs
+                        : (Number.isFinite(segment.endMs) ? segment.endMs : 0));
+
+                if (googleMapsReady && streetViewService) {
+                    const panorama = await fetchPanoramaForLocation(midLat, midLng, fallbackHeading);
+                    if (panorama) {
+                        frame = {
+                            startMs: segment.startMs,
+                            endMs: segment.endMs,
+                            panoId: panorama.panoId,
+                            lat: panorama.lat,
+                            lng: panorama.lng,
+                            heading: panorama.heading,
+                            thumbUrl: buildStaticStreetViewUrl({
+                                panoId: panorama.panoId,
+                                heading: panorama.heading,
+                            }),
+                            midMs,
+                        };
+                    }
+                }
+
+                if (!frame) {
+                    frame = {
+                        startMs: segment.startMs,
+                        endMs: segment.endMs,
+                        panoId: null,
+                        lat: midLat,
+                        lng: midLng,
+                        heading: fallbackHeading,
+                        thumbUrl: buildStaticStreetViewUrl({
+                            lat: midLat,
+                            lng: midLng,
+                            heading: fallbackHeading,
+                        }),
+                        midMs,
+                    };
+                }
+
+                frames.push(frame);
+            }
+
+            frames.sort((a, b) => a.startMs - b.startMs);
+            streetViewFrames = frames;
+
+            if (googleMapsReady && streetViewService) {
+                setStreetViewStatus(
+                    streetViewFrames.length
+                        ? 'Street imagery via Google Street View'
+                        : 'No Google Street View coverage for this route.'
+                );
+            } else {
+                setStreetViewStatus(
+                    streetViewFrames.length
+                        ? 'Static Street View previews'
+                        : 'No Street View previews for this route.'
+                );
+            }
+
+            if (streetViewFallbackActive && streetViewFrames.length) {
+                updateStreetViewFallback(streetViewFrames[0]);
+            } else if (streetViewFallbackActive && streetViewFallbackMeta && !streetViewFrames.length) {
+                streetViewFallbackMeta.textContent = 'No Street View previews for this route.';
+            }
+
+            if (streetViewPanorama && googleMapsReady && streetViewFrames.length && !streetViewFallbackActive) {
+                updateStreetView(currentTime);
+            }
+
+            streetViewLoading = false;
+        }
+
+        function buildStaticStreetViewUrl({ panoId, lat, lng, heading }) {
+            if (!googleMapsKey) {
+                return null;
+            }
+            const params = new URLSearchParams({
+                size: '640x360',
+                pitch: '0',
+                key: googleMapsKey,
+            });
+            if (heading !== undefined && heading !== null) {
+                params.set('heading', String(Math.round((heading + 360) % 360)));
+            }
+            if (panoId) {
+                params.set('pano', panoId);
+            } else if (lat !== undefined && lng !== undefined) {
+                params.set('location', `${lat},${lng}`);
+            } else {
+                return null;
+            }
+            return `https://maps.googleapis.com/maps/api/streetview?${params.toString()}`;
+        }
+
+        async function fetchPanoramaForLocation(lat, lng, fallbackHeading) {
+            const cacheKey = `${lat.toFixed(5)},${lng.toFixed(5)}`;
+            if (streetViewCache.has(cacheKey)) {
+                return streetViewCache.get(cacheKey);
+            }
+
+            if (!streetViewService) {
+                return null;
+            }
+
+            const searchRadii = [30, 60, 120, 240, 400];
+            let panoramaData = null;
+
+            for (const radius of searchRadii) {
+                const result = await new Promise((resolve) => {
+                    const request = {
+                        location: { lat, lng },
+                        radius,
+                    };
+                    if (google.maps.StreetViewSource && google.maps.StreetViewSource.OUTDOOR) {
+                        request.source = google.maps.StreetViewSource.OUTDOOR;
+                    }
+                    streetViewService.getPanorama(request, (data, status) => {
+                        if (status === google.maps.StreetViewStatus.OK) {
+                            resolve(data);
+                        } else {
+                            resolve(null);
+                        }
+                    });
+                });
+
+                if (result) {
+                    panoramaData = result;
+                    break;
+                }
+            }
+
+            if (!panoramaData) {
+                streetViewCache.set(cacheKey, null);
+                return null;
+            }
+
+            const panoId = panoramaData.location?.pano || null;
+            const latLng = panoramaData.location?.latLng;
+            const heading = panoramaData.tiles?.centerHeading ?? fallbackHeading ?? 0;
+            const panorama = {
+                panoId,
+                lat: latLng ? latLng.lat() : lat,
+                lng: latLng ? latLng.lng() : lng,
+                heading,
+            };
+
+            streetViewCache.set(cacheKey, panorama);
+            return panorama;
+        }
+
+        function getFrameReferenceMs(frame) {
+            if (!frame) {
+                return 0;
+            }
+            if (typeof frame.midMs === 'number' && !Number.isNaN(frame.midMs)) {
+                return frame.midMs;
+            }
+            const hasStart = typeof frame.startMs === 'number' && !Number.isNaN(frame.startMs);
+            const hasEnd = typeof frame.endMs === 'number' && !Number.isNaN(frame.endMs);
+            if (hasStart && hasEnd) {
+                return frame.startMs + (frame.endMs - frame.startMs) / 2;
+            }
+            if (hasStart) {
+                return frame.startMs;
+            }
+            if (hasEnd) {
+                return frame.endMs;
+            }
+            return 0;
+        }
+
+        function getFrameForTime(currentMs) {
+            if (!streetViewFrames.length) {
+                return null;
+            }
+            const targetMs = Math.max(0, currentMs || 0);
+            let bestFrame = streetViewFrames[0];
+            let bestDistance = Math.abs(targetMs - getFrameReferenceMs(bestFrame));
+
+            for (let i = 1; i < streetViewFrames.length; i++) {
+                const frame = streetViewFrames[i];
+                const referenceMs = getFrameReferenceMs(frame);
+                const distance = Math.abs(targetMs - referenceMs);
+                if (distance < bestDistance) {
+                    bestDistance = distance;
+                    bestFrame = frame;
+                }
+            }
+            return bestFrame;
+        }
+
+        function updateStreetViewFallback(frame) {
+            if (!streetViewFallbackActive || !frame) {
+                return;
+            }
+            if (streetViewFallbackImage) {
+                const previewUrl = frame.thumbUrl || buildStaticStreetViewUrl({
+                    panoId: frame.panoId,
+                    lat: frame.lat,
+                    lng: frame.lng,
+                    heading: frame.heading,
+                });
+                if (previewUrl) {
+                    streetViewFallbackImage.src = previewUrl;
+                    streetViewFallbackImage.style.display = 'block';
+                } else {
+                    streetViewFallbackImage.removeAttribute('src');
+                    streetViewFallbackImage.style.display = 'none';
+                }
+            }
+            if (streetViewFallbackMeta) {
+                const compass = frame.heading !== null && frame.heading !== undefined
+                    ? `${Math.round(frame.heading)}°`
+                    : '—';
+                const index = Math.max(0, streetViewFrames.indexOf(frame));
+                streetViewFallbackMeta.textContent = `Frame ${index + 1}/${streetViewFrames.length} · Heading ${compass}`;
+            }
+        }
+
+        function updateStreetView(currentMs) {
+            if (!streetViewEnabled || !streetViewFrames.length) {
+                return;
+            }
+
+            const frame = getFrameForTime(currentMs);
+            if (!frame) {
+                return;
+            }
+
+            if (streetViewFallbackActive) {
+                if (frame.panoId) {
+                    deactivateStreetViewFallback();
+                } else {
+                    updateStreetViewFallback(frame);
+                    return;
+                }
+            }
+
+            if (!frame.panoId) {
+                activateStreetViewFallback('Limited Street View coverage. Showing static previews.');
+                updateStreetViewFallback(frame);
+                return;
+            }
+
+            if (!streetViewPanorama) {
+                return;
+            }
+
+            if (frame.panoId === lastStreetViewImageId) {
+                streetViewPanorama.setPosition({ lat: frame.lat, lng: frame.lng });
+                streetViewPanorama.setPov({
+                    heading: frame.heading ?? 0,
+                    pitch: 0,
+                    zoom: 1,
+                });
+                return;
+            }
+
+            lastStreetViewImageId = frame.panoId;
+            if (frame.panoId) {
+                streetViewPanorama.setPano(frame.panoId);
+            }
+            streetViewPanorama.setPosition({ lat: frame.lat, lng: frame.lng });
+            streetViewPanorama.setPov({
+                heading: frame.heading ?? 0,
+                pitch: 0,
+                zoom: 1,
+            });
+        }
+
+
+        function getReviewMarkerIcon(type = 'general') {
+            const iconKey = type || 'general';
+            if (!reviewMarkerIcons[iconKey]) {
+                reviewMarkerIcons[iconKey] = L.icon({
+                    iconUrl: '/static/images/pushpin-red.svg',
+                    iconRetinaUrl: '/static/images/pushpin-red.svg',
+                    iconSize: [28, 32],
+                    iconAnchor: [12, 30],
+                    popupAnchor: [0, -26],
+                    className: 'review-marker-icon',
+                });
+            }
+            return reviewMarkerIcons[iconKey];
+        }
+
+        function initializeMarkerControls() {
+            if (markerControlsInitialized) return;
+            markerControlsInitialized = true;
+
+            const addBtn = document.getElementById('addMarkerBtnFloating');
+            if (addBtn) {
+                addBtn.addEventListener('click', () => {
+                    setMarkerPlacementMode(!isAddingMarker);
+                });
+            }
+
+            const markerForm = document.getElementById('markerForm');
+            if (markerForm) {
+                markerForm.addEventListener('submit', submitMarkerForm);
+            }
+        }
+
+        function setMarkerPlacementMode(active) {
+            isAddingMarker = active;
+            const addBtn = document.getElementById('addMarkerBtnFloating');
+            if (addBtn) {
+                addBtn.classList.toggle('active', active);
+                addBtn.textContent = active ? 'Click on map…' : '📌 Add Key Location';
+            }
+            if (active) {
+                pendingMarkerLatLng = null;
+            }
+        }
+
+        function handleMapClick(event) {
+            if (speedLimitModeEnabled) {
+                beginManualSpeedLimit(event.latlng);
+                return;
+            }
+            if (!isAddingMarker) {
+                return;
+            }
+            pendingMarkerLatLng = event.latlng;
+            setMarkerPlacementMode(false);
+            openMarkerModal({ lat: event.latlng.lat, lng: event.latlng.lng });
+        }
+
+        function openMarkerModal(position, marker = null) {
+            const backdrop = document.getElementById('markerModal');
+            if (!backdrop) return;
+
+            initializeMarkerControls();
+
+            const title = document.getElementById('markerModalTitle');
+            const markerIdField = document.getElementById('markerIdField');
+            const latField = document.getElementById('markerLatField');
+            const lngField = document.getElementById('markerLngField');
+            const timestampField = document.getElementById('markerTimestampField');
+            const labelField = document.getElementById('markerLabelField');
+            const typeField = document.getElementById('markerTypeField');
+            const tagsField = document.getElementById('markerTagsField');
+            const descriptionField = document.getElementById('markerDescriptionField');
+            const metaInfo = document.getElementById('markerMetaInfo');
+
+            let relativeMs = marker ? marker.relativeMs : null;
+            let timestampIso = marker ? marker.timestamp : null;
+            const targetLat = marker ? marker.latitude : position?.lat;
+            const targetLng = marker ? marker.longitude : position?.lng;
+
+            if ((!timestampIso || relativeMs === null) && targetLat !== undefined && targetLng !== undefined && routeData?.findNearestPointByLocation) {
+                const nearest = routeData.findNearestPointByLocation(targetLat, targetLng);
+                if (nearest) {
+                    relativeMs = nearest.point.timeMs;
+                    timestampIso = new Date(startTimestampMs + nearest.point.timeMs).toISOString();
+                }
+            }
+
+            markerIdField.value = marker ? marker.id : '';
+            latField.value = targetLat ?? '';
+            lngField.value = targetLng ?? '';
+            timestampField.value = timestampIso ?? '';
+            labelField.value = marker?.label || '';
+            const markerTypeValue = marker?.type && MARKER_TYPE_OPTIONS.has(marker.type)
+                ? marker.type
+                : 'general';
+            typeField.value = markerTypeValue;
+            tagsField.value = marker?.tags?.join(', ') || '';
+            descriptionField.value = marker?.description || '';
+
+            const coordText = targetLat !== undefined && targetLng !== undefined
+                ? `Lat ${targetLat.toFixed(6)}, Lng ${targetLng.toFixed(6)}`
+                : 'No GPS coordinates';
+            const timeText = typeof relativeMs === 'number'
+                ? `Playback time ${formatTimestamp(relativeMs)}`
+                : 'No time reference';
+            metaInfo.textContent = `${coordText} • ${timeText}`;
+
+            title.textContent = marker ? 'Edit key location' : 'Add key location';
+
+            backdrop.style.display = 'flex';
+        }
+
+        function closeMarkerModal() {
+            const backdrop = document.getElementById('markerModal');
+            if (backdrop) {
+                backdrop.style.display = 'none';
+            }
+            setMarkerPlacementMode(false);
+        }
+
+        function buildMarkerPayloadFromForm() {
+            const lat = parseFloat(document.getElementById('markerLatField').value);
+            const lng = parseFloat(document.getElementById('markerLngField').value);
+            const timestamp = document.getElementById('markerTimestampField').value || null;
+            const label = document.getElementById('markerLabelField').value.trim();
+            const type = document.getElementById('markerTypeField').value;
+            const description = document.getElementById('markerDescriptionField').value.trim();
+            const tagsInput = document.getElementById('markerTagsField').value;
+            const tags = tagsInput
+                ? tagsInput.split(',').map(tag => tag.trim()).filter(Boolean)
+                : [];
+
+            return { latitude: lat, longitude: lng, timestamp, label, type, description, tags };
+        }
+
+        async function submitMarkerForm(event) {
+            event.preventDefault();
+            const markerIdField = document.getElementById('markerIdField');
+            const payload = buildMarkerPayloadFromForm();
+
+            if (Number.isNaN(payload.latitude) || Number.isNaN(payload.longitude)) {
+                alert('Latitude and longitude are required. Click on the map to choose a location.');
+                return;
+            }
+
+            const markerId = markerIdField.value;
+            const endpoint = markerId
+                ? `/backend/api/mobile/routes/${ROUTE_ID}/markers/${markerId}`
+                : `/backend/api/mobile/routes/${ROUTE_ID}/markers`;
+            const method = markerId ? 'PATCH' : 'POST';
+
+            try {
+                const response = await fetch(endpoint, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({}));
+                    throw new Error(error.error || `Failed to save marker (${response.status})`);
+                }
+
+                closeMarkerModal();
+                await refreshRouteData(markerId ? 'Updating marker…' : 'Saving marker…');
+            } catch (err) {
+                console.error('Failed to save marker', err);
+                alert(err.message || 'Failed to save marker');
+            }
+        }
+
+        async function deleteMarker(markerId) {
+            if (!markerId) return;
+            if (!confirm('Remove this marker from the session?')) {
+                return;
+            }
+            try {
+                const response = await fetch(`/backend/api/mobile/routes/${ROUTE_ID}/markers/${markerId}`, {
+                    method: 'DELETE',
+                });
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({}));
+                    throw new Error(error.error || `Failed to delete marker (${response.status})`);
+                }
+                await refreshRouteData('Removing marker…');
+            } catch (err) {
+                console.error('Failed to delete marker', err);
+                alert(err.message || 'Failed to delete marker');
+            }
+        }
+
+        function renderReviewMarkersOnMap() {
+            if (!reviewMarkersLayer) return;
+            reviewMarkersLayer.clearLayers();
+
+            reviewMarkers.forEach((marker) => {
+                if (marker.latitude === undefined || marker.longitude === undefined) return;
+                const leafletMarker = L.marker([marker.latitude, marker.longitude], {
+                    icon: getReviewMarkerIcon(marker.type),
+                }).addTo(reviewMarkersLayer);
+
+                const description = marker.description ? `<br/>${marker.description}` : '';
+                leafletMarker.bindPopup(`<strong>${marker.label}</strong>${description}`);
+                leafletMarker.on('click', () => {
+                    if (typeof marker.relativeMs === 'number') {
+                        jumpToTime(marker.relativeMs);
+                    }
+                });
+            });
+
+            updateStreetViewMarkers();
+        }
+
+        function renderMarkerList() {
+            const container = document.getElementById('markerList');
+            initializeMarkerControls();
+            if (!container) return;
+
+            setMarkerPlacementMode(false);
+
+            if (!reviewMarkers.length) {
+                container.innerHTML = `<div class="marker-empty">No locations flagged yet. Add markers to highlight exam hotspots.</div>`;
+                return;
+            }
+
+            container.innerHTML = '';
+            reviewMarkers.forEach((marker) => {
+                const card = document.createElement('div');
+                card.className = 'marker-card';
+
+                const timeLabel = typeof marker.relativeMs === 'number'
+                    ? formatTimestamp(marker.relativeMs)
+                    : '—';
+                const timestampDisplay = marker.timestamp
+                    ? new Date(marker.timestamp).toLocaleString('de-DE')
+                    : 'No timestamp';
+
+                const tagsHtml = marker.tags?.length
+                    ? marker.tags.map(tag => `<span class="marker-tag">${escapeHtml(tag)}</span>`).join(' ')
+                    : '';
+
+                card.innerHTML = `
+                    <h4>${escapeHtml(marker.label)}</h4>
+                    <div class="marker-meta">${timestampDisplay} • ${timeLabel}</div>
+                    ${marker.description ? `<div class="marker-description">${escapeHtml(marker.description)}</div>` : ''}
+                    ${tagsHtml ? `<div class="marker-tags">${tagsHtml}</div>` : ''}
+                    <div class="marker-actions">
+                        <button class="focus-btn">Focus</button>
+                        <button class="focus-btn edit-btn">Edit</button>
+                        <button class="delete-btn">Delete</button>
+                    </div>
+                `;
+
+                const [focusBtn, editBtn, deleteBtn] = card.querySelectorAll('button');
+                focusBtn.addEventListener('click', () => {
+                    focusMarkerOnMap(marker);
+                });
+                editBtn.addEventListener('click', () => {
+                    openMarkerModal({ lat: marker.latitude, lng: marker.longitude }, marker);
+                });
+                deleteBtn.addEventListener('click', () => deleteMarker(marker.id));
+
+                container.appendChild(card);
+            });
+        }
+
+        function focusMarkerOnMap(marker) {
+            if (!marker) return;
+            if (marker.latitude !== undefined && marker.longitude !== undefined) {
+                map.setView([marker.latitude, marker.longitude], 16, { animate: true });
+            }
+            if (typeof marker.relativeMs === 'number') {
+                jumpToTime(marker.relativeMs);
+            }
+        }
+
+        function getVoiceTagOptionsHtml(selectedTags = []) {
+            const unique = new Set(VOICE_TAG_SUGGESTIONS);
+            (routeData.voiceNotes || []).forEach(note => {
+                (note.tags || []).forEach(tag => unique.add(tag));
+            });
+            return [...unique].sort().map(tag => {
+                const isSelected = selectedTags && selectedTags.includes(tag);
+                return `<option value="${escapeHtml(tag)}" ${isSelected ? 'selected' : ''}>${escapeHtml(tag)}</option>`;
+            }).join('');
+        }
+
+        async function saveVoiceNoteTags(noteId, tagsInput) {
+            const tags = Array.isArray(tagsInput)
+                ? tagsInput
+                : (tagsInput
+                    ? tagsInput.split(',').map(tag => tag.trim()).filter(Boolean)
+                    : []);
+            try {
+                const response = await fetch(`/backend/api/mobile/routes/${ROUTE_ID}/audio/${encodeURIComponent(noteId)}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ tags }),
+                });
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({}));
+                    throw new Error(error.error || `Failed to update voice note (${response.status})`);
+                }
+                await refreshRouteData('Updating voice note…');
+            } catch (err) {
+                console.error('Failed to update tags', err);
+                alert(err.message || 'Failed to update tags');
+            }
+        }
+
+        function toggleTagEditor(noteCard, show) {
+            const editor = noteCard.querySelector('.note-tag-editor');
+            if (!editor) return;
+            editor.style.display = show ? 'flex' : 'none';
+            if (show) {
+                const select = editor.querySelector('select');
+                if (select) {
+                    select.focus();
+                }
+            }
+        }
+
+        const percentOfTime = (value, total) => {
+            if (!total) return 0;
+            return Math.max(0, Math.min(100, (value / total) * 100));
+        };
+
+        function renderTimelineEvents() {
+            const container = document.getElementById('timelineEvents');
+            if (!container) return;
+
+            const totalMs = routeData.totalDurationMs || totalDurationSeconds * 1000;
+            if (!totalMs || !Number.isFinite(totalMs) || totalMs <= 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            container.innerHTML = '';
+
+            reviewMarkers.forEach((marker) => {
+                if (typeof marker.relativeMs !== 'number') return;
+                const markerEl = document.createElement('div');
+                markerEl.className = 'timeline-event marker';
+                markerEl.style.left = `${percentOfTime(marker.relativeMs, totalMs)}%`;
+                markerEl.title = marker.label || 'Flagged location';
+                markerEl.dataset.markerId = marker.id;
+                markerEl.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    focusMarkerOnMap(marker);
+                });
+                container.appendChild(markerEl);
+            });
+
+            (routeData.voiceNotes || []).forEach((note, index) => {
+                if (typeof note.relativeMs !== 'number') return;
+                const noteEl = document.createElement('div');
+                noteEl.className = 'timeline-event voice';
+                noteEl.style.left = `${percentOfTime(note.relativeMs, totalMs)}%`;
+                noteEl.title = `Voice note at ${formatTimestamp(note.relativeMs)}`;
+                noteEl.dataset.noteIndex = String(index);
+                noteEl.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    jumpToNote(index);
+                });
+                container.appendChild(noteEl);
+            });
+
+            updateTimelineActiveState();
+        }
+
+        function updateTimelineActiveState() {
+            const voiceNoteElements = document.querySelectorAll('.timeline-event.voice');
+            const notes = routeData.voiceNotes || [];
+            voiceNoteElements.forEach((el) => {
+                const index = Number(el.dataset.noteIndex);
+                const note = notes[index];
+                if (!note) return;
+                if (Math.abs((note.relativeMs || 0) - currentTime) < 1500) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
+            });
+        }
+
+        // Display voice notes
+        function displayVoiceNotes() {
+            const allNotes = routeData.voiceNotes || [];
+            const container = document.getElementById('voiceNoteList');
+            const totalNotes = allNotes.length;
+            const visibleEntries = allNotes.map((note, index) => ({ note, index }));
+
+            const visibleCount = visibleEntries.length;
+            const noteCountLabel = document.getElementById('noteCount');
+            if (noteCountLabel) {
+                noteCountLabel.textContent = `(${totalNotes})`;
+            }
+
+            voiceMarkers.forEach(marker => map.removeLayer(marker));
+            voiceMarkers = [];
+
+            if (visibleCount === 0) {
+                container.innerHTML = `
+                    <div class="empty-notes">
+                        <div class="empty-notes-icon">🎵</div>
+                        <p>No voice notes in this route</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+
+            visibleEntries.forEach(({ note, index }, visibleIndex) => {
+                if (note.location && note.location.lat && note.location.lng) {
+                    const marker = L.marker([note.location.lat, note.location.lng], {
+                        icon: L.divIcon({
+                            className: 'voice-marker',
+                            html: `${visibleIndex + 1}`,
+                            iconSize: [30, 30]
+                        })
+                    }).addTo(map);
+
+                    marker.noteId = note.id;
+                    voiceMarkers.push(marker);
+                    marker.on('click', () => {
+                        jumpToNote(index);
+                    });
+                }
+
+                const noteCard = document.createElement('div');
+                noteCard.className = 'voice-note-card';
+                noteCard.dataset.noteId = note.id;
+                noteCard.dataset.noteIndex = index;
+
+                const timeStr = formatTimestamp(note.relativeMs || 0);
+                const locationStr = (note.location && note.location.lat && note.location.lng)
+                    ? `📍 ${note.location.lat.toFixed(6)}, ${note.location.lng.toFixed(6)}`
+                    : '📍 No GPS location';
+                const durationStr = note.durationMs ? `⏱️ ${formatTimestamp(note.durationMs)}` : '';
+                const tagsHtml = note.tags && note.tags.length
+                    ? note.tags.map(tag => `<span class="note-tag">${escapeHtml(tag)}</span>`).join('')
+                    : '<span class="note-tag-empty">No tags yet</span>';
+                const labelPrefix = note.label ? `<strong>${escapeHtml(note.label)}</strong> • ` : '';
+
+                noteCard.innerHTML = `
+                    <div class="note-header">
+                        <div class="note-time">${labelPrefix}🎤 Note #${visibleIndex + 1} – ${timeStr}</div>
+                        <div class="note-actions">
+                            <button type="button" class="note-action-btn" data-action="jump">Jump</button>
+                            <button type="button" class="note-action-btn" data-action="play" ${note.audioUrl ? '' : 'disabled'}>▶️</button>
+                        </div>
+                    </div>
+                    <div class="note-location">${locationStr}</div>
+                    ${durationStr ? `<div class="note-duration">${durationStr}</div>` : ''}
+                    <div class="note-tags">
+                        ${tagsHtml}
+                        <button type="button" class="note-tag-edit-btn" data-action="edit-tags">✏️ Tag</button>
+                    </div>
+                    <div class="note-tag-editor" data-editor>
+                        <select data-tag-select multiple size="4">
+                            ${getVoiceTagOptionsHtml(note.tags)}
+                        </select>
+                        <div class="editor-actions">
+                            <button type="button" class="save-btn" data-action="save-tags">Save</button>
+                            <button type="button" class="cancel-btn" data-action="cancel-tags">Cancel</button>
+                        </div>
+                    </div>
+                    ${note.transcript ? `<div class="note-transcript">📝 ${escapeHtml(note.transcript)}</div>` : ''}
+                `;
+
+                noteCard.addEventListener('click', (event) => {
+                    const action = event.target.getAttribute('data-action');
+                    if (action === 'jump') {
+                        event.stopPropagation();
+                        jumpToNote(index);
+                        return;
+                    }
+                    if (action === 'play') {
+                        event.stopPropagation();
+                        playNote(note.id);
+                        return;
+                    }
+                    if (action === 'edit-tags') {
+                        event.stopPropagation();
+                        toggleTagEditor(noteCard, true);
+                        return;
+                    }
+                    if (action === 'save-tags') {
+                        event.stopPropagation();
+                        const select = noteCard.querySelector('.note-tag-editor select');
+                        const values = Array.from(select?.selectedOptions || []).map(option => option.value);
+                        toggleTagEditor(noteCard, false);
+                        saveVoiceNoteTags(note.id, values);
+                        return;
+                    }
+                    if (action === 'cancel-tags') {
+                        event.stopPropagation();
+                        toggleTagEditor(noteCard, false);
+                        return;
+                    }
+                    const editor = noteCard.querySelector('.note-tag-editor');
+                    if (editor && editor.style.display === 'flex') {
+                        return;
+                    }
+                    jumpToNote(index);
+                });
+
+                container.appendChild(noteCard);
+            });
+
+            updateTimelineActiveState();
+        }
+
+        // Format timestamp
+        function formatTimestamp(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+
+            if (hours > 0) {
+                return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            }
+            return `${minutes}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        // Play voice note
+        window.playNote = function(noteId) {
+            const note = (routeData.voiceNotes || []).find(n => n.id === noteId);
+            if (!note || !note.audioUrl) return;
+
+            const audio = new Audio(note.audioUrl);
+            audio.play().catch(error => {
+                console.error('Error playing audio:', error);
+                alert('Failed to play voice note');
+            });
+        };
+
+        // Jump to specific note
+        window.jumpToNote = function(noteIndex) {
+            const voiceNotes = routeData.voiceNotes || [];
+            if (noteIndex >= voiceNotes.length) return;
+
+            const note = voiceNotes[noteIndex];
+            jumpToTime(note.relativeMs || 0);
+
+            // Highlight note card
+            document.querySelectorAll('.voice-note-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            document.querySelector(`[data-note-index="${noteIndex}"]`)?.classList.add('active');
+
+            // Pan to location
+            if (note.location && note.location.lat && note.location.lng) {
+                map.setView([note.location.lat, note.location.lng], 16, { animate: true });
+            }
+        };
+
+        // Initialize playback controls
+        function initializePlayback() {
+            if (playbackControlsInitialized) {
+                updatePlayback();
+                return;
+            }
+            playbackControlsInitialized = true;
+            // Play/Pause button
+            document.getElementById('playPauseBtn').addEventListener('click', togglePlayPause);
+
+            // Skip buttons
+            document.getElementById('skipBackBtn').addEventListener('click', () => jumpToPreviousNote());
+            document.getElementById('skipForwardBtn').addEventListener('click', () => jumpToNextNote());
+
+            // Rewind/Forward buttons
+            document.getElementById('rewindBtn').addEventListener('click', () => skip(-10000)); // -10 seconds
+            document.getElementById('forwardBtn').addEventListener('click', () => skip(10000)); // +10 seconds
+
+            // Speed buttons
+            document.querySelectorAll('.speed-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    playbackSpeed = parseFloat(btn.dataset.speed);
+                });
+            });
+
+            // Progress bar
+            document.getElementById('progressContainer').addEventListener('click', (e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const percent = (e.clientX - rect.left) / rect.width;
+                const totalDuration = Math.max(1, totalDurationSeconds * 1000);
+                currentTime = totalDuration * percent;
+                updatePlayback();
+            });
+        }
+
+        // Toggle play/pause
+        function togglePlayPause() {
+            isPlaying = !isPlaying;
+            const btn = document.getElementById('playPauseBtn');
+            btn.textContent = isPlaying ? '⏸️' : '▶️';
+
+            if (isPlaying) {
+                startPlayback();
+            } else {
+                stopPlayback();
+            }
+        }
+
+        // Start playback
+        function startPlayback() {
+            if (!routeData.points.length) {
+                return;
+            }
+            const totalDuration = Math.max(1, routeData.totalDurationMs || totalDurationSeconds * 1000);
+            const hasSegments = routeSegments.length > 0;
+            const highlightStartMs = hasSegments ? routeSegments[0].startMs : 0;
+            const highlightEndMs = hasSegments ? routeSegments[routeSegments.length - 1].endMs : totalDuration;
+
+            if (currentTime >= totalDuration) {
+                currentTime = 0;
+            }
+
+            if (hasSegments) {
+                const isReplay = currentTime <= highlightStartMs || currentTime >= highlightEndMs;
+                if (isReplay) {
+                    currentTime = highlightStartMs;
+                    updateRoutePlayback(0);
+                    updateStreetView(0);
+                } else {
+                    updateRoutePlayback(currentTime);
+                    updateStreetView(currentTime);
+                }
+            }
+            startTimestamp = Date.now() - currentTime;
+            animatePlayback();
+        }
+
+        // Stop playback
+        function stopPlayback() {
+            if (animationFrame) {
+                cancelAnimationFrame(animationFrame);
+                animationFrame = null;
+            }
+        }
+
+        // Animate playback
+        function animatePlayback() {
+            if (!isPlaying) return;
+
+            currentTime = (Date.now() - startTimestamp) * playbackSpeed;
+            const totalDuration = Math.max(1, routeData.totalDurationMs || totalDurationSeconds * 1000);
+
+            if (currentTime >= totalDuration) {
+                currentTime = totalDuration;
+                isPlaying = false;
+                document.getElementById('playPauseBtn').textContent = '▶️';
+                return;
+            }
+
+            updatePlayback();
+            animationFrame = requestAnimationFrame(animatePlayback);
+        }
+
+        function jumpToTime(targetMs) {
+            const totalDuration = Math.max(1, routeData.totalDurationMs || totalDurationSeconds * 1000);
+            currentTime = Math.max(0, Math.min(targetMs, totalDuration));
+            updatePlayback();
+        }
+
+        // Update playback position
+        function updatePlayback() {
+            const totalDuration = Math.max(1, totalDurationSeconds * 1000);
+            currentTime = Math.max(0, Math.min(currentTime, totalDuration));
+            const progress = (currentTime / totalDuration) * 100;
+
+            // Update progress bar
+            document.getElementById('progressBar').style.width = `${progress}%`;
+            document.getElementById('currentTime').textContent = formatTimestamp(currentTime);
+
+            updateRoutePlayback(currentTime);
+            updateStreetView(currentTime);
+            updateSpeedOverlay(currentTime);
+
+            // Check for voice notes at current time
+            checkVoiceNotesAtTime(currentTime);
+            updateTimelineActiveState();
+        }
+
+        // Check and highlight active voice notes
+        function checkVoiceNotesAtTime(time) {
+            const voiceNotes = routeData.voiceNotes || [];
+            voiceNotes.forEach((note, index) => {
+                const noteCard = document.querySelector(`[data-note-index="${index}"]`);
+                if (!noteCard) return;
+                if (Math.abs((note.relativeMs || 0) - time) < 2000) {
+                    noteCard.classList.add('active');
+                } else {
+                    noteCard.classList.remove('active');
+                }
+            });
+        }
+
+        // Skip forward/backward
+        function skip(ms) {
+            jumpToTime(currentTime + ms);
+        }
+
+        // Jump to previous/next note
+        function jumpToPreviousNote() {
+            const voiceNotes = routeData.voiceNotes || [];
+            const prevNote = [...voiceNotes].reverse().find(n => (n.relativeMs || 0) < currentTime - 1000);
+            if (prevNote) {
+                jumpToTime(prevNote.relativeMs || 0);
+            }
+        }
+
+        function jumpToNextNote() {
+            const voiceNotes = routeData.voiceNotes || [];
+            const nextNote = voiceNotes.find(n => (n.relativeMs || 0) > currentTime + 1000);
+            if (nextNote) {
+                jumpToTime(nextNote.relativeMs || 0);
+            }
+        }
+
+        // Parse duration string to milliseconds
+        function formatDurationFromMinutes(minutes) {
+            const value = Number(minutes);
+            if (!value || Number.isNaN(value)) {
+                return '00:00';
+            }
+            const totalSeconds = Math.max(0, Math.round(value * 60));
+            const hours = Math.floor(totalSeconds / 3600);
+            const mins = Math.floor((totalSeconds % 3600) / 60);
+            const secs = totalSeconds % 60;
+            if (hours > 0) {
+                return `${hours}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            }
+            return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        // Hide loading overlay
+        function hideLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            if (!overlay) return;
+            overlay.style.display = 'none';
+            const label = overlay.querySelector('p');
+            if (label) {
+                label.textContent = 'Loading route data...';
+            }
+        }
+    </script>
+</body>
+</html>

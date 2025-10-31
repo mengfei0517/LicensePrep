@@ -1,0 +1,21 @@
+# LicensePrep Chrome Extension - Git Ignore
+
+# Packaged files
+*.crx
+*.pem
+*.zip
+
+# macOS
+.DS_Store
+
+# Development tools
+.vscode/
+.idea/
+
+# Temporary files
+*.log
+*.tmp
+
+# User data (generated during testing)
+user-data/
+

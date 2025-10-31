@@ -1,0 +1,166 @@
+{
+  "session_id": "session_20251027_065038_web-reco",
+  "device_id": "web-recorder-02811f97-1ceb-48b0-8145-d580f4a8f0ef",
+  "start_time": "2025-10-27T10:50:38.103Z",
+  "created_at": "2025-10-27T10:50:38.111795",
+  "last_updated": "2025-10-27T12:29:30.421331",
+  "gps_points": [
+    {
+      "latitude": 48.1059924,
+      "longitude": 11.4864487,
+      "altitude": null,
+      "accuracy": 128991.26124260512,
+      "speed": null,
+      "heading": null,
+      "timestamp": "2025-10-27T10:50:40.016Z",
+      "source": "web"
+    },
+    {
+      "latitude": 48.1059924,
+      "longitude": 11.4864487,
+      "altitude": null,
+      "accuracy": 128991.26124260512,
+      "speed": null,
+      "heading": null,
+      "timestamp": "2025-10-27T10:50:45.087Z",
+      "source": "web"
+    },
+    {
+      "latitude": 48.1059924,
+      "longitude": 11.4864487,
+      "altitude": null,
+      "accuracy": 128991.26124260512,
+      "speed": null,
+      "heading": null,
+      "timestamp": "2025-10-27T10:50:49.141Z",
+      "source": "web"
+    },
+    {
+      "latitude": 48.1059924,
+      "longitude": 11.4864487,
+      "altitude": null,
+      "accuracy": 128991.26124260512,
+      "speed": null,
+      "heading": null,
+      "timestamp": "2025-10-27T10:50:49.145Z",
+      "source": "web"
+    },
+    {
+      "latitude": 48.1059924,
+      "longitude": 11.4864487,
+      "altitude": null,
+      "accuracy": 128991.26124260512,
+      "speed": null,
+      "heading": null,
+      "timestamp": "2025-10-27T10:50:49.145Z",
+      "source": "web"
+    },
+    {
+      "latitude": 48.1059924,
+      "longitude": 11.4864487,
+      "altitude": null,
+      "accuracy": 128991.26124260512,
+      "speed": null,
+      "heading": null,
+      "timestamp": "2025-10-27T10:50:50.098Z",
+      "source": "web"
+    },
+    {
+      "latitude": 48.1059924,
+      "longitude": 11.4864487,
+      "altitude": null,
+      "accuracy": 128991.26124260512,
+      "speed": null,
+      "heading": null,
+      "timestamp": "2025-10-27T10:50:50.158Z",
+      "source": "web"
+    },
+    {
+      "latitude": 48.1059924,
+      "longitude": 11.4864487,
+      "altitude": null,
+      "accuracy": 128991.26124260512,
+      "speed": null,
+      "heading": null,
+      "timestamp": "2025-10-27T10:50:50.163Z",
+      "source": "web"
+    },
+    {
+      "latitude": 48.1059924,
+      "longitude": 11.4864487,
+      "altitude": null,
+      "accuracy": 128991.26124260512,
+      "speed": null,
+      "heading": null,
+      "timestamp": "2025-10-27T10:50:50.163Z",
+      "source": "web"
+    },
+    {
+      "latitude": 48.1059924,
+      "longitude": 11.4864487,
+      "altitude": null,
+      "accuracy": 128991.26124260512,
+      "speed": null,
+      "heading": null,
+      "timestamp": "2025-10-27T10:50:50.163Z",
+      "source": "web"
+    },
+    {
+      "latitude": 48.1059924,
+      "longitude": 11.4864487,
+      "altitude": null,
+      "accuracy": 128991.26124260512,
+      "speed": null,
+      "heading": null,
+      "timestamp": "2025-10-27T10:50:54.142Z",
+      "source": "web"
+    },
+    {
+      "latitude": 48.1059924,
+      "longitude": 11.4864487,
+      "altitude": null,
+      "accuracy": 128991.26124260512,
+      "speed": null,
+      "heading": null,
+      "timestamp": "2025-10-27T10:50:55.144Z",
+      "source": "web"
+    },
+    {
+      "latitude": 48.1059924,
+      "longitude": 11.4864487,
+      "altitude": null,
+      "accuracy": 128991.26124260512,
+      "speed": null,
+      "heading": null,
+      "timestamp": "2025-10-27T10:50:55.187Z",
+      "source": "web"
+    }
+  ],
+  "audio_notes": [],
+  "status": "completed",
+  "source": "web",
+  "end_time": "2025-10-27T10:50:56.312Z",
+  "total_distance_km": 0.0,
+  "total_duration_min": 0.3,
+  "map_bounds": {
+    "min_lat": 48.1059924,
+    "max_lat": 48.1059924,
+    "min_lng": 11.4864487,
+    "max_lng": 11.4864487
+  },
+  "preview_snapshot": "session_20251027_065038_web-reco.jpg",
+  "preview_url": "/api/mobile/routes/session_20251027_065038_web-reco/snapshot",
+  "review_markers": [
+    {
+      "marker_id": "737d5eb9b94448bca507ff7e744c5b9c",
+      "latitude": 48.105578783372046,
+      "longitude": 11.487164034689947,
+      "timestamp": "2025-10-27T10:50:40.016Z",
+      "label": "key point 1",
+      "type": "exam",
+      "description": "",
+      "tags": [],
+      "created_at": "2025-10-27T12:29:30.421314"
+    }
+  ]
+}

@@ -1,0 +1,899 @@
+from __future__ import annotations
+
+from collections import Counter, defaultdict
+from datetime import datetime
+from math import asin, cos, radians, sin, sqrt
+from typing import Any, Dict, List, Optional, Tuple
+
+import requests
+from requests import RequestException
+
+from flask import Blueprint, jsonify
+
+from api.routes_mobile import _list_sessions, _load_session, _save_session  # type: ignore
+from config.settings import settings
+
+ROADS_SPEED_LIMITS_URL = "https://roads.googleapis.com/v1/speedLimits"
+ROADS_SNAP_TO_ROADS_URL = "https://roads.googleapis.com/v1/snapToRoads"
+ROADS_PATH_BATCH_SIZE = 90
+ROADS_PLACE_BATCH_SIZE = 90
+
+bp = Blueprint("analysis", __name__, url_prefix="/api/analysis")
+
+
+def _parse_timestamp(value: Optional[str]) -> Optional[datetime]:
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def _haversine_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Return distance in metres between two lat/lng coordinates."""
+    r = 6371000.0
+    phi1, phi2 = radians(lat1), radians(lat2)
+    dphi = radians(lat2 - lat1)
+    dlambda = radians(lon2 - lon1)
+    a = sin(dphi / 2) ** 2 + cos(phi1) * cos(phi2) * sin(dlambda / 2) ** 2
+    return 2 * r * asin(sqrt(a))
+
+
+def _normalise_tags(raw_tags: Any, fallback: Optional[str] = None) -> List[str]:
+    tags: List[str] = []
+    if isinstance(raw_tags, list):
+        tags = [str(tag).strip().lower() for tag in raw_tags if str(tag).strip()]
+    elif isinstance(raw_tags, str):
+        if raw_tags.startswith("[") and raw_tags.endswith("]"):
+            # JSON-encoded array
+            try:
+                import json
+
+                parsed = json.loads(raw_tags)
+                if isinstance(parsed, list):
+                    tags = [
+                        str(tag).strip().lower() for tag in parsed if str(tag).strip()
+                    ]
+            except (json.JSONDecodeError, TypeError):
+                pass
+        if not tags:
+            tags = [
+                part.strip().lower()
+                for part in raw_tags.split(",")
+                if part.strip()
+            ]
+    if not tags and fallback:
+        tags = [fallback.lower()]
+    return tags
+
+
+def _compute_harsh_events(points: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    if len(points) < 2:
+        return []
+
+    enriched: List[Dict[str, Any]] = []
+    for point in points:
+        lat = point.get("latitude")
+        lng = point.get("longitude")
+        timestamp = _parse_timestamp(point.get("timestamp"))
+        if lat is None or lng is None or timestamp is None:
+            continue
+        speed = point.get("speed")
+        if isinstance(speed, (int, float)):
+            speed_ms = float(speed) / 3.6  # stored as km/h; convert to m/s
+        else:
+            speed_ms = None
+        enriched.append(
+            {
+                "lat": float(lat),
+                "lng": float(lng),
+                "timestamp": timestamp,
+                "speed": speed_ms,
+            }
+        )
+
+    if len(enriched) < 2:
+        return []
+
+    enriched.sort(key=lambda item: item["timestamp"])
+    events: List[Dict[str, Any]] = []
+    prev = enriched[0]
+    prev_speed = prev["speed"]
+
+    for current in enriched[1:]:
+        delta_t = (current["timestamp"] - prev["timestamp"]).total_seconds()
+        if delta_t <= 0:
+            prev = current
+            prev_speed = current["speed"]
+            continue
+
+        speed = current["speed"]
+        if speed is None or prev_speed is None:
+            # fallback to computed speed
+            distance = _haversine_m(
+                prev["lat"], prev["lng"], current["lat"], current["lng"]
+            )
+            speed = distance / delta_t if delta_t > 0 else 0.0
+        acceleration = (speed - (prev_speed or 0.0)) / delta_t
+
+        if acceleration < -1.5:  # braking threshold (m/s^2)
+            events.append(
+                {
+                    "timestamp": current["timestamp"].isoformat(),
+                    "acceleration": acceleration,
+                    "latitude": current["lat"],
+                    "longitude": current["lng"],
+                }
+            )
+
+        prev = current
+        prev_speed = speed
+
+    return events
+
+
+def _compute_segments(points: List[Dict[str, Any]]) -> Tuple[
+    List[Dict[str, Any]],
+    List[Dict[str, Any]],
+]:
+    """Return derived segments and chronologically ordered points."""
+
+    segments: List[Dict[str, Any]] = []
+    if len(points) < 2:
+        return segments, []
+
+    parsed_points: List[Dict[str, Any]] = []
+    for point in points:
+        lat = point.get("latitude")
+        lng = point.get("longitude")
+        timestamp = _parse_timestamp(point.get("timestamp"))
+        if lat is None or lng is None or timestamp is None:
+            continue
+        parsed_points.append(
+            {
+                "lat": float(lat),
+                "lng": float(lng),
+                "timestamp": timestamp,
+                "speed": point.get("speed"),
+                "source": point,
+            }
+        )
+
+    if len(parsed_points) < 2:
+        return [], []
+
+    parsed_points.sort(key=lambda item: item["timestamp"])
+    for idx, point in enumerate(parsed_points):
+        point["seq_index"] = idx
+
+    prev = parsed_points[0]
+
+    for current in parsed_points[1:]:
+        delta_t = (current["timestamp"] - prev["timestamp"]).total_seconds()
+        if delta_t <= 0:
+            prev = current
+            continue
+
+        distance_m = _haversine_m(
+            prev["lat"], prev["lng"], current["lat"], current["lng"]
+        )
+        speed_ms = (
+            float(current["speed"]) / 3.6
+            if isinstance(current["speed"], (int, float))
+            else None
+        )
+        if speed_ms is None or speed_ms < 0:
+            speed_ms = distance_m / delta_t
+        segments.append(
+            {
+                "start": prev["timestamp"].isoformat(),
+                "end": current["timestamp"].isoformat(),
+                "duration_s": delta_t,
+                "distance_km": distance_m / 1000.0,
+                "speed_ms": speed_ms,
+                "speed_kmh": speed_ms * 3.6,
+                "start_index": prev["seq_index"],
+                "end_index": current["seq_index"],
+            }
+        )
+        prev = current
+
+    return segments, parsed_points
+
+
+def _fetch_speed_limits(points: List[Dict[str, Any]]) -> Dict[int, float]:
+    """Fetch speed limit data via Google Roads API for ordered points."""
+
+    api_key = settings.GOOGLE_MAPS_API_KEY
+    if not api_key:
+        return {}
+
+    # Build ordered list of (index, lat, lng) entries
+    ordered_coordinates: List[Tuple[int, float, float]] = []
+    for point in points:
+        idx = point.get("seq_index")
+        lat = point.get("lat")
+        lng = point.get("lng")
+        if (
+            isinstance(idx, int)
+            and isinstance(lat, (int, float))
+            and isinstance(lng, (int, float))
+        ):
+            ordered_coordinates.append((idx, float(lat), float(lng)))
+
+    if not ordered_coordinates:
+        return {}
+
+    index_to_place: Dict[int, str] = {}
+    place_ids_order: List[str] = []
+
+    # First snap to roads to obtain stable place IDs
+    for batch_start in range(0, len(ordered_coordinates), ROADS_PATH_BATCH_SIZE):
+        batch = ordered_coordinates[batch_start : batch_start + ROADS_PATH_BATCH_SIZE]
+        if not batch:
+            continue
+        path_param = "|".join(f"{lat:.6f},{lng:.6f}" for _, lat, lng in batch)
+        snap_params = {
+            "path": path_param,
+            "key": api_key,
+        }
+        try:
+            snap_response = requests.get(
+                ROADS_SNAP_TO_ROADS_URL,
+                params=snap_params,
+                timeout=8,
+            )
+            snap_response.raise_for_status()
+            snap_payload = snap_response.json()
+        except (RequestException, ValueError) as exc:
+            print(f"[Analysis] ⚠️ Snap to Roads failed: {exc}")
+            continue
+
+        for snapped in snap_payload.get("snappedPoints", []):
+            place_id = snapped.get("placeId")
+            original_index = snapped.get("originalIndex")
+            if (
+                not isinstance(original_index, int)
+                or not place_id
+                or not (0 <= original_index < len(batch))
+            ):
+                continue
+            global_index = batch[original_index][0]
+            index_to_place[global_index] = place_id
+            if place_id not in place_ids_order:
+                place_ids_order.append(place_id)
+
+    if not index_to_place or not place_ids_order:
+        return {}
+
+    place_limit_lookup: Dict[str, float] = {}
+
+    for batch_start in range(0, len(place_ids_order), ROADS_PLACE_BATCH_SIZE):
+        batch_place_ids = place_ids_order[
+            batch_start : batch_start + ROADS_PLACE_BATCH_SIZE
+        ]
+        if not batch_place_ids:
+            continue
+        params: List[Tuple[str, str]] = [("key", api_key), ("units", "KPH")]
+        for place_id in batch_place_ids:
+            params.append(("placeId", place_id))
+        try:
+            response = requests.get(
+                ROADS_SPEED_LIMITS_URL,
+                params=params,
+                timeout=8,
+            )
+            if response.status_code != 200:
+                body_preview = ""
+                try:
+                    body_preview = response.text[:300]
+                except Exception:
+                    body_preview = "<unable to read response body>"
+                print(
+                    "[Analysis] ⚠️ speedLimits request failed "
+                    f"(status {response.status_code}): {body_preview}"
+                )
+                if response.status_code in (400, 403, 404):
+                    # These indicate configuration issues; stop retrying further batches.
+                    break
+                response.raise_for_status()
+                continue
+            payload = response.json()
+        except (RequestException, ValueError) as exc:
+            detail = ""
+            if isinstance(exc, requests.HTTPError) and exc.response is not None:
+                try:
+                    detail = f" Body: {exc.response.text[:300]}"
+                except Exception:
+                    detail = " Body: <unreadable>"
+            print(f"[Analysis] ⚠️ Failed to fetch speed limits: {exc}{detail}")
+            break
+
+        for limit in payload.get("speedLimits", []):
+            place_id = limit.get("placeId")
+            value = limit.get("speedLimit")
+            units = limit.get("units")
+            if place_id and isinstance(value, (int, float)):
+                speed_kmh = float(value)
+                if units == "MPH":
+                    speed_kmh *= 1.60934
+                place_limit_lookup[place_id] = speed_kmh
+
+    if not place_limit_lookup:
+        return {}
+
+    limits_by_index: Dict[int, float] = {}
+    for index, place_id in index_to_place.items():
+        limit = place_limit_lookup.get(place_id)
+        if limit is not None:
+            limits_by_index[index] = limit
+
+    return limits_by_index
+
+
+def _load_all_sessions() -> List[Dict[str, Any]]:
+    sessions: List[Dict[str, Any]] = []
+    for summary in _list_sessions():
+        session_id = summary.get("session_id")
+        if not session_id:
+            continue
+        session = _load_session(session_id)
+        if session:
+            sessions.append(session)
+    return sessions
+
+
+def _aggregate_heatmap(
+    sessions: List[Dict[str, Any]]
+) -> Tuple[List[Dict[str, Any]], Counter]:
+    clusters: Dict[Tuple[int, int], Dict[str, Any]] = {}
+    tag_counter: Counter = Counter()
+
+    for session in sessions:
+        session_id = session.get("session_id")
+
+        # Review markers
+        for marker in session.get("review_markers", []) or []:
+            lat = marker.get("latitude")
+            lng = marker.get("longitude")
+            if lat is None or lng is None:
+                continue
+            key = (round(float(lat) * 1000), round(float(lng) * 1000))
+            cluster = clusters.setdefault(
+                key,
+                {
+                    "count": 0,
+                    "lat_sum": 0.0,
+                    "lng_sum": 0.0,
+                    "labels": Counter(),
+                    "tags": Counter(),
+                    "routes": set(),
+                    "sources": Counter(),
+                },
+            )
+            cluster["count"] += 1
+            cluster["lat_sum"] += float(lat)
+            cluster["lng_sum"] += float(lng)
+            label = marker.get("label") or marker.get("type") or "Key location"
+            cluster["labels"][label] += 1
+            tags = _normalise_tags(marker.get("tags"), fallback=marker.get("type"))
+            for tag in tags:
+                cluster["tags"][tag] += 1
+                tag_counter[tag] += 1
+            cluster["routes"].add(session_id)
+            cluster["sources"][marker.get("type") or "marker"] += 1
+
+        # Voice notes
+        for note in session.get("audio_notes", []) or []:
+            location = (
+                note.get("latitude"),
+                note.get("longitude"),
+            )
+            if location[0] is None or location[1] is None:
+                continue
+            key = (round(float(location[0]) * 1000), round(float(location[1]) * 1000))
+            cluster = clusters.setdefault(
+                key,
+                {
+                    "count": 0,
+                    "lat_sum": 0.0,
+                    "lng_sum": 0.0,
+                    "labels": Counter(),
+                    "tags": Counter(),
+                    "routes": set(),
+                    "sources": Counter(),
+                },
+            )
+            cluster["count"] += 1
+            cluster["lat_sum"] += float(location[0])
+            cluster["lng_sum"] += float(location[1])
+            cluster["labels"]["Voice note"] += 1
+            tags = _normalise_tags(note.get("tags"), fallback="voice_note")
+            for tag in tags:
+                cluster["tags"][tag] += 1
+                tag_counter[tag] += 1
+            cluster["routes"].add(session_id)
+            cluster["sources"]["voice_note"] += 1
+
+    heatmap = []
+    for (lat_key, lng_key), cluster in clusters.items():
+        count = cluster["count"]
+        if count == 0:
+            continue
+        dominant_tag = (
+            cluster["tags"].most_common(1)[0][0] if cluster["tags"] else None
+        )
+        heatmap.append(
+            {
+                "cluster_id": f"{lat_key}_{lng_key}",
+                "count": count,
+                "latitude": cluster["lat_sum"] / count,
+                "longitude": cluster["lng_sum"] / count,
+                "dominant_label": cluster["labels"].most_common(1)[0][0]
+                if cluster["labels"]
+                else "Hotspot",
+                "dominant_tag": dominant_tag,
+                "tags": [
+                    {"label": tag, "count": tag_count}
+                    for tag, tag_count in cluster["tags"].most_common(5)
+                ],
+                "routes": list(cluster["routes"]),
+                "source_breakdown": cluster["sources"],
+            }
+        )
+
+    heatmap.sort(key=lambda item: item["count"], reverse=True)
+    return heatmap, tag_counter
+
+
+def _aggregate_top_issues(
+    tag_counter: Counter, tag_routes: Dict[str, set]
+) -> List[Dict[str, Any]]:
+    top_items: List[Dict[str, Any]] = []
+    for tag, count in tag_counter.most_common(5):
+        top_items.append(
+            {
+                "label": tag,
+                "count": int(count),
+                "routes": list(tag_routes.get(tag, []))[:5],
+            }
+        )
+    return top_items
+
+
+def _compute_practice_trends(
+    sessions: List[Dict[str, Any]]
+) -> Dict[str, Any]:
+    trend_items: List[Dict[str, Any]] = []
+    total_duration = 0.0
+    total_distance = 0.0
+    total_harsh = 0
+    total_notes = 0
+
+    for session in sessions:
+        session_id = session.get("session_id")
+        recorded_at = _parse_timestamp(session.get("start_time"))
+        duration = float(session.get("total_duration_min") or 0.0)
+        distance = float(session.get("total_distance_km") or 0.0)
+        notes_count = len(session.get("audio_notes") or [])
+        markers_count = len(session.get("review_markers") or [])
+        harsh_events = _compute_harsh_events(session.get("gps_points") or [])
+        harsh_count = len(harsh_events)
+
+        total_duration += duration
+        total_distance += distance
+        total_harsh += harsh_count
+        total_notes += notes_count
+
+        safety_score = max(
+            0.0, min(100.0, 100.0 - (harsh_count * 8.0) + (markers_count * 1.5))
+        )
+
+        trend_items.append(
+            {
+                "route_id": session_id,
+                "recorded_at": recorded_at.isoformat() if recorded_at else None,
+                "duration_min": duration,
+                "distance_km": distance,
+                "voice_notes": notes_count,
+                "markers": markers_count,
+                "harsh_events": harsh_count,
+                "safety_score": round(safety_score, 1),
+            }
+        )
+
+    trend_items.sort(key=lambda item: item["recorded_at"] or "", reverse=False)
+    total_sessions = len(trend_items)
+    avg_duration = total_duration / total_sessions if total_sessions else 0.0
+    avg_distance = total_distance / total_sessions if total_sessions else 0.0
+    harsh_per_hour = (
+        total_harsh / (total_duration / 60.0) if total_duration > 0 else total_harsh
+    )
+    safety_index = max(
+        0.0, min(100.0, 100.0 - harsh_per_hour * 12.0 + (total_notes * 0.8))
+    )
+
+    return {
+        "sessions": trend_items,
+        "summary": {
+            "session_count": total_sessions,
+            "total_duration_min": round(total_duration, 2),
+            "total_distance_km": round(total_distance, 2),
+            "average_duration_min": round(avg_duration, 2),
+            "average_distance_km": round(avg_distance, 2),
+            "total_harsh_events": total_harsh,
+            "safety_index": round(safety_index, 1),
+            "voice_notes_logged": total_notes,
+        },
+    }
+
+
+def _suggest_practice_segments(
+    heatmap: List[Dict[str, Any]],
+    tag_routes: Dict[str, set],
+    sessions: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    recommendations: List[Dict[str, Any]] = []
+    if not heatmap:
+        return recommendations
+
+    for hotspot in heatmap[:5]:
+        dominant_tag = hotspot.get("dominant_tag")
+        label = hotspot.get("dominant_label")
+        if not dominant_tag:
+            dominant_tag = label.lower() if label else "focus area"
+        reason = (
+            f"'{label}' has been flagged {hotspot['count']} times "
+            if label
+            else f"Recurring events tagged '{dominant_tag}'"
+        )
+        related_routes = list(tag_routes.get(dominant_tag, []))[:3]
+        recommendations.append(
+            {
+                "label": label or dominant_tag.title(),
+                "tag": dominant_tag,
+                "reason": reason,
+                "latitude": hotspot["latitude"],
+                "longitude": hotspot["longitude"],
+                "routes": related_routes,
+            }
+        )
+        if len(recommendations) >= 3:
+            break
+
+    if not recommendations and heatmap:
+        top = heatmap[0]
+        recommendations.append(
+            {
+                "label": top.get("dominant_label", "Practice hotspot"),
+                "tag": top.get("dominant_tag"),
+                "reason": f"High activity area with {top['count']} events logged.",
+                "latitude": top["latitude"],
+                "longitude": top["longitude"],
+                "routes": top.get("routes", [])[:3],
+            }
+        )
+
+    return recommendations
+
+
+def _build_route_note(session: Dict[str, Any]) -> Dict[str, Any]:
+    session_id = session.get("session_id")
+    start_time = _parse_timestamp(session.get("start_time"))
+    end_time = _parse_timestamp(session.get("end_time"))
+    duration_min = float(session.get("total_duration_min") or 0.0)
+    distance_km = float(session.get("total_distance_km") or 0.0)
+    device_id = session.get("device_id")
+
+    gps_points = session.get("gps_points") or []
+    segments, ordered_points = _compute_segments(gps_points)
+    speed_limit_lookup = _fetch_speed_limits(ordered_points) if ordered_points else {}
+
+    limits_written = False
+    if speed_limit_lookup:
+        for point in ordered_points:
+            seq_index = point.get("seq_index")
+            if not isinstance(seq_index, int):
+                continue
+            limit_value = speed_limit_lookup.get(seq_index)
+            if limit_value is None:
+                continue
+            source_point = point.get("source")
+            if isinstance(source_point, dict):
+                existing = source_point.get("speed_limit_kmh")
+                rounded_limit = round(float(limit_value), 1)
+                if existing != rounded_limit:
+                    source_point["speed_limit_kmh"] = rounded_limit
+                    source_point["speed_limit_source"] = "roads_api"
+                    limits_written = True
+
+    if limits_written:
+        try:
+            _save_session(session)
+        except Exception as exc:
+            print(f"[Analysis] ⚠️ Failed to persist speed limits for {session_id}: {exc}")
+
+    harsh_events = _compute_harsh_events(gps_points)
+
+    total_distance_km = sum(segment["distance_km"] for segment in segments)
+    total_duration_hours = sum(segment["duration_s"] for segment in segments) / 3600.0
+    avg_speed = (
+        (total_distance_km / total_duration_hours) if total_duration_hours > 0 else 0.0
+    )
+    if avg_speed == 0.0 and duration_min > 0 and distance_km > 0:
+        avg_speed = distance_km / (duration_min / 60.0)
+    max_speed = (
+        max(segment["speed_kmh"] for segment in segments) if segments else 0.0
+    )
+
+    # Stability score: start from 5, subtract per harsh event
+    stability_score = max(1.0, 5.0 - (len(harsh_events) * 0.7))
+    if duration_min >= 30 and len(harsh_events) == 0:
+        stability_score = min(5.0, stability_score + 0.3)
+
+    stability_commentary = []
+    if harsh_events:
+        worst = sorted(harsh_events, key=lambda e: e["acceleration"])[:3]
+        for event in worst:
+            stability_commentary.append(
+                {
+                    "timestamp": event["timestamp"],
+                    "type": "brake",
+                    "note": f"Hard brake detected (−{abs(event['acceleration']):.2f} m/s²)",
+                }
+            )
+    else:
+        stability_commentary.append(
+            {
+                "timestamp": start_time.isoformat() if start_time else None,
+                "type": "praise",
+                "note": "No harsh braking detected in this session. Great job!",
+            }
+        )
+
+    # Speed compliance: compare to adaptive window around median speed
+    speeds = [segment["speed_kmh"] for segment in segments if segment["speed_kmh"] > 0]
+    compliance_pct = 100.0
+    compliance_comment = "Insufficient speed data recorded."
+    compliance_basis = "none"
+    limit_checks = 0
+    max_over_kmh: Optional[float] = None
+
+    limit_samples: List[Tuple[float, float]] = []
+    if speed_limit_lookup:
+        for segment in segments:
+            speed = segment.get("speed_kmh")
+            if not speed or speed <= 0:
+                continue
+            limit = None
+            for index_key in ("end_index", "start_index"):
+                idx = segment.get(index_key)
+                if isinstance(idx, int) and idx in speed_limit_lookup:
+                    limit = speed_limit_lookup[idx]
+                    break
+            if limit is None:
+                continue
+            limit_samples.append((speed, limit))
+
+    if limit_samples:
+        compliance_basis = "limits"
+        tolerance_kmh = 5.0
+        total_samples = len(limit_samples)
+        compliant_count = sum(
+            1 for speed, limit in limit_samples if speed <= limit + tolerance_kmh
+        )
+        compliance_pct = (compliant_count / total_samples) * 100.0
+        limit_checks = total_samples
+        overages = [
+            speed - limit
+            for speed, limit in limit_samples
+            if speed > limit + tolerance_kmh
+        ]
+        if overages:
+            worst_over = max(overages)
+            max_over_kmh = worst_over
+            compliance_comment = (
+                f"{compliance_pct:.0f}% of sampled segments stayed within "
+                f"{tolerance_kmh:.0f} km/h of the posted limit "
+                f"({total_samples} checks, max over +{worst_over:.0f} km/h)."
+            )
+        else:
+            compliance_comment = (
+                f"{compliance_pct:.0f}% of sampled segments stayed within "
+                f"{tolerance_kmh:.0f} km/h of the posted limit across {total_samples} checks."
+            )
+    elif speeds:
+        compliance_basis = "median"
+        median_speed = sorted(speeds)[len(speeds) // 2]
+        lower_bound = median_speed * 0.7
+        upper_bound = median_speed * 1.2
+        compliant = [
+            s
+            for s in speeds
+            if lower_bound <= s <= upper_bound
+        ]
+        compliance_pct = (len(compliant) / len(speeds)) * 100.0
+        compliance_comment = (
+            f"{compliance_pct:.0f}% of the drive stayed within "
+            f"70–120% of your median speed ({median_speed:.0f} km/h)."
+        )
+
+    speed_segments = [
+        {
+            "start": segment["start"],
+            "end": segment["end"],
+            "duration_s": round(segment["duration_s"], 2),
+            "distance_km": round(segment["distance_km"], 4),
+            "speed_kmh": round(segment["speed_kmh"], 1),
+        }
+        for segment in segments
+    ]
+
+    # Context mix derived from speed buckets
+    context_totals = {"urban": 0.0, "rural": 0.0, "highway": 0.0}
+    total_distance = sum(segment["distance_km"] for segment in segments)
+    for segment in segments:
+        speed = segment["speed_kmh"]
+        if speed < 40:
+            context_totals["urban"] += segment["distance_km"]
+        elif speed < 70:
+            context_totals["rural"] += segment["distance_km"]
+        else:
+            context_totals["highway"] += segment["distance_km"]
+
+    context_mix = []
+    if total_distance > 0:
+        for label, dist in context_totals.items():
+            context_mix.append(
+                {
+                    "label": label,
+                    "share": dist / total_distance,
+                    "distance_km": dist,
+                }
+            )
+
+    # Voice note & marker insights
+    voice_notes = session.get("audio_notes") or []
+    markers = session.get("review_markers") or []
+    voice_tags: Counter = Counter()
+    for note in voice_notes:
+        tags = _normalise_tags(note.get("tags"))
+        if tags:
+            voice_tags.update(tags)
+    for marker in markers:
+        tags = _normalise_tags(marker.get("tags"), fallback=marker.get("type"))
+        if tags:
+            voice_tags.update(tags)
+
+    top_tags = [
+        {"label": tag, "count": count} for tag, count in voice_tags.most_common(5)
+    ]
+
+    notable_events: List[Dict[str, Any]] = []
+    for marker in markers[:5]:
+        notable_events.append(
+            {
+                "timestamp": marker.get("timestamp"),
+                "label": marker.get("label"),
+                "description": marker.get("description"),
+                "type": marker.get("type", "marker"),
+            }
+        )
+    for note in voice_notes[:5]:
+        notable_events.append(
+            {
+                "timestamp": note.get("timestamp"),
+                "label": "Voice note",
+                "description": note.get("transcript")
+                or "Audio note captured during drive.",
+                "type": "voice_note",
+                "tags": _normalise_tags(note.get("tags")),
+            }
+        )
+
+    return {
+        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "route_id": session_id,
+        "summary": {
+            "start_time": start_time.isoformat() if start_time else None,
+            "end_time": end_time.isoformat() if end_time else None,
+            "duration_min": duration_min,
+            "distance_km": distance_km,
+            "device_id": device_id,
+            "preview_url": session.get("preview_url"),
+        },
+        "stability": {
+            "score": round(stability_score, 1),
+            "out_of": 5,
+            "harsh_events": len(harsh_events),
+            "highlights": stability_commentary,
+        },
+        "speed_profile": {
+            "average_kmh": round(avg_speed, 1),
+            "max_kmh": round(max_speed, 1),
+            "compliance_percent": round(compliance_pct, 1),
+            "commentary": compliance_comment,
+            "basis": compliance_basis,
+            "limit_checks": limit_checks,
+            "max_over_kmh": round(max_over_kmh, 1) if max_over_kmh is not None else None,
+        },
+        "speed_segments": speed_segments,
+        "context_mix": context_mix,
+        "voice_tags": top_tags,
+        "notable_events": notable_events[:6],
+    }
+
+
+@bp.get("/overview")
+def analysis_overview():
+    sessions = _load_all_sessions()
+    generated_at = datetime.utcnow().isoformat() + "Z"
+
+    if not sessions:
+        return jsonify(
+            {
+                "generated_at": generated_at,
+                "routes_count": 0,
+                "heatmap": [],
+                "top_issues": [],
+                "practice_trends": {
+                    "sessions": [],
+                    "summary": {
+                        "session_count": 0,
+                        "total_duration_min": 0,
+                        "total_distance_km": 0,
+                        "average_duration_min": 0,
+                        "average_distance_km": 0,
+                        "total_harsh_events": 0,
+                        "safety_index": 100,
+                        "voice_notes_logged": 0,
+                    },
+                },
+                "recommended_segments": [],
+            }
+        )
+
+    heatmap, tag_counter = _aggregate_heatmap(sessions)
+    tag_routes: Dict[str, set] = defaultdict(set)
+
+    for hotspot in heatmap:
+        for tag in hotspot.get("tags", []):
+            tag_routes[tag["label"]].update(hotspot.get("routes", []))
+
+    # Ensure raw tags also contribute route linking
+    for session in sessions:
+        session_id = session.get("session_id")
+        for note in session.get("audio_notes", []) or []:
+            tags = _normalise_tags(note.get("tags"))
+            for tag in tags:
+                tag_routes[tag].add(session_id)
+        for marker in session.get("review_markers", []) or []:
+            tags = _normalise_tags(marker.get("tags"), fallback=marker.get("type"))
+            for tag in tags:
+                tag_routes[tag].add(session_id)
+
+    top_issues = _aggregate_top_issues(tag_counter, tag_routes)
+    practice_trends = _compute_practice_trends(sessions)
+    recommendations = _suggest_practice_segments(heatmap, tag_routes, sessions)
+
+    overview = {
+        "generated_at": generated_at,
+        "routes_count": len(sessions),
+        "heatmap": heatmap[:20],
+        "top_issues": top_issues,
+        "practice_trends": practice_trends,
+        "recommended_segments": recommendations,
+    }
+
+    return jsonify(overview)
+
+
+@bp.get("/routes/<session_id>")
+def route_analysis(session_id: str):
+    session = _load_session(session_id)
+    if not session:
+        return jsonify({"error": "Route not found"}), 404
+
+    note = _build_route_note(session)
+    return jsonify(note)

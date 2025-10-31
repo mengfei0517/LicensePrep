@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import type { SVGProps } from 'react';
 import Link from 'next/link';
 import {
@@ -16,7 +16,8 @@ import { useAnalysisOverview } from '@/lib/hooks/use-analysis';
 import dynamic from 'next/dynamic';
 import 'leaflet/dist/leaflet.css';
 import type { PracticeTrendSession } from '@/lib/api-client';
-import type { LatLngTuple } from 'leaflet';
+import type { LatLngTuple, Map as LeafletMapType, MapOptions } from 'leaflet';
+import type { MapContainerProps as LeafletMapContainerProps } from 'react-leaflet';
 
 const numberFormatter = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 1,
@@ -574,7 +575,69 @@ function AggregatedPersonals({ sessions }: { sessions: { route_id: string; recor
 
 const MapDisplay = dynamic(
   async () => {
-    const { MapContainer, TileLayer, Polyline, CircleMarker, useMap } = await import('react-leaflet');
+    const { TileLayer, Polyline, CircleMarker, useMap } = await import('react-leaflet');
+    const { LeafletContext, createLeafletContext } = await import('@react-leaflet/core');
+    const { Map: LeafletMap } = await import('leaflet');
+    function SafeMapContainer({
+      bounds,
+      boundsOptions,
+      center,
+      children,
+      className,
+      id,
+      placeholder,
+      style,
+      whenReady,
+      zoom,
+      ...options
+    }: LeafletMapContainerProps) {
+      const [staticProps] = useState(() => ({ className, id, style }));
+      const [context, setContext] = useState<ReturnType<typeof createLeafletContext> | null>(null);
+      const mapInstanceRef = useRef<LeafletMapType | null>(null);
+      const containerRef = useCallback((node: HTMLDivElement | null) => {
+        if (node !== null && !mapInstanceRef.current) {
+          const el = node as HTMLDivElement & { _leaflet_id?: string };
+          if (el._leaflet_id) {
+            delete el._leaflet_id;
+          }
+          const map = new LeafletMap(node, options as MapOptions);
+          mapInstanceRef.current = map;
+          if (center != null && zoom != null) {
+            map.setView(center, zoom);
+          } else if (bounds != null) {
+            map.fitBounds(bounds, boundsOptions);
+          }
+          if (whenReady) {
+            map.whenReady(whenReady);
+          }
+          setContext(createLeafletContext(map));
+        }
+      }, []);
+      useEffect(() => {
+        return () => {
+          if (mapInstanceRef.current) {
+            const container = mapInstanceRef.current.getContainer() as HTMLDivElement & { _leaflet_id?: string };
+            mapInstanceRef.current.remove();
+            if (container && container._leaflet_id) {
+              delete container._leaflet_id;
+            }
+            mapInstanceRef.current = null;
+          }
+        };
+      }, []);
+      const contents = context ? (
+        <LeafletContext value={context}>
+          {children}
+        </LeafletContext>
+      ) : (
+        placeholder ?? null
+      );
+      return (
+        <div {...staticProps} ref={containerRef}>
+          {contents}
+        </div>
+      );
+    }
     function FitBounds({ polylines }: { polylines: LatLngTuple[][] }) {
       const map = useMap();
       useEffect(() => {
@@ -589,6 +652,10 @@ const MapDisplay = dynamic(
     return function MapDisplayInner({ sessions }: { sessions: PracticeTrendSession[] }) {
       const [polylines, setPolylines] = useState<LatLngTuple[][]>([]);
       const [keyPoints, setKeyPoints] = useState<LatLngTuple[]>([]);
+      const [isClient, setIsClient] = useState(false);
+      useEffect(() => {
+        setIsClient(true);
+      }, []);
       useEffect(() => {
         let mounted = true;
         (async () => {
@@ -620,23 +687,32 @@ const MapDisplay = dynamic(
         <div className="mb-6 w-full max-w-6xl mx-auto">
           <h2 className="text-lg font-bold mb-2 text-blue-900">Overall Practice Map</h2>
           <div className="w-full" style={{ aspectRatio: '5 / 3', minHeight: 300 }}>
-            <MapContainer center={fallback} zoom={7} style={{ width: '100%', height: '100%', borderRadius: 12, overflow: 'hidden', border: '1px solid #e5e7eb' }} scrollWheelZoom={true}>
-              <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution="&copy; OpenStreetMap contributors"
-              />
-              <FitBounds polylines={polylines} />
-              {polylines.map((line, i) => (
-                <Polyline
-                  key={i}
-                  positions={line}
-                  pathOptions={{ color: '#60a5fa', weight: 10, opacity: 0.8, smoothFactor: 2 }}
+            {isClient ? (
+              <SafeMapContainer
+                center={fallback}
+                zoom={7}
+                style={{ width: '100%', height: '100%', borderRadius: 12, overflow: 'hidden', border: '1px solid #e5e7eb' }}
+                scrollWheelZoom={true}
+              >
+                <TileLayer
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  attribution="&copy; OpenStreetMap contributors"
                 />
-              ))}
-              {keyPoints.map((pos, j) => (
-                <CircleMarker key={j} center={pos} radius={6} fillColor="#f87171" color="#b91c1c" fillOpacity={0.8} />
-              ))}
-            </MapContainer>
+                <FitBounds polylines={polylines} />
+                {polylines.map((line, i) => (
+                  <Polyline
+                    key={i}
+                    positions={line}
+                    pathOptions={{ color: '#60a5fa', weight: 10, opacity: 0.8 }}
+                  />
+                ))}
+                {keyPoints.map((pos, j) => (
+                  <CircleMarker key={j} center={pos} radius={6} fillColor="#f87171" color="#b91c1c" fillOpacity={0.8} />
+                ))}
+              </SafeMapContainer>
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-slate-50 to-slate-100 animate-pulse rounded-xl border border-slate-200" />
+            )}
           </div>
         </div>
       );

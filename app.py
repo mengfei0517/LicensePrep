@@ -13,10 +13,10 @@ app = Flask(
 def index():
     """API Information and Status"""
     return jsonify({
-        "name": "LicensePrep API",
+        "name": "FahrerLab API",
         "version": "2.0",
         "status": "running",
-        "description": "Backend API for LicensePrep - AI-powered German driving test preparation",
+        "description": "Backend API for FahrerLab - AI-powered German driving test preparation",
         "frontend": "http://localhost:3000",
         "endpoints": {
             "api": {
@@ -75,7 +75,7 @@ if __name__ == "__main__":
     # Bind to 0.0.0.0 to allow both localhost and 127.0.0.1 access
     # Chrome Prompt API requires Secure Context - use localhost for testing
     print("\n" + "="*60)
-    print("🚀 LicensePrep Server Starting...")
+    print("🚀 FahrerLab Server Starting...")
     print("="*60)
     backend_host = settings.FLASK_HOST
     backend_port = settings.FLASK_PORT

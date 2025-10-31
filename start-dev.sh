@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# LicensePrep Development Server Starter
+# FahrerLab Development Server Starter
 # This script starts both Flask backend and Next.js frontend
 
 echo "=================================="
-echo "🚀 LicensePrep Development Server"
+echo "🚀 FahrerLab Development Server"
 echo "=================================="
 
 # Check if Python environment is activated
@@ -42,12 +42,12 @@ trap cleanup SIGINT SIGTERM
 
 # Ensure Python deps installed (optional quick check)
 if ! python -c "import flask" >/dev/null 2>&1; then
-    echo "📦 未检测到 Flask，建议先安装 Python 依赖: pip install -r requirements.txt"
+    echo "📦 Flask not detected. Recommended: pip install -r requirements.txt"
 fi
 
 # Ensure web-app dependencies installed
 if [ ! -d "web-app/node_modules" ]; then
-    echo "📦 安装前端依赖 (web-app)..."
+    echo "📦 Installing frontend dependencies (web-app)..."
     (cd web-app && npm ci || npm install)
 fi
 

@@ -40,28 +40,15 @@ function formatNumber(value: number | undefined | null, fallback = '—') {
 export default function RouteAnalysisPage() {
   const { overview, isLoading, error, refresh } = useAnalysisOverview();
 
-  const summaryCards = useMemo(() => {
+  const summaryCards = useMemo<Array<{ title: string; value: string | number; subtitle: string; icon: any; tone: string }>>(() => {
     if (!overview) return [];
 
     const { summary } = overview.practice_trends;
 
-    return [
-      {
-        title: 'Recorded Sessions',
-        value: summary.session_count,
-        subtitle: `${formatNumber(summary.total_distance_km, '0')} km covered`,
-        icon: MapPinIcon,
-        tone: 'bg-blue-50 text-blue-600',
-      },
-      {
-        title: 'Practice Hours',
-        value: formatNumber(summary.total_duration_min / 60, '0'),
-        subtitle: `${formatNumber(summary.average_duration_min, '0')} min avg length`,
-        icon: ClockIcon,
-        tone: 'bg-indigo-50 text-indigo-600',
-      },
-    ];
+    return [];
   }, [overview]);
+
+  const [selectedDay, setSelectedDay] = useState<string>('all');
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-10">
@@ -143,6 +130,137 @@ export default function RouteAnalysisPage() {
             ))}
           </div>
 
+          {/* Practice trends (moved above map) */}
+          <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Session Trendline
+                </h2>
+                <p className="text-sm text-gray-500">
+                  Compare rhythm, distance, and smoothness across every saved drive.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <label className="text-xs text-gray-500">
+                  Session
+                  <select
+                    className="ml-2 rounded border border-gray-200 bg-white px-2 py-1 text-sm"
+                    value={selectedDay}
+                    onChange={(e) => setSelectedDay(e.target.value)}
+                  >
+                    <option value="all">All</option>
+                    {Array.from(new Set(overview.practice_trends.sessions
+                      .map((s) => (s.recorded_at ? s.recorded_at.slice(0, 10) : null))
+                      .filter(Boolean) as string[]
+                    )).sort((a, b) => (a > b ? -1 : 1)).map((d) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            {overview.practice_trends.sessions.length === 0 ? (
+              <div className="mt-6 rounded-lg border border-dashed border-gray-200 p-6 text-sm text-gray-500">
+                Record at least one route to unlock the trendline.
+              </div>
+            ) : (
+              (() => {
+                const sessions = [...overview.practice_trends.sessions];
+                const filtered = sessions
+                  .filter((s) => (selectedDay === 'all' ? true : (s.recorded_at ? s.recorded_at.slice(0, 10) === selectedDay : false)))
+                  .sort((a, b) => {
+                    const ta = a.recorded_at ? new Date(a.recorded_at).getTime() : 0;
+                    const tb = b.recorded_at ? new Date(b.recorded_at).getTime() : 0;
+                    return tb - ta; // newest first
+                  });
+                return (
+                  <div className="mt-6 rounded-xl border border-gray-100">
+                    <div
+                      className="overflow-x-auto"
+                      style={{ maxHeight: (filtered.length >= 3 ? 280 : undefined), overflowY: 'auto' }}
+                    >
+                      <table className="min-w-full divide-y divide-gray-100 text-sm">
+                        <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500 sticky top-0 z-10">
+                          <tr>
+                            <th className="px-4 py-3 text-left bg-gray-50">Session</th>
+                            <th className="px-4 py-3 text-left bg-gray-50">Duration</th>
+                            <th className="px-4 py-3 text-left bg-gray-50">Distance</th>
+                            <th className="px-4 py-3 text-left bg-gray-50">Voice Notes</th>
+                            <th className="px-4 py-3 text-left bg-gray-50">Marked Locations</th>
+                            <th className="px-4 py-3 text-left bg-gray-50">Self Assessment</th>
+                            <th className="px-4 py-3 text-left bg-gray-50">Coach Assessment</th>
+                            <th className="px-4 py-3 text-left bg-gray-50">Links</th>
+                            <th className="px-4 py-3 text-left bg-gray-50">Analysis</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 bg-white text-gray-700">
+                          {filtered.map((session) => {
+                            const selfKey = `route:${session.route_id}:self_assessment`;
+                            const coachKey = `route:${session.route_id}:coach_assessment`;
+                            let selfValue = '-';
+                            let coachValue = '-';
+                            if (typeof window !== 'undefined') {
+                              selfValue = localStorage.getItem(selfKey) || '-';
+                              coachValue = localStorage.getItem(coachKey) || '-';
+                            }
+                            let marked = '-';
+                            if (typeof window !== 'undefined') {
+                              try {
+                                const note = JSON.parse(localStorage.getItem(`route:${session.route_id}:note_cached`) || 'null');
+                                marked = Array.isArray(note?.notable_events) ? note.notable_events.length : '-';
+                              } catch {}
+                            }
+                            return (
+                              <tr key={session.route_id}>
+                                <td className="px-4 py-3">
+                                  <div className="font-medium text-gray-900">
+                                    {session.recorded_at
+                                      ? dateFormatter.format(new Date(session.recorded_at))
+                                      : session.route_id}
+                                  </div>
+                                  <div className="text-xs text-gray-400">Route ID: {session.route_id}</div>
+                                </td>
+                                <td className="px-4 py-3">{formatNumber(session.duration_min)} min</td>
+                                <td className="px-4 py-3">{formatNumber(session.distance_km)} km</td>
+                                <td className="px-4 py-3">{session.voice_notes} notes</td>
+                                <td className="px-4 py-3">{session.markers}</td>
+                                <td className="px-4 py-3">{selfValue}</td>
+                                <td className="px-4 py-3">{coachValue}</td>
+                                <td className="px-4 py-3">
+                                  <div className="flex gap-2">
+                                    <a
+                                      href={`/backend/route-review/${session.route_id}`}
+                                      className="text-blue-500 hover:underline"
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                    >
+                                      Route Review
+                                    </a>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <Link
+                                    href={`/routes/analysis/${session.route_id}`}
+                                    className="text-blue-500 hover:underline"
+                                    target="_blank"
+                                  >
+                                    Route Analysis
+                                  </Link>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })()
+            )}
+          </section>
+
           <div className="mb-10">
             <MapDisplay sessions={overview.practice_trends.sessions} />
           </div>
@@ -185,102 +303,6 @@ export default function RouteAnalysisPage() {
           </section>
 
           {/* Hotspot Heatmap & Repeating Issues removed by request */}
-
-          {/* Practice trends */}
-          <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Session Trendline
-                </h2>
-                <p className="text-sm text-gray-500">
-                  Compare rhythm, distance, and smoothness across every saved drive.
-                </p>
-              </div>
-            </div>
-
-            {overview.practice_trends.sessions.length === 0 ? (
-              <div className="mt-6 rounded-lg border border-dashed border-gray-200 p-6 text-sm text-gray-500">
-                Record at least one route to unlock the trendline.
-              </div>
-            ) : (
-              <div className="mt-6 overflow-hidden rounded-xl border border-gray-100">
-                <table className="min-w-full divide-y divide-gray-100 text-sm">
-                  <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
-                    <tr>
-                      <th className="px-4 py-3 text-left">Session</th>
-                      <th className="px-4 py-3 text-left">Duration</th>
-                      <th className="px-4 py-3 text-left">Distance</th>
-                      <th className="px-4 py-3 text-left">Voice Notes</th>
-                      <th className="px-4 py-3 text-left">Marked Locations</th>
-                      <th className="px-4 py-3 text-left">Self Assessment</th>
-                      <th className="px-4 py-3 text-left">Coach Assessment</th>
-                      <th className="px-4 py-3 text-left">Links</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 bg-white text-gray-700">
-                    {overview.practice_trends.sessions.map((session) => {
-                      const selfKey = `route:${session.route_id}:self_assessment`;
-                      const coachKey = `route:${session.route_id}:coach_assessment`;
-                      let selfValue = '-';
-                      let coachValue = '-';
-                      if (typeof window !== 'undefined') {
-                        selfValue = localStorage.getItem(selfKey) || '-';
-                        coachValue = localStorage.getItem(coachKey) || '-';
-                      }
-                      // marked locations
-                      let marked = '-';
-                      if (typeof window !== 'undefined') {
-                        try {
-                          const note = JSON.parse(localStorage.getItem(`route:${session.route_id}:note_cached`) || 'null');
-                          marked = Array.isArray(note?.notable_events) ? note.notable_events.length : '-';
-                        } catch {}
-                      }
-                      return (
-                        <tr key={session.route_id}>
-                          <td className="px-4 py-3">
-                            <div className="font-medium text-gray-900">
-                              {session.recorded_at
-                                ? dateFormatter.format(new Date(session.recorded_at))
-                                : session.route_id}
-                            </div>
-                            <div className="text-xs text-gray-400">
-                              Route ID: {session.route_id}
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">{formatNumber(session.duration_min)} min</td>
-                          <td className="px-4 py-3">{formatNumber(session.distance_km)} km</td>
-                          <td className="px-4 py-3">{session.voice_notes} notes</td>
-                          <td className="px-4 py-3">{session.markers}</td>
-                          <td className="px-4 py-3">{selfValue}</td>
-                          <td className="px-4 py-3">{coachValue}</td>
-                          <td className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <a
-                                href={`/backend/route-review/${session.route_id}`}
-                                className="text-blue-500 hover:underline"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                Route Review
-                              </a>
-                              <Link
-                                href={`/routes/analysis/${session.route_id}`}
-                                className="text-blue-500 hover:underline"
-                                target="_blank"
-                              >
-                                Session Record
-                              </Link>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
 
           {/* 已彻底删除 Recommendations 区块 */}
         </>

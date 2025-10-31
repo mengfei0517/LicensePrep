@@ -104,7 +104,7 @@ export default function ExamSimulationPage() {
     <div className="min-h-screen bg-white">
       <header className="border-b border-gray-200 bg-gradient-to-br from-purple-50 via-blue-50 to-white">
         <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
             <div>
               <span className="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-sm font-semibold text-purple-700">
                 <SparklesIcon className="mr-2 h-4 w-4" />
@@ -119,7 +119,7 @@ export default function ExamSimulationPage() {
                 with AI-weighted hotspots from your learning history.
               </p>
             </div>
-            <div className="rounded-xl border border-purple-200 bg-white/80 p-4 shadow-sm backdrop-blur">
+            <div className="self-center rounded-xl border border-purple-200 bg-white/80 p-4 shadow-sm backdrop-blur">
               <p className="text-sm text-gray-500">
                 Planner uses curated geo-fencing + AI heatmap weighting. Routes are
                 exam-level difficult yet fresh on each generation.

@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   HomeIcon,
   BookOpenIcon,
-  QuestionMarkCircleIcon,
+  // QuestionMarkCircleIcon,
   MapIcon,
   FlagIcon,
   ChartBarIcon,
@@ -15,7 +16,7 @@ import clsx from 'clsx';
 const navigation = [
   { name: 'Home', href: '/', icon: HomeIcon },
   { name: 'Learn', href: '/learn', icon: BookOpenIcon },
-  { name: 'Q&A', href: '/qa', icon: QuestionMarkCircleIcon },
+  // { name: 'Q&A', href: '/qa', icon: QuestionMarkCircleIcon },
   { name: 'Routes', href: '/routes', icon: MapIcon },
   { name: 'Simulation', href: '/simulate', icon: FlagIcon },
   { name: 'Progress', href: '/progress', icon: ChartBarIcon },
@@ -31,11 +32,11 @@ export function Navigation() {
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">L</span>
+              <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center bg-white">
+                <Image src="/logo.png" alt="FahrerLab" width={32} height={32} />
               </div>
               <span className="text-xl font-bold text-gray-900">
-                LicensePrep
+                FahrerLab
               </span>
             </Link>
           </div>

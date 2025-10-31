@@ -298,7 +298,7 @@ export default function RouteAnalysisPage() {
 
           {/* Hotspot Heatmap & Repeating Issues removed by request */}
 
-          {/* 已彻底删除 Recommendations 区块 */}
+          {/* Recommendations block removed by request */}
         </>
       )}
     </div>
@@ -439,7 +439,7 @@ function SpeedDurationBuckets({
               }
             }
           } catch (e) {
-            // 回退：若无法获取segments，使用该session平均速度估算
+            // fallback: if cannot get segments, use average speed of the session to estimate
             const avgSpeed = s.duration_min > 0 ? s.distance_km / (s.duration_min / 60) : 0;
             const idx = buckets.findIndex((b) => avgSpeed >= b.min && avgSpeed < b.max);
             const minutes = Math.max(0, s.duration_min || 0);

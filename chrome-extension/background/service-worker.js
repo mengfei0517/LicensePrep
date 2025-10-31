@@ -134,7 +134,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   switch (request.action) {
     case 'getAPIStatus':
       handleGetAPIStatus(sendResponse);
-      return true; // 保持消息通道开启
+      return true; // keep message channel open
     
     case 'syncData':
       handleSyncData(request.data, sendResponse);
@@ -152,7 +152,7 @@ async function handleGetAPIStatus(sendResponse) {
   try {
     // Can check API config, user subscription status, etc.
     const status = {
-      promptAPI: 'unknown', // 需要在页面上下文检查
+      promptAPI: 'unknown', // need to check in page context
       backendConnected: false,
       userSubscription: 'free'
     };
@@ -195,7 +195,7 @@ chrome.action.onClicked.addListener((tab) => {
  * Periodic data sync (optional)
  */
 chrome.alarms.create('syncData', {
-  periodInMinutes: 30 // Sync every 30 minutes
+  periodInMinutes: 30 // sync every 30 minutes
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {

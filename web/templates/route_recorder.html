@@ -56,8 +56,8 @@
             border-radius: 12px;
             padding: 14px 16px;
             color: #334155;
-            font-weight: 800; /* 加粗 */
-            font-size: 1.5rem; /* 再放大 */
+            font-weight: 800; /* bold */
+            font-size: 1.5rem; /* enlarge */
             box-shadow: 0 6px 18px rgba(124,58,237,0.08);
         }
 
@@ -84,7 +84,7 @@
             cursor: pointer;
             padding: 4px 0;
             display: inline-block;
-            margin-left: 0; /* 与标题📍左侧对齐 */
+            margin-left: 0; /* align with title📍 on the left */
         }
         .back-link:hover { text-decoration: underline; }
         .page-title {
@@ -147,7 +147,7 @@
 
         .header h1 {
             margin: 0;
-            font-size: 2.2em; /* 放大标题字号 */
+            font-size: 2.2em; /* enlarge title font size */
         }
 
         .close-btn {
@@ -225,7 +225,7 @@
         }
 
         .start-btn {
-            background: #f1f5f9; /* 去掉渐变，采用中性底色 */
+            background: #f1f5f9; 
             color: #334155;
             border: 1px solid #e5e7eb;
         }
@@ -236,7 +236,7 @@
         }
 
         .stop-btn {
-            background: #f1f5f9; /* 去掉渐变，采用中性底色 */
+            background: #f1f5f9;
             color: #334155;
             border: 1px solid #e5e7eb;
         }
@@ -247,7 +247,7 @@
         }
 
         .save-btn {
-            background: #f1f5f9; /* 去掉渐变，采用中性底色 */
+            background: #f1f5f9;
             color: #334155;
             border: 1px solid #e5e7eb;
         }
@@ -985,7 +985,7 @@
             try {
                 await uploadGpsBatch(true);
 
-                // 取消截图：直接完成会话，不附带快照
+                // cancel screenshot: finish session without snapshot
                 const result = await finishSession(null);
 
                 document.getElementById('statusText').textContent = 'Saved Successfully!';

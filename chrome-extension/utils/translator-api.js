@@ -1,6 +1,6 @@
 /**
- * Chrome Built-in AI - Translator API 封装
- * 支持语言检测和翻译
+ * Chrome Built-in AI - Translator API wrapper
+ * supports language detection and translation
  */
 
 export class TranslatorAPIClient {

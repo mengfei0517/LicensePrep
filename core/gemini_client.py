@@ -1,6 +1,6 @@
 """
 Google Gemini API Client
-使用 Google Cloud 的 Gemini API 进行 AI 生成
+using Google Cloud Gemini API for AI generation
 """
 from __future__ import annotations
 import requests
@@ -9,26 +9,26 @@ from config.settings import settings
 
 
 class GeminiClient:
-    """Google Gemini API 客户端"""
+    """Google Gemini API client"""
     
     def __init__(self, api_key: str = None):
         self.api_key = api_key or settings.GOOGLE_GEMINI_API_KEY
         self.base_url = "https://generativelanguage.googleapis.com/v1beta"
-        # 使用最新的稳定版本 (根据诊断结果)
-        # gemini-2.5-flash: 最新版本，速度快，免费额度高
-        # gemini-flash-latest: 始终指向最新的 flash 版本
+        # use the latest stable version (based on diagnosis results)
+        # gemini-2.5-flash: latest version, fast, high free额度
+        # gemini-flash-latest: always point to the latest flash version
         self.model = "gemini-2.5-flash"
     
     def generate_content(self, prompt: str, temperature: float = 0.3) -> str:
         """
-        调用 Gemini API 生成内容
+        call Gemini API to generate content
         
         Args:
-            prompt: 输入的提示词
-            temperature: 温度参数 (0.0-1.0)
+            prompt: input prompt
+            temperature: temperature parameter (0.0-1.0)
             
         Returns:
-            生成的文本内容
+            generated text content
         """
         url = f"{self.base_url}/models/{self.model}:generateContent?key={self.api_key}"
         
@@ -52,7 +52,7 @@ class GeminiClient:
             
             response = requests.post(url, json=payload, timeout=30)
             
-            # 详细的错误信息
+            # detailed error information
             if response.status_code != 200:
                 error_detail = f"Status: {response.status_code}"
                 try:
@@ -69,7 +69,7 @@ class GeminiClient:
             response.raise_for_status()
             data = response.json()
             
-            # 解析响应
+            # parse response
             if "candidates" in data and len(data["candidates"]) > 0:
                 candidate = data["candidates"][0]
                 if "content" in candidate and "parts" in candidate["content"]:
@@ -97,15 +97,15 @@ class GeminiClient:
         temperature: float = 0.3
     ) -> Dict[str, Any]:
         """
-        生成结构化的答案（用于 Q&A）
+        generate structured answer (for Q&A)
         
         Args:
-            question: 用户问题
-            context: 知识库上下文
-            temperature: 温度参数
+            question: user question
+            context: knowledge base context
+            temperature: temperature parameter
             
         Returns:
-            结构化的答案字典
+            structured answer dictionary
         """
         prompt = f"""You are an authoritative German driving instructor. Answer the user's question based on the knowledge context provided below.
 
@@ -125,10 +125,10 @@ Return ONLY valid JSON, no additional text."""
 
         response_text = self.generate_content(prompt, temperature)
         
-        # 尝试解析 JSON
+        # try to parse JSON
         import json
         try:
-            # 提取 JSON 部分
+            # extract JSON part
             json_start = response_text.find('{')
             json_end = response_text.rfind('}') + 1
             
@@ -136,7 +136,7 @@ Return ONLY valid JSON, no additional text."""
                 json_str = response_text[json_start:json_end]
                 return json.loads(json_str)
             else:
-                # 如果没有 JSON，返回简单结构
+                # if no JSON, return simple structure
                 return {
                     "answer": response_text,
                     "explanation": "",
@@ -144,7 +144,7 @@ Return ONLY valid JSON, no additional text."""
                     "related_topics": []
                 }
         except json.JSONDecodeError:
-            # JSON 解析失败，返回原始文本
+            # JSON parse failed, return original text
             return {
                 "answer": response_text,
                 "explanation": "",
@@ -153,29 +153,29 @@ Return ONLY valid JSON, no additional text."""
             }
 
 
-# 全局客户端实例
+# global client instance
 _gemini_client = None
 
 def get_gemini_client() -> GeminiClient:
-    """获取全局 Gemini 客户端实例"""
+    """get global Gemini client instance"""
     global _gemini_client
     if _gemini_client is None:
         _gemini_client = GeminiClient()
     return _gemini_client
 
 
-# 测试代码
+# test code
 if __name__ == "__main__":
     print("🧪 Testing Google Gemini API\n")
     
     client = GeminiClient()
     
-    # 测试基本生成
+    # test basic generation
     print("Test 1: Basic generation")
     response = client.generate_content("What is the speed limit on German Autobahn?")
     print(f"Response: {response[:200]}...\n")
     
-    # 测试结构化答案
+    # test structured answer
     print("Test 2: Structured answer")
     context = "On the Autobahn, there is generally no speed limit, but a recommended speed of 130 km/h."
     answer = client.generate_structured_answer(

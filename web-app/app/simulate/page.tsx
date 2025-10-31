@@ -18,19 +18,12 @@ import {
   ExamSimulationPlan,
 } from '@/lib/api-client';
 
-const START_OPTIONS = [
-  'Munich Test Center (Bodenseestraße)',
-  'Berlin Tegel TÜV Station',
-  'Hamburg Langenhorn Prüfzentrum',
-  'Cologne TÜV Nord - Poll',
-];
-
 const DURATION_MIN = 45;
 
 export default function ExamSimulationPage() {
-  const [start, setStart] = useState<string>(START_OPTIONS[0]);
+  const [start, setStart] = useState<string>('');
+  const [end, setEnd] = useState<string>('');
   const [durationMin, setDurationMin] = useState<number>(DURATION_MIN);
-  const [seed, setSeed] = useState<string>('');
   const [plan, setPlan] = useState<ExamSimulationPlan | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -69,19 +62,12 @@ export default function ExamSimulationPage() {
     ];
   }, [plan]);
 
-  const generatePlan = async (options?: { seed?: number | null }) => {
+  const generatePlan = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await apiClient.planRoute(
-        start,
-        durationMin,
-        options?.seed ?? (seed ? Number(seed) : undefined)
-      );
+      const response = await apiClient.planRoute(start, durationMin);
       setPlan(response);
-      if (response.seed !== undefined && response.seed !== null) {
-        setSeed(String(response.seed));
-      }
     } catch (err) {
       console.error('Failed to generate plan', err);
       setError(
@@ -92,12 +78,6 @@ export default function ExamSimulationPage() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleRegenerate = () => {
-    const newSeed = Math.floor(Math.random() * 1_000_000);
-    setSeed(String(newSeed));
-    generatePlan({ seed: newSeed });
   };
 
   return (
@@ -144,97 +124,81 @@ export default function ExamSimulationPage() {
                 htmlFor="start"
                 className="text-sm font-medium text-gray-700"
               >
-                Start Location / Test Center
+                Start Location
               </label>
-              <select
+              <input
                 id="start"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200"
+                type="text"
+                placeholder="For example: Ahornstrasse 1, 85774"
                 value={start}
                 onChange={(event) => setStart(event.target.value)}
-              >
-                {START_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-              <p className="text-xs text-gray-500">
-                Select the exam centre you want to rehearse.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <label
-                htmlFor="duration"
-                className="text-sm font-medium text-gray-700"
-              >
-                Target Duration (minutes)
-              </label>
-              <input
-                id="duration"
-                type="range"
-                min={40}
-                max={50}
-                value={durationMin}
-                onChange={(event) => setDurationMin(Number(event.target.value))}
-                className="w-full accent-purple-500"
-              />
-              <div className="flex justify-between text-xs text-gray-500">
-                <span>40 min</span>
-                <span>{durationMin} min</span>
-                <span>50 min</span>
-              </div>
-              <p className="text-xs text-gray-500">
-                Official German practical exam typically runs 45 minutes.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <label
-                htmlFor="seed"
-                className="text-sm font-medium text-gray-700"
-              >
-                Optional Seed (reproduce a previous plan)
-              </label>
-              <input
-                id="seed"
-                type="text"
-                inputMode="numeric"
-                placeholder="Auto"
-                value={seed}
-                onChange={(event) => setSeed(event.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200"
               />
               <p className="text-xs text-gray-500">
-                Leave empty for a fresh randomised route.
+                Enter the starting address for your practice route.
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                type="submit"
-                className="inline-flex items-center rounded-md bg-purple-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-purple-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={isLoading}
+            <div className="space-y-2">
+              <label
+                htmlFor="end"
+                className="text-sm font-medium text-gray-700"
               >
-                {isLoading ? (
-                  <>
-                    <ArrowPathIcon className="mr-2 h-4 w-4 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  'Generate Plan'
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={handleRegenerate}
-                className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50"
-              >
-                Surprise Me
-              </button>
-              <span className="text-xs text-gray-400">
-                Planner may take 1-2 seconds.
-              </span>
+                End Location
+              </label>
+              <input
+                id="end"
+                type="text"
+                placeholder="For example: München Hauptbahnhof"
+                value={end}
+                onChange={(event) => setEnd(event.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200"
+              />
+              <p className="text-xs text-gray-500">
+                Enter the ending address for your practice route.
+              </p>
+            </div>
+
+            <div className="flex items-end gap-6 md:col-span-2">
+              <div className="w-1/2 space-y-2">
+                <label
+                  htmlFor="duration"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Target Duration (minutes)
+                </label>
+                <input
+                  id="duration"
+                  type="range"
+                  min={40}
+                  max={60}
+                  value={durationMin}
+                  onChange={(event) => setDurationMin(Number(event.target.value))}
+                  className="w-full accent-purple-500"
+                />
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>40 min</span>
+                  <span>{durationMin} min</span>
+                  <span>60 min</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  type="submit"
+                  className="inline-flex items-center rounded-md bg-purple-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-purple-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={isLoading || !start.trim() || !end.trim()}
+                >
+                  {isLoading ? (
+                    <>
+                      <ArrowPathIcon className="mr-2 h-4 w-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    'Generate Plan'
+                  )}
+                </button>
+              </div>
             </div>
 
             {error && (

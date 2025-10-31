@@ -87,7 +87,7 @@ export default function Home() {
           <div className="mx-auto mt-16 flex max-w-2xl sm:mt-24 lg:ml-10 lg:mr-0 lg:mt-0 lg:max-w-none lg:flex-none xl:ml-32">
             <div className="max-w-3xl flex-none sm:max-w-5xl lg:max-w-none">
               {/* Dashboard Preview: inline snapshot of key content */}
-              <div className="w-[48rem] rounded-md bg-white shadow-2xl ring-1 ring-gray-900/10 p-6">
+              <div className="w-[48rem] rounded-md bg-white shadow-2xl ring-1 ring-gray-900/10 p-6 -ml-[1cm]">
                 {/* Slogan */}
                 <div className="rounded-lg border border-blue-200 bg-blue-50 px-5 py-4 text-blue-900 text-center shadow-sm">
                   <p className="text-lg sm:text-xl font-bold italic leading-8 tracking-tight">

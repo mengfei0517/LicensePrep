@@ -40,6 +40,17 @@ cleanup() {
 
 trap cleanup SIGINT SIGTERM
 
+# Ensure Python deps installed (optional quick check)
+if ! python -c "import flask" >/dev/null 2>&1; then
+    echo "📦 未检测到 Flask，建议先安装 Python 依赖: pip install -r requirements.txt"
+fi
+
+# Ensure web-app dependencies installed
+if [ ! -d "web-app/node_modules" ]; then
+    echo "📦 安装前端依赖 (web-app)..."
+    (cd web-app && npm ci || npm install)
+fi
+
 # Start Flask backend
 echo "📍 Starting Flask Backend (http://localhost:5000)..."
 python app.py &

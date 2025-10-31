@@ -1,344 +1,86 @@
-# LicensePrep - Hybrid AI Driving Coach Platform
+# LicensePrep
 
-**AI-Powered German Driving Test Preparation**
-
-LicensePrep is a comprehensive hybrid AI platform combining **Web App (Next.js)**, **Chrome Extension**, and **Mobile App** (planned) to provide the ultimate German driving test preparation experience.
-
-[![Chrome Built-in AI](https://img.shields.io/badge/Chrome-Built--in%20AI-blue)](https://developer.chrome.com/docs/ai)
-[![Next.js](https://img.shields.io/badge/Next.js-14-black)](https://nextjs.org/)
-[![Flask](https://img.shields.io/badge/Flask-API-green)](https://flask.palletsprojects.com/)
+AI 驱动的德国驾考学习与路线模拟平台（Flask 后端 + Next.js 前端 + Chrome 扩展）。
 
 ---
 
-## 🏗️ Platform Architecture
+## 快速开始
 
-```
-┌─────────────────────┐
-│  Chrome Extension   │ ← Chrome Built-in AI (Gemini Nano)
-│   - Q&A Assistant   │   + Cloud Gemini API Fallback
-│   - Context Menus   │
-└──────────┬──────────┘
-           │
-           ├──────────────┐
-           │              │
-┌──────────▼──────┐   ┌──▼──────────────┐
-│  Next.js Web    │   │  Flask Backend  │
-│   - Learning    │◄──┤   - API Server  │◄── Google Gemini API
-│   - Q&A         │   │   - RAG System  │
-│   - Simulation  │   └─────────────────┘
-│   - Progress    │
-└──────────┬──────┘           │
-           │                  │
-           ├──────────────────┤
-           │                  │
-       ┌───▼────────┐    ┌───▼────────┐
-       │  Firebase  │    │  React     │
-       │  (Planned) │    │  Native    │
-       │  - Auth    │    │  (Planned) │
-       │  - Firestore    │  - Routes  │
-       └────────────┘    └────────────┘
-```
+### 1) 环境要求
+- Python 3.11+
+- Node.js 18+
+- Google Gemini API Key（从 Google AI Studio 获取）
 
----
-
-## ✨ Features
-
-### 🌐 Web App (Next.js)
-- ✅ Modern learning platform with 8 categories, 42+ subcategories
-- ✅ AI-powered Q&A system with Gemini API
-- ✅ Interactive content (images, guides, step-by-step instructions)
-- ✅ Responsive design (desktop, tablet, mobile)
-- ✅ Type-safe with TypeScript
-- 🔜 Firebase authentication and progress tracking
-
-### 🧩 Chrome Extension
-- ✅ Chrome Built-in AI (Gemini Nano) for local, private processing
-- ✅ Cloud Gemini API fallback for reliability
-- ✅ Hybrid architecture: privacy + availability
-- ✅ Context menus for quick access
-- ✅ Custom API key support
-- ✅ Multi-language support (German ↔ English)
-
-### 🎮 Exam Simulation
-- ✅ GPS route recording with OpenStreetMap
-- ✅ Voice notes with GPS coordinates
-- ✅ Speed analysis and visualization
-- ✅ Route playback with variable speed
-- ✅ Local storage (browser-based)
-
-### 📱 Mobile App (Planned)
-- 🔜 GPS route recording with React Native
-- 🔜 Real-time Firebase sync
-- 🔜 Offline-first architecture
-- 🔜 AI-powered driving analysis
-
-### 🤖 AI Backend (Flask)
-- ✅ Google Gemini 2.5 Flash integration
-- ✅ RAG system for accurate answers
-- ✅ Route planning agent
-- ✅ Replay analysis agent
-- ✅ RESTful API for all clients
-
----
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- **Python**: 3.11+
-- **Node.js**: 18+
-- **Google Gemini API Key**: Get from [Google AI Studio](https://aistudio.google.com/app/apikey)
-
-### 1. Backend Setup (Flask)
+### 2) 环境变量
+在终端设置至少以下变量：
 
 ```bash
-# Clone repository
-git clone https://github.com/yourusername/LicensePrep.git
-cd LicensePrep
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Set API key
-export GOOGLE_API_KEY="your-gemini-api-key"
-
-# Run server
-python app.py
+export GOOGLE_GEMINI_API_KEY="your-gemini-api-key"   # 或使用 GOOGLE_API_KEY 兼容变量
+# 可选：用于 /route-review 模板（Google 地图，仅该页面需要）
+export GOOGLE_MAPS_API_KEY="your-google-maps-api-key"
 ```
 
-Backend runs on: **http://localhost:5000**
-
-### 2. Frontend Setup (Next.js)
+### 3) 一键启动（推荐）
 
 ```bash
-# Open new terminal
-cd web-app
-
-# Install dependencies
-npm install
-
-# Run development server
-npm run dev
+conda activate license-prep-env  # 或 source venv/bin/activate
+./start-dev.sh
 ```
 
-Web app runs on: **http://localhost:3000**
+运行后：
+- 后端 API: http://localhost:5000
+- 前端应用: http://localhost:3000
 
-### 3. Chrome Extension Setup
-
-```bash
-cd chrome-extension
-
-# Load in Chrome
-# 1. Open chrome://extensions/
-# 2. Enable "Developer mode"
-# 3. Click "Load unpacked"
-# 4. Select chrome-extension folder
-```
-
-**Testing**: Click extension icon or press `Ctrl+Shift+L` (Mac: `Cmd+Shift+L`)
+说明：脚本会在缺失时自动安装 `web-app` 的前端依赖，并并行启动 Flask 与 Next.js 开发服务器。
 
 ---
 
-## 📚 Documentation
-
-- **[API Specification](docs/API_SPECIFICATION.md)** - Complete API reference
-- **[Architecture](docs/ARCHITECTURE.md)** - System design and overview
-- **[Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Production deployment
-- **[Documentation Index](docs/DOCUMENTATION_INDEX.md)** - Guide to all documentation
-- **[Chrome Extension](chrome-extension/README.md)** - Extension documentation
-- **[Web App](web-app/README.md)** - Next.js app documentation
-- **[Chrome API Setup](docs/CHROME_API_SETUP.md)** - Chrome Built-in AI configuration
-
----
-
-## 🏛️ Project Structure
+## 目录结构
 
 ```
 LicensePrep/
-├── app.py                  # Flask backend entry point
-├── api/                    # Flask API routes
-│   ├── routes_content.py   # Content API
-│   ├── routes_rule_qa.py   # Q&A API
-│   ├── routes_replay.py    # Route analysis
-│   └── routes_planner.py   # Route planning
-├── core/                   # Backend services
-│   ├── gemini_client.py    # Gemini API client
-│   └── simple_retrieval.py # RAG retrieval
-├── agents/                 # AI agents
-│   ├── planner_agent.py
-│   └── replay_agent.py
-├── data/                   # Learning content
-│   ├── metadata/
-│   └── rules/
-├── web/                    # Flask static files & templates
-│   ├── static/images/      # Learning content images
-│   └── templates/          # Route recorder/review (for simulate)
-├── web-app/                # Next.js frontend
-│   ├── app/                # Next.js pages
-│   ├── components/         # React components
-│   ├── lib/                # API client & hooks
-│   └── public/             # Static assets
-└── chrome-extension/       # Chrome Extension
-    ├── manifest.json
-    ├── popup/
-    ├── background/
-    └── utils/
+├── app.py                  # Flask 后端入口
+├── start-dev.sh            # 一键本地开发启动脚本（主程序）
+├── requirements.txt        # 后端依赖清单
+├── api/                    # Flask API 路由
+├── core/                   # 后端核心（Gemini 客户端、简单检索等）
+├── agents/                 # 规划/回放等智能体
+├── config/                 # 设置与环境变量
+├── data/                   # 学习/规则/样例/移动端上传数据
+├── web/                    # Flask 模板与静态资源（路线录制/回放页面）
+├── web-app/                # Next.js 前端（独立 package.json）
+└── chrome-extension/       # Chrome 扩展（独立 package.json）
 ```
 
 ---
 
-## 🔥 Key Features Explained
+## 开发说明
 
-### Hybrid AI Architecture
-
-**Why Hybrid?**
-- **Privacy**: Chrome Built-in AI (Gemini Nano) processes data locally
-- **Reliability**: Cloud fallback ensures service availability
-- **Performance**: Local AI = instant responses, no network latency
-- **Cost**: Reduced API costs with local processing
-
-### Learning Content
-
-- **8 Categories**: Basic driving, Five skills, 30-zone, City zones, Country roads, Highways, Technical questions, ADAS
-- **42+ Subcategories**: Detailed topics with images and instructions
-- **Interactive**: Step-by-step guides with visual aids
-
-### Exam Simulation
-
-1. **Record**: GPS route recording with voice notes
-2. **Analyze**: Speed analysis, acceleration, braking patterns
-3. **Review**: Route playback with synchronized voice notes
-4. **Improve**: AI-powered feedback on performance
+- 后端以 Flask 提供 REST API（见 `app.py` 与 `api/`）。
+- 前端以 Next.js 提供 Web 界面（见 `web-app/`）。
+- Chrome 扩展使用 Chrome 内置 AI（Gemini Nano）并可回退到云端 Gemini API（见 `chrome-extension/`）。
+- CORS 允许来源通过 `config/settings.py` 读取环境变量配置。
 
 ---
 
-## 🎯 Hackathon Highlights
+## 文档
 
-### Chrome Built-in AI Integration
-- ✅ Uses Gemini Nano for local, private AI processing
-- ✅ Automatic fallback to Cloud Gemini API
-- ✅ Demonstrates hybrid architecture benefits
-- ✅ Custom API key support for power users
-
-### Innovation
-- ✅ Hybrid AI platform (Web + Extension + Mobile planned)
-- ✅ Privacy-first with local AI processing
-- ✅ Seamless fallback ensures reliability
-- ✅ Multi-platform content synchronization (planned)
-
-### Technical Excellence
-- ✅ Modern tech stack (Next.js, React, TypeScript)
-- ✅ API-first design for cross-platform support
-- ✅ Type-safe development with full TypeScript coverage
-- ✅ Well-documented and maintainable code
+- docs/API_SPECIFICATION.md（API 规范）
+- docs/ARCHITECTURE.md（架构）
+- docs/DEPLOYMENT_GUIDE.md（部署指南）
+- docs/CHROME_API_SETUP.md（Chrome Built-in AI 说明）
 
 ---
 
-## 📊 Tech Stack
+## 故障排查
 
-### Frontend
-- **Next.js 14** - React framework with App Router
-- **TypeScript** - Type-safe development
-- **Tailwind CSS** - Utility-first styling
-- **SWR** - Data fetching and caching
-
-### Backend
-- **Flask** - Python web framework
-- **Google Gemini API** - AI language model
-- **FAISS** - Vector similarity search (RAG)
-- **Langchain** - LLM application framework
-
-### Chrome Extension
-- **Manifest V3** - Latest extension architecture
-- **Chrome Built-in AI APIs** - Gemini Nano integration
-- **Vanilla JavaScript** - No framework dependencies
-
-### Planned
-- **React Native** - Mobile app development
-- **Firebase** - Authentication, Firestore, Storage
-- **Expo** - React Native toolchain
+- 后端无法启动：确认已激活虚拟环境并 `pip install -r requirements.txt`，检查 `GOOGLE_GEMINI_API_KEY` 是否已设置。
+- 前端无法访问后端：确认 Flask 运行在 5000 端口，并检查 CORS 配置。
+- 图片或静态资源无法显示：确保 Flask 运行且 Next.js 重启过。
+- 扩展不可用：确认后端已启动，必要时在扩展设置中填入自定义 API Key，并在 Chrome 扩展管理页重新加载。
 
 ---
 
-## 🤝 Contributing
+## 许可
 
-We welcome contributions! Please:
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see LICENSE file for details.
-
----
-
-## 🆘 Troubleshooting
-
-### Backend Issues
-
-**Flask won't start**
-```bash
-# Ensure correct environment
-conda activate license-prep-env  # or source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Check API key
-echo $GOOGLE_API_KEY
-```
-
-### Frontend Issues
-
-**Next.js can't connect to backend**
-```bash
-# Check Flask is running
-curl http://localhost:5000/api/content/categories
-
-# Verify CORS in app.py
-# Should read allowed origins from config/settings.py (env: CORS_ALLOWED_ORIGINS)
-```
-
-**Images not displaying**
-- Ensure Flask backend is running on port 5000
-- Check `web-app/next.config.ts` rewrites configuration
-- Restart Next.js: `npm run dev`
-
-### Chrome Extension Issues
-
-**Extension not working**
-- Ensure Flask backend is running (for cloud API)
-- Check browser console for errors
-- Try using custom API key in Settings
-- Reload extension after changes
-
----
-
-## 📞 Support
-
-- **Documentation**: See markdown files in project root and subdirectories
-- **Issues**: Open a GitHub issue
-- **Questions**: Check existing documentation first
-
----
-
-## 🎉 Getting Started
-
-1. **Clone the repository**
-2. **Get your Gemini API key** from Google AI Studio
-3. **Start Flask backend**: `python app.py`
-4. **Start Next.js frontend**: `cd web-app && npm run dev`
-5. **Load Chrome Extension**: Follow instructions in `chrome-extension/README.md`
-6. **Open browser**: Visit http://localhost:3000
-
-**Happy Learning! 🚗📚**
+MIT

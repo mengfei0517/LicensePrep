@@ -19,7 +19,7 @@ const navigation = [
   // { name: 'Q&A', href: '/qa', icon: QuestionMarkCircleIcon },
   { name: 'Routes', href: '/routes', icon: MapIcon },
   { name: 'Simulation', href: '/simulate', icon: FlagIcon },
-  { name: 'Progress', href: '/progress', icon: ChartBarIcon },
+  { name: 'Future', href: '/progress', icon: ChartBarIcon },
 ];
 
 export function Navigation() {

@@ -9,6 +9,114 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <style>
+        /* Suite hero header styles (to match dashboard look) */
+        .suite-breadcrumb {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #eef2ff;
+            color: #4338ca;
+            border: 1px solid #e0e7ff;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 14px;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1fr auto; /* 左文案 + 右侧返回按钮 */
+            gap: 12px 14px;
+            align-items: center;
+            background: linear-gradient(180deg, #f8fbff 0%, #f6f7ff 100%);
+            border: 1px solid #e9ecff;
+            border-radius: 16px;
+            padding: 16px 18px;
+            box-shadow: 0 8px 24px rgba(102,126,234,0.08);
+            margin-bottom: 18px;
+        }
+
+        .hero-heading {
+            font-size: 40px;
+            line-height: 1.1;
+            color: #0f172a;
+            letter-spacing: 0.2px;
+            margin-bottom: 10px;
+        }
+
+        .hero-subtext {
+            color: #475569;
+            font-size: 15px;
+        }
+
+        .hero-note {
+            background: #ffffff;
+            border: 2px solid #ede9fe;
+            border-radius: 12px;
+            padding: 14px 16px;
+            color: #334155;
+            font-weight: 800; /* 加粗 */
+            font-size: 1.5rem; /* 再放大 */
+            box-shadow: 0 6px 18px rgba(124,58,237,0.08);
+        }
+
+        /* Plain hero title: no border/box, just text */
+        .page-header { /* mimic All Recorded Routes */
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+        .page-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .back-link {
+            appearance: none;
+            border: none;
+            background: none;
+            color: #1d4ed8;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            padding: 4px 0;
+            display: inline-block;
+            margin-left: 0; /* 与标题📍左侧对齐 */
+        }
+        .back-link:hover { text-decoration: underline; }
+        .page-title {
+            margin: 0;
+            font-size: 1.9rem;
+            line-height: 1.2;
+            color: #0f172a;
+            letter-spacing: 0.2px;
+        }
+        .page-subtitle { margin: 0; color: #475569; font-size: 0.98rem; }
+        .refresh-btn {
+            background: #ffffff;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+            border-radius: 10px;
+            padding: 8px 14px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            box-shadow: 0 6px 18px rgba(59, 130, 246, 0.12);
+            transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
+            align-self: center;
+        }
+        .refresh-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 24px rgba(59, 130, 246, 0.16);
+            background: #f8fbff;
+        }
+
+        @media (max-width: 900px) {
+            .hero-heading { font-size: 32px; }
+        }
         * {
             margin: 0;
             padding: 0;
@@ -39,7 +147,7 @@
 
         .header h1 {
             margin: 0;
-            font-size: 1.8em;
+            font-size: 2.2em; /* 放大标题字号 */
         }
 
         .close-btn {
@@ -55,6 +163,26 @@
 
         .close-btn:hover {
             background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Back button inside hero */
+        .hero-back-btn {
+            background: #ffffff;
+            color: #334155;
+            border: 1px solid #e5e7eb;
+            border-radius: 999px;
+            padding: 8px 14px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+            transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
+            justify-self: end;
+        }
+        .hero-back-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 24px rgba(0,0,0,0.10);
+            background: #f8fafc;
         }
 
         .map-container {
@@ -97,8 +225,9 @@
         }
 
         .start-btn {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            color: white;
+            background: #f1f5f9; /* 去掉渐变，采用中性底色 */
+            color: #334155;
+            border: 1px solid #e5e7eb;
         }
 
         .start-btn:hover {
@@ -107,8 +236,9 @@
         }
 
         .stop-btn {
-            background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);
-            color: white;
+            background: #f1f5f9; /* 去掉渐变，采用中性底色 */
+            color: #334155;
+            border: 1px solid #e5e7eb;
         }
 
         .stop-btn:hover {
@@ -117,8 +247,9 @@
         }
 
         .save-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: #f1f5f9; /* 去掉渐变，采用中性底色 */
+            color: #334155;
+            border: 1px solid #e5e7eb;
         }
 
         .save-btn:hover {
@@ -384,16 +515,15 @@
 </head>
 <body>
     <div class="recorder-container">
-        <div class="header">
-            <h1>📍 GPS Route Recorder</h1>
-            <button class="close-btn" onclick="window.close()">Close Window</button>
+        <!-- Suite-like header -->
+        <div class="page-header">
+            <div class="page-meta">
+                <a href="#" class="back-link" onclick="closeRecorderWindow(event)">✕ Close Window</a>
+                <h1 class="page-title">📍 GPS Route Recorder</h1>
+                <p class="page-subtitle">Initiate GPS tracking, add time-stamped voice notes, and save your practice sessions.</p>
+            </div>
+            <button class="refresh-btn" onclick="refreshRecorder()">⟳ Refresh</button>
         </div>
-
-        <div class="info-banner">
-            <strong>🗺️ Using OpenStreetMap</strong> - Open source maps, no API key required!<br>
-            <strong>☁️ Auto Sync:</strong> Finished sessions (including voice notes & map snapshot) appear automatically on your dashboard.
-        </div>
-
         <div class="map-container" id="map-capture">
             <div id="map"></div>
             
@@ -450,7 +580,6 @@
 
             <div class="voice-notes-list" id="voiceNotesList">
                 <div class="empty-voice-notes">
-                    <div class="empty-voice-notes-icon">🎵</div>
                     <p>No voice notes yet</p>
                     <p style="font-size: 0.9em;">Start recording to add voice notes at any point during your drive</p>
                 </div>
@@ -461,10 +590,34 @@
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    <!-- html2canvas for screenshot -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
 
     <script>
+        function navigateBack() {
+            try {
+                if (window.history.length > 1) {
+                    window.history.back();
+                    return;
+                }
+            } catch (e) {}
+            // fallback
+            window.location.href = '/';
+        }
+
+        function navigateToRoutes(event) {
+            // kept for potential future use
+            if (event && event.preventDefault) event.preventDefault();
+            window.location.href = '/routes';
+        }
+
+        function closeRecorderWindow(event) {
+            if (event && event.preventDefault) event.preventDefault();
+            try { window.close(); } catch (e) {}
+        }
+
+        function refreshRecorder() {
+            window.location.reload();
+        }
         let map;
         let currentMarker;
         let routePath;
@@ -832,20 +985,8 @@
             try {
                 await uploadGpsBatch(true);
 
-                let imageData = null;
-                try {
-                    const mapElement = document.getElementById('map-capture');
-                    const canvas = await html2canvas(mapElement, {
-                        useCORS: true,
-                        allowTaint: true,
-                        scale: 1.2,
-                    });
-                    imageData = canvas.toDataURL('image/jpeg', 0.7);
-                } catch (error) {
-                    console.warn('Map snapshot failed, continuing without preview:', error);
-                }
-
-                const result = await finishSession(imageData);
+                // 取消截图：直接完成会话，不附带快照
+                const result = await finishSession(null);
 
                 document.getElementById('statusText').textContent = 'Saved Successfully!';
                 alert('Route saved successfully!');
@@ -1109,7 +1250,6 @@
             if (voiceNotes.length === 0) {
                 container.innerHTML = `
                     <div class="empty-voice-notes">
-                        <div class="empty-voice-notes-icon">🎵</div>
                         <p>No voice notes yet</p>
                         <p style="font-size: 0.9em;">Start recording to add voice notes at any point during your drive</p>
                     </div>

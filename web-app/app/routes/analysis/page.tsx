@@ -62,11 +62,10 @@ export default function RouteAnalysisPage() {
             Back to Routes
           </Link>
           <h1 className="mt-4 text-3xl font-bold text-gray-900">
-            AI Practice Analysis
+            Practice Analysis Overview
           </h1>
           <p className="mt-2 text-base text-gray-600">
-            Macro lens on every recorded drive. Spot recurring mistakes, track momentum,
-            and plan the next targeted practice route.
+          It collects all individual practice session pathways and provides a full data summary. This clarity allows you to easily identify your High-Frequency Training Routes and High-Frequency Flagged Points. The resulting insights offer a data-driven path to efficiently prepare for your exams.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -81,12 +80,7 @@ export default function RouteAnalysisPage() {
             />
             Refresh
           </button>
-          <span className="text-xs text-gray-500">
-            Updated:{' '}
-            {overview
-              ? dateFormatter.format(new Date(overview.generated_at))
-              : '—'}
-          </span>
+          {/* timestamp removed per request */}
         </div>
       </div>
 

@@ -5,7 +5,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import {
   MapPinIcon,
-  PlayIcon,
   ClockIcon,
   ArrowPathIcon,
   ArrowLeftIcon,
@@ -70,7 +69,7 @@ export default function RoutesReviewPage() {
             Back to Route Recording
           </Link>
           <h1 className="mt-4 text-3xl font-bold text-gray-900">
-            All Recorded Routes
+            Recorded Routes
           </h1>
           <p className="mt-2 text-base text-gray-600">
             Browse every captured drive, play them back with voice notes, or tidy up old sessions.
@@ -119,7 +118,7 @@ export default function RoutesReviewPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           {allRoutes.map((route) => (
             <div
               key={route.id}
@@ -175,13 +174,12 @@ export default function RoutesReviewPage() {
                     href={`/routes/analysis/${route.id}`}
                     className="rounded-lg border border-blue-200 px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700"
                   >
-                    AI Note
+                    Analysis
                   </Link>
                   <button
                     onClick={() => openReview(route.id)}
-                    className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+                    className="flex-1 rounded-lg border border-blue-200 bg-blue-100 px-4 py-2 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-200"
                   >
-                    <PlayIcon className="mr-1 inline h-4 w-4" />
                     Review
                   </button>
                   <button

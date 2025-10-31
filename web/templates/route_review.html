@@ -55,6 +55,33 @@
             height: 100vh;
         }
 
+        /* Unified header styles (aligned with recorder page) */
+        .page-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 16px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .page-meta { display: flex; flex-direction: column; gap: 8px; }
+        .back-link { color: #1d4ed8; font-weight: 600; font-size: 0.95rem; text-decoration: none; }
+        .back-link:hover { text-decoration: underline; }
+        .page-title { margin: 0; font-size: 1.6rem; font-weight: 800; color: #0f172a; }
+        .page-subtitle { margin: 0; color: #475569; font-size: 0.98rem; }
+        .refresh-btn {
+            background: #ffffff;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+            border-radius: 10px;
+            padding: 8px 14px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+        .refresh-btn:hover { background: #f8fbff; }
+
         /* Header */
         .review-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -770,7 +797,7 @@
         }
 
         .control-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #667eea;
             color: white;
             border: none;
             padding: 12px 20px;
@@ -832,7 +859,7 @@
         }
 
         .progress-bar {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #667eea;
             height: 100%;
             border-radius: 4px;
             width: 0%;
@@ -1307,13 +1334,13 @@
 </head>
 <body data-google-maps-key="{{ google_maps_api_key }}">
     <div class="review-container">
-        <!-- Header -->
-        <div class="review-header">
-            <div class="header-title">
-                <h1>📍 Route Review</h1>
-                <div class="route-name" id="routeName">Loading...</div>
+        <!-- Header (unified layout) -->
+        <div class="page-header">
+            <div class="page-meta">
+                <a href="#" class="back-link" onclick="window.close(); return false;">✕ Close Window</a>
+                <h1 class="page-title">📍 Route Review</h1>
             </div>
-            <button class="close-btn" onclick="window.close()">✕ Close</button>
+            <button class="refresh-btn" onclick="refreshRouteData('Refreshing…')">⟳ Refresh</button>
         </div>
 
         <!-- Main Content -->
@@ -2363,13 +2390,8 @@
                     };
                 }).sort((a, b) => (a.relativeMs || 0) - (b.relativeMs || 0));
 
-                const routeName = summary.recorded_at
-                    ? `Drive ${new Date(summary.recorded_at).toLocaleString()}`
-                    : (summary.route_id || 'Practice Route');
-
                 routeData = {
                     id: summary.route_id || ROUTE_ID,
-                    name: routeName,
                     duration: formatDurationFromMinutes(summary.duration_min),
                     distance: (summary.distance_km ?? 0).toFixed(2),
                     points: normalizedPoints,
@@ -2437,8 +2459,7 @@
 
         // Initialize route visualization
         function initializeRoute() {
-            // Update header
-            document.getElementById('routeName').textContent = routeData.name;
+            // Header subtitle removed per design; no route name displayed
 
             streetViewCache.clear();
             streetViewFrames = [];
